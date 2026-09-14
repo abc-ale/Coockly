@@ -1,0 +1,26 @@
+spring:
+  profiles:
+    default: local
+  datasource:
+    url: ${SUPABASE_DATABASE_URL}
+    username: ${SUPABASE_DATABASE_USERNAME}
+    password: ${SUPABASE_DATABASE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: ${PORT:8080}
+
+seguridad:
+  jwt:
+    secreto: ${JWT_SECRETO}
+    expiracion-minutos: ${JWT_EXPIRACION_MINUTOS:60}
+
+cloudinary:
+  nombre: ${CLOUDINARY_CLOUD_NAME}
+  clave-api: ${CLOUDINARY_API_KEY}
+  secreto: ${CLOUDINARY_API_SECRET}

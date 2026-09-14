@@ -1,0 +1,3 @@
+package com.cookly.excepciones;
+import org.springframework.http.*; import org.springframework.web.bind.annotation.*; import org.springframework.web.bind.MethodArgumentNotValidException; import java.util.*;
+@RestControllerAdvice public class ManejadorErrores { @ExceptionHandler({IllegalArgumentException.class,MethodArgumentNotValidException.class}) public ResponseEntity<Map<String,String>> invalido(Exception e){return ResponseEntity.badRequest().body(Map.of("mensaje",e instanceof IllegalArgumentException?e.getMessage():"Datos inválidos"));}@ExceptionHandler(Exception.class) public ResponseEntity<Map<String,String>> general(Exception e){return ResponseEntity.status(500).body(Map.of("mensaje","Ocurrió un error al procesar la solicitud."));} }

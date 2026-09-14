@@ -1,0 +1,8 @@
+# Credenciales locales
+src/main/resources/application-local.properties
+
+# Archivos generados
+target/
+.gradle/
+.mvn/apache-maven-*/
+.mvn/*.zip

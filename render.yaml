@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: cookly-api
+    runtime: docker
+    rootDir: cookly-backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/salud
+    envVars:
+      - key: SUPABASE_DATABASE_URL
+        sync: false
+      - key: SUPABASE_DATABASE_USERNAME
+        sync: false
+      - key: SUPABASE_DATABASE_PASSWORD
+        sync: false
+      - key: JWT_SECRETO
+        generateValue: true
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false

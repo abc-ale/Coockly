@@ -1,0 +1,15 @@
+plugins { id 'com.android.application' }
+def productionApiUrl = project.findProperty('PRODUCTION_API_URL') ?: 'https://REPLACE_WITH_RENDER_URL/api/v1/'
+android { namespace 'com.cookly'; compileSdk 35
+ defaultConfig { applicationId 'com.cookly'; minSdk 26; targetSdk 35; versionCode 1; versionName '1.0.0'; buildConfigField 'String', 'API_BASE_URL', '"' + productionApiUrl + '"'; manifestPlaceholders = [usesCleartextTraffic: 'false'] }
+ compileOptions {
+  sourceCompatibility JavaVersion.VERSION_17
+  targetCompatibility JavaVersion.VERSION_17
+ }
+ buildFeatures { buildConfig true }
+ buildTypes {
+  debug { buildConfigField 'String', 'API_BASE_URL', '"http://10.0.2.2:8080/api/v1/"'; manifestPlaceholders.usesCleartextTraffic = 'true' }
+  release { manifestPlaceholders.usesCleartextTraffic = 'false' }
+ }
+}
+dependencies { implementation 'androidx.appcompat:appcompat:1.7.0'; implementation 'com.google.android.material:material:1.12.0'; implementation 'androidx.constraintlayout:constraintlayout:2.2.0'; implementation 'androidx.lifecycle:lifecycle-viewmodel:2.8.7'; implementation 'androidx.lifecycle:lifecycle-livedata:2.8.7'; implementation 'androidx.recyclerview:recyclerview:1.3.2'; implementation 'com.squareup.retrofit2:retrofit:2.11.0'; implementation 'com.squareup.retrofit2:converter-gson:2.11.0'; implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'; implementation 'androidx.security:security-crypto:1.1.0-alpha06' }

@@ -1,0 +1,7 @@
+package com.cookly.seguridad;
+import io.jsonwebtoken.*; import io.jsonwebtoken.security.Keys; import org.springframework.beans.factory.annotation.*; import org.springframework.stereotype.Service; import java.nio.charset.StandardCharsets; import java.time.*; import java.util.*;
+@Service public class ServicioToken { private final byte[] clave; private final long expiracion;
+ public ServicioToken(@Value("${seguridad.jwt.secreto}") String secreto,@Value("${seguridad.jwt.expiracion-minutos}") long minutos){ if(secreto.length()<32) throw new IllegalArgumentException("JWT_SECRETO debe tener al menos 32 caracteres"); clave=secreto.getBytes(StandardCharsets.UTF_8); expiracion=minutos; }
+ public String crear(String correo,String rol){ return Jwts.builder().subject(correo).claim("rol",rol).issuedAt(new Date()).expiration(Date.from(Instant.now().plus(Duration.ofMinutes(expiracion)))).signWith(Keys.hmacShaKeyFor(clave)).compact(); }
+ public Claims validar(String token){ return Jwts.parser().verifyWith(Keys.hmacShaKeyFor(clave)).build().parseSignedClaims(token).getPayload(); }
+}
