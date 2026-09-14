@@ -2,6 +2,7 @@ services:
   - type: web
     name: cookly-api
     runtime: docker
+    plan: free
     rootDir: cookly-backend
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/v1/salud
