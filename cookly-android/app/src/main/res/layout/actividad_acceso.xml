@@ -1,1 +1,136 @@
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:padding="24dp" android:layout_width="match_parent" android:layout_height="match_parent"><TextView android:id="@+id/titulo" android:text="@string/titulo_acceso" android:textSize="30sp" android:textStyle="bold" android:layout_width="0dp" android:layout_height="wrap_content" app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/><com.google.android.material.textfield.TextInputEditText android:id="@+id/nombre" android:hint="Nombre (solo para registrarte)" android:inputType="textPersonName" android:layout_width="0dp" android:layout_height="wrap_content" app:layout_constraintTop_toBottomOf="@id/titulo" android:layout_marginTop="32dp" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/><com.google.android.material.textfield.TextInputEditText android:id="@+id/correo" android:hint="Correo electrónico" android:inputType="textEmailAddress" android:layout_width="0dp" android:layout_height="wrap_content" app:layout_constraintTop_toBottomOf="@id/nombre" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/><com.google.android.material.textfield.TextInputEditText android:id="@+id/contrasena" android:hint="Contraseña (mínimo 10 caracteres)" android:inputType="textPassword" android:layout_width="0dp" android:layout_height="wrap_content" app:layout_constraintTop_toBottomOf="@id/correo" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/><Button android:id="@+id/botonAcceso" android:text="@string/acceder" android:layout_width="0dp" android:layout_height="wrap_content" app:layout_constraintTop_toBottomOf="@id/contrasena" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/><Button android:id="@+id/botonRegistro" android:text="@string/registro" android:layout_width="0dp" android:layout_height="wrap_content" app:layout_constraintTop_toBottomOf="@id/botonAcceso" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/></androidx.constraintlayout.widget.ConstraintLayout>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/crema"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="COOKLY  ✦"
+            android:textColor="@color/coral"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/titulo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="@string/titulo_acceso"
+            android:textColor="@color/cafe"
+            android:textSize="34sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/subtituloAcceso"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Tu recetario inteligente empieza aquí."
+            android:textColor="@color/gris"
+            android:textSize="16sp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="26dp"
+            app:cardBackgroundColor="@color/blanco"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="3dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/contenedorNombre"
+                    style="@style/Widget.Cookly.TextInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/nombre"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Tu nombre"
+                        android:inputType="textPersonName" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Cookly.TextInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/correo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Correo electrónico"
+                        android:inputType="textEmailAddress" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Cookly.TextInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:endIconMode="password_toggle">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/contrasena"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Contraseña"
+                        android:inputType="textPassword" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/botonAcceso"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/acceder"
+                    android:textSize="16sp"
+                    app:cornerRadius="18dp" />
+
+                <TextView
+                    android:id="@+id/botonRecuperar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center"
+                    android:text="¿Olvidaste tu contraseña?"
+                    android:textColor="@color/coral"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/botonRegistro"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/registro"
+                    android:textColor="@color/coral"
+                    app:strokeColor="@color/coral"
+                    app:cornerRadius="18dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:text="Tus recetas y preferencias se guardan de forma segura."
+            android:textColor="@color/gris"
+            android:textSize="12sp" />
+    </LinearLayout>
+</ScrollView>

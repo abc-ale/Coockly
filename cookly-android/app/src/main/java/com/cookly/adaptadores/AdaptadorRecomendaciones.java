@@ -30,8 +30,7 @@ public class AdaptadorRecomendaciones extends RecyclerView.Adapter<AdaptadorReco
     @Override public void onBindViewHolder(@NonNull ContenedorReceta contenedor, int posicion) {
         RecomendacionReceta receta = recetas.get(posicion);
         contenedor.nombre.setText(receta.nombre);
-        String tiempo = receta.minutosPreparacion == null ? "" : " · " + receta.minutosPreparacion + " min";
-        contenedor.coincidencia.setText(receta.porcentajeCoincidencia + "% de coincidencia" + tiempo);
+        contenedor.coincidencia.setText(receta.porcentajeCoincidencia + "% de coincidencia");
         String faltantes = receta.ingredientesFaltantes == null || receta.ingredientesFaltantes.isEmpty() ? "Tienes todos los ingredientes" : "Faltan: " + android.text.TextUtils.join(", ", receta.ingredientesFaltantes);
         contenedor.detalle.setText(faltantes);
         contenedor.itemView.setOnClickListener(v -> alSeleccionar.seleccionar(receta));

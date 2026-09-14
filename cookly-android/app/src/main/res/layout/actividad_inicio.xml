@@ -1,10 +1,161 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="#FFF8F3">
-  <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"><LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical"><LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical"><TextView android:text="COOKLY" android:textColor="#D65A31" android:textStyle="bold" android:textSize="12sp"/><TextView android:text="¿Qué cocinamos hoy?" android:textColor="#241B18" android:textStyle="bold" android:textSize="27sp"/></LinearLayout><TextView android:id="@+id/botonPerfil" android:text="👤" android:textSize="26sp" android:gravity="center" android:layout_width="52dp" android:layout_height="52dp" android:contentDescription="Perfil"/></LinearLayout>
-    <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:cardBackgroundColor="#D65A31" app:cardCornerRadius="24dp" xmlns:app="http://schemas.android.com/apk/res-auto"><LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp"><TextView android:text="MENÚ EXPRESS  •  15 MIN" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="12sp" android:layout_width="wrap_content" android:layout_height="wrap_content"/><TextView android:text="Dime qué tienes y te doy\nuna idea deliciosa" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="22sp" android:layout_marginTop="6dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/><com.google.android.material.button.MaterialButton android:id="@+id/botonMenuExpress" android:text="Buscar con mis ingredientes  →" android:textColor="#D65A31" android:backgroundTint="#FFFFFF" android:layout_marginTop="14dp" android:layout_width="wrap_content" android:layout_height="48dp"/></LinearLayout></com.google.android.material.card.MaterialCardView>
-    <TextView android:text="Recetas para inspirarte" android:textColor="#241B18" android:textStyle="bold" android:textSize="20sp" android:layout_marginTop="24dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-    <TextView android:text="Ideas rápidas, completas y fáciles de seguir" android:textColor="#786D67" android:textSize="14sp" android:layout_marginTop="4dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-    <LinearLayout android:id="@+id/contenedorRecetas" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="8dp"/>
-  </LinearLayout></ScrollView>
-  <LinearLayout android:layout_width="match_parent" android:layout_height="68dp" android:background="#FFFFFF" android:gravity="center"><TextView android:text="⌂\nInicio" android:gravity="center" android:textColor="#D65A31" android:textStyle="bold" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/><TextView android:id="@+id/botonAgregar" android:text="＋\nCrear" android:gravity="center" android:textColor="#241B18" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:contentDescription="Crear receta"/><TextView android:id="@+id/botonPerfilInferior" android:text="☺\nPerfil" android:gravity="center" android:textColor="#241B18" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:contentDescription="Perfil"/></LinearLayout>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/crema"
+    android:orientation="vertical">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="COOKLY  ✦"
+                        android:textColor="@color/coral"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="¿Qué cocinamos hoy?"
+                        android:textColor="@color/cafe"
+                        android:textSize="28sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+                <TextView
+                    android:id="@+id/botonPerfil"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:background="@drawable/fondo_avatar"
+                    android:gravity="center"
+                    android:text="👩‍🍳"
+                    android:textSize="25sp" />
+            </LinearLayout>
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                app:cardBackgroundColor="@color/coral"
+                app:cardCornerRadius="26dp"
+                >
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="MENÚ EXPRESS  •  15 MIN"
+                        android:textColor="@color/blanco"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="7dp"
+                        android:text="Dime qué tienes y te doy una idea deliciosa."
+                        android:textColor="@color/blanco"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/botonMenuExpress"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="14dp"
+                        android:text="Buscar con mis ingredientes  →"
+                        android:textColor="@color/coral"
+                        app:backgroundTint="@color/blanco"
+                        app:cornerRadius="16dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal">
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/botonChat"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:text="💬 Chat cocinero"
+                    android:textColor="@color/cafe"
+                    app:cornerRadius="16dp"
+                    app:strokeColor="@color/coral" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/botonVoz"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="🎙 Voz"
+                    android:textColor="@color/cafe"
+                    app:cornerRadius="16dp"
+                    app:strokeColor="@color/verde" />
+            </LinearLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:text="Para inspirarte"
+                android:textColor="@color/cafe"
+                android:textSize="21sp"
+                android:textStyle="bold" />
+            <LinearLayout
+                android:id="@+id/contenedorRecetas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical" />
+        </LinearLayout>
+    </ScrollView>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:background="@color/blanco"
+        android:gravity="center">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="⌂\nInicio"
+            android:textColor="@color/coral"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/botonAgregar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="＋\nCrear"
+            android:textColor="@color/cafe" />
+        <TextView
+            android:id="@+id/botonPerfilInferior"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="☺\nPerfil"
+            android:textColor="@color/cafe" />
+    </LinearLayout>
 </LinearLayout>

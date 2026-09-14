@@ -9,4 +9,11 @@ public final class ConversorMedidas {
         if (porcionesOriginales <= 0 || porcionesDeseadas <= 0) throw new IllegalArgumentException("Las porciones deben ser mayores que cero");
         return cantidad * porcionesDeseadas / porcionesOriginales;
     }
+
+    public static String formatear(double cantidad, String unidad) {
+        if (Math.abs(cantidad - Math.rint(cantidad)) < 0.001) {
+            return String.format(java.util.Locale.getDefault(), "%.0f %s", cantidad, unidad);
+        }
+        return String.format(java.util.Locale.getDefault(), "%.2f %s", cantidad, unidad);
+    }
 }

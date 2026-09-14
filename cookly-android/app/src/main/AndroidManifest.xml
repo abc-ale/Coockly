@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:label="Cookly"
@@ -7,7 +8,10 @@
         android:usesCleartextTraffic="${usesCleartextTraffic}">
         <activity android:name=".actividades.ActividadNuevaReceta" />
         <activity android:name=".actividades.ActividadPerfil" />
+        <activity android:name=".actividades.ActividadRecuperacion" />
         <activity android:name=".actividades.ActividadMenuExpress" />
+        <activity android:name=".actividades.ActividadReceta" />
+        <activity android:name=".actividades.ActividadAsistente" />
         <activity android:name=".actividades.ActividadInicio" />
         <activity
             android:name=".actividades.ActividadAcceso"

@@ -1,109 +1,79 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#FFF8F3">
-
-    <ScrollView
+    android:background="@color/crema">
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:fillViewport="true">
-
-        <LinearLayout
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="22dp">
+        <TextView
+            android:id="@+id/botonVolverExpress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="‹  Inicio"
+            android:textColor="@color/coral"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="20dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="MENÚ EXPRESS"
-                android:textColor="#D65A31"
-                android:textStyle="bold"
-                android:textSize="12sp" />
-
-            <TextView
+            android:layout_marginTop="28dp"
+            android:text="Menú Express ✨"
+            android:textColor="@color/cafe"
+            android:textSize="32sp"
+            android:textStyle="bold" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Un ingrediente por línea. Te devolvemos ideas que puedes cocinar ahora."
+            android:textColor="@color/gris"
+            android:textSize="16sp" />
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Cookly.TextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            app:counterEnabled="true"
+            app:counterMaxLength="800">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/ingredientesExpress"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Cocina con lo que ya tienes"
-                android:textColor="#241B18"
-                android:textSize="28sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Separa tus ingredientes por comas y te mostraremos las recetas más cercanas, incluyendo lo que te falta."
-                android:textColor="#786D67"
-                android:textSize="15sp" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:hint="Ej. huevo, tomate, arroz"
-                app:boxBackgroundMode="outline"
-                app:boxCornerRadiusTopStart="16dp"
-                app:boxCornerRadiusTopEnd="16dp"
-                app:boxCornerRadiusBottomStart="16dp"
-                app:boxCornerRadiusBottomEnd="16dp">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/campoIngredientes"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="textCapSentences"
-                    android:maxLines="2" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/botonBuscarIngredientes"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="12dp"
-                android:text="Buscar recetas"
-                android:textAllCaps="false"
-                android:textSize="16sp"
-                app:cornerRadius="16dp" />
-
-            <ProgressBar
-                android:id="@+id/progresoMenu"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="24dp"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/estadoMenu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:gravity="center"
-                android:textColor="#786D67"
-                android:textSize="15sp"
-                android:visibility="gone" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/listaRecomendaciones"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:nestedScrollingEnabled="false" />
-        </LinearLayout>
-    </ScrollView>
-
-    <com.google.android.material.button.MaterialButton
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_margin="16dp"
-        android:text="Volver al inicio"
-        android:textAllCaps="false"
-        android:onClick="volverInicio"
-        style="@style/Widget.Material3.Button.OutlinedButton" />
-</LinearLayout>
+                android:layout_height="160dp"
+                android:gravity="top"
+                android:hint="huevo&#10;tomate&#10;arroz&#10;cebolla"
+                android:inputType="textCapSentences|textMultiLine"
+                android:padding="16dp" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/botonGenerarMenu"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="14dp"
+            android:text="Generar mi menú"
+            app:cornerRadius="18dp" />
+        <ProgressBar
+            android:id="@+id/progresoExpress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="18dp"
+            android:visibility="gone" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="26dp"
+            android:text="Tus coincidencias"
+            android:textColor="@color/cafe"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+        <LinearLayout
+            android:id="@+id/resultadosExpress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical" />
+    </LinearLayout>
+</ScrollView>

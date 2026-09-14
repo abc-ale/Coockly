@@ -1,107 +1,82 @@
 package com.cookly.actividades;
 
+import android.graphics.Color;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
-import androidx.appcompat.app.AlertDialog;
+import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import com.cookly.R;
-import com.cookly.adaptadores.AdaptadorRecomendaciones;
 import com.cookly.modelos.RecomendacionReceta;
-import com.cookly.vistasmodelos.VistaModeloMenuExpress;
-import com.google.android.material.button.MaterialButton;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
+import com.cookly.modelos.SolicitudMenuExpress;
+import com.cookly.servicios.ClienteApi;
+import com.cookly.utilidades.ValidadorEntrada;
+import java.util.*;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
-/** Pantalla completa de búsqueda: reemplaza el antiguo diálogo que solo mostraba un Toast. */
 public class ActividadMenuExpress extends AppCompatActivity {
-    private EditText campoIngredientes;
-    private MaterialButton botonBuscar;
+    private LinearLayout resultados;
     private ProgressBar progreso;
-    private TextView estado;
-    private AdaptadorRecomendaciones adaptador;
 
-    @Override
-    protected void onCreate(Bundle estadoGuardado) {
-        super.onCreate(estadoGuardado);
+    @Override public void onCreate(Bundle estado) {
+        super.onCreate(estado);
         setContentView(R.layout.actividad_menu_express);
-
-        campoIngredientes = findViewById(R.id.campoIngredientes);
-        botonBuscar = findViewById(R.id.botonBuscarIngredientes);
-        progreso = findViewById(R.id.progresoMenu);
-        estado = findViewById(R.id.estadoMenu);
-
-        RecyclerView lista = findViewById(R.id.listaRecomendaciones);
-        lista.setLayoutManager(new LinearLayoutManager(this));
-        adaptador = new AdaptadorRecomendaciones(this::mostrarReceta);
-        lista.setAdapter(adaptador);
-
-        VistaModeloMenuExpress modelo = new ViewModelProvider(this).get(VistaModeloMenuExpress.class);
-        modelo.obtenerRecomendaciones().observe(this, recetas -> {
-            progreso.setVisibility(View.GONE);
-            botonBuscar.setEnabled(true);
-            adaptador.actualizar(recetas);
-            if (recetas == null || recetas.isEmpty()) {
-                mostrarEstado("No encontré coincidencias todavía. Prueba con huevo, arroz, tomate o pollo.");
-            } else {
-                estado.setVisibility(View.GONE);
-            }
-        });
-        modelo.obtenerError().observe(this, mensaje -> {
-            if (mensaje != null && !mensaje.isBlank()) {
-                progreso.setVisibility(View.GONE);
-                botonBuscar.setEnabled(true);
-                mostrarEstado(mensaje);
-            }
-        });
-
-        botonBuscar.setOnClickListener(v -> {
-            List<String> ingredientes = Arrays.stream(campoIngredientes.getText().toString().split(","))
-                    .map(String::trim)
-                    .filter(ingrediente -> !ingrediente.isBlank())
-                    .map(ingrediente -> ingrediente.toLowerCase(Locale.ROOT))
-                    .distinct()
-                    .collect(Collectors.toCollection(ArrayList::new));
-            if (ingredientes.isEmpty()) {
-                campoIngredientes.setError("Escribe al menos un ingrediente");
-                return;
-            }
-            campoIngredientes.setError(null);
-            progreso.setVisibility(View.VISIBLE);
-            estado.setVisibility(View.GONE);
-            botonBuscar.setEnabled(false);
-            modelo.buscar(ingredientes);
-        });
+        EditText ingredientes = findViewById(R.id.ingredientesExpress);
+        resultados = findViewById(R.id.resultadosExpress);
+        progreso = findViewById(R.id.progresoExpress);
+        findViewById(R.id.botonVolverExpress).setOnClickListener(v -> finish());
+        findViewById(R.id.botonGenerarMenu).setOnClickListener(v -> generar(ingredientes.getText().toString()));
     }
 
-    private void mostrarEstado(String mensaje) {
-        estado.setText(mensaje);
-        estado.setVisibility(View.VISIBLE);
+    private void generar(String texto) {
+        List<String> lista = ValidadorEntrada.separarIngredientes(texto);
+        if (lista.isEmpty()) {
+            Toast.makeText(this, "Escribe al menos un ingrediente por línea.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        progreso.setVisibility(View.VISIBLE);
+        resultados.removeAllViews();
+        ClienteApi.crear(this).menuExpress(new SolicitudMenuExpress(lista))
+                .enqueue(new Callback<Map<String, List<RecomendacionReceta>>>() {
+                    @Override public void onResponse(Call<Map<String, List<RecomendacionReceta>>> call, Response<Map<String, List<RecomendacionReceta>>> response) {
+                        progreso.setVisibility(View.GONE);
+                        List<RecomendacionReceta> recetas = response.body() == null ? null : response.body().get("recetas");
+                        if (recetas == null || recetas.isEmpty()) {
+                            mostrarVacio("No encontré una coincidencia todavía. Prueba con ingredientes más generales.");
+                            return;
+                        }
+                        for (RecomendacionReceta receta : recetas) tarjeta(receta);
+                    }
+                    @Override public void onFailure(Call<Map<String, List<RecomendacionReceta>>> call, Throwable t) {
+                        progreso.setVisibility(View.GONE);
+                        mostrarVacio("No se pudo consultar el menú. Revisa la URL de tu API.");
+                    }
+                });
     }
 
-    private void mostrarReceta(RecomendacionReceta receta) {
+    private void tarjeta(RecomendacionReceta receta) {
+        TextView vista = new TextView(this);
         String faltantes = receta.ingredientesFaltantes == null || receta.ingredientesFaltantes.isEmpty()
-                ? "Tienes todo lo necesario."
-                : "Te faltan: " + TextUtils.join(", ", receta.ingredientesFaltantes);
-        String tiempo = receta.minutosPreparacion == null ? "" : "\nTiempo estimado: " + receta.minutosPreparacion + " min";
-        new AlertDialog.Builder(this)
-                .setTitle("🍳 " + receta.nombre)
-                .setMessage("Coincidencia: " + receta.porcentajeCoincidencia + "%\n\n" + faltantes + tiempo)
-                .setPositiveButton("Entendido", null)
-                .show();
+                ? "Tienes todo lo necesario" : "Te faltan: " + String.join(", ", receta.ingredientesFaltantes);
+        vista.setText("🍽  " + receta.nombre + "\n" + receta.porcentajeCoincidencia + "% de coincidencia  ·  "
+                + (receta.minutosPreparacion == null ? "Tiempo flexible" : receta.minutosPreparacion + " min")
+                + "\n" + faltantes);
+        vista.setTextColor(Color.rgb(36, 27, 24));
+        vista.setTextSize(16);
+        vista.setPadding(18, 18, 18, 18);
+        vista.setBackgroundResource(R.drawable.fondo_tarjeta);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.setMargins(0, 0, 0, 12);
+        resultados.addView(vista, params);
     }
 
-    public void volverInicio(View vista) {
-        finish();
+    private void mostrarVacio(String mensaje) {
+        TextView vista = new TextView(this);
+        vista.setText(mensaje);
+        vista.setTextSize(15);
+        vista.setTextColor(Color.DKGRAY);
+        vista.setPadding(8, 18, 8, 18);
+        resultados.addView(vista);
     }
 }

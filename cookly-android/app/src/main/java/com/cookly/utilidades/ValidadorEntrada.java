@@ -11,7 +11,10 @@ public final class ValidadorEntrada {
     public static List<String> separarIngredientes(String texto) {
         List<String> resultado = new ArrayList<>();
         if (texto == null) return resultado;
-        for (String ingrediente : texto.split(",")) { String limpio=ingrediente.trim(); if (!limpio.isEmpty() && limpio.length() <= 80 && !resultado.contains(limpio)) resultado.add(limpio); }
+        for (String ingrediente : texto.split("[,\\n\\r;]+")) {
+            String limpio = ingrediente.trim();
+            if (!limpio.isEmpty() && limpio.length() <= 80 && !resultado.contains(limpio)) resultado.add(limpio);
+        }
         return resultado;
     }
 }
