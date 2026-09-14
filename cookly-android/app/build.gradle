@@ -1,5 +1,5 @@
 plugins { id 'com.android.application' }
-def productionApiUrl = project.findProperty('PRODUCTION_API_URL') ?: 'https://cookly-api-sb9w.onrender.com'
+def productionApiUrl = project.findProperty('PRODUCTION_API_URL') ?: 'https://cookly-api-sb9w.onrender.com/api/v1/'
 android { namespace 'com.cookly'; compileSdk 35
  defaultConfig { applicationId 'com.cookly'; minSdk 26; targetSdk 35; versionCode 1; versionName '1.0.0'; buildConfigField 'String', 'API_BASE_URL', '"' + productionApiUrl + '"'; manifestPlaceholders = [usesCleartextTraffic: 'false'] }
  compileOptions {
@@ -8,7 +8,7 @@ android { namespace 'com.cookly'; compileSdk 35
  }
  buildFeatures { buildConfig true }
  buildTypes {
-  debug { buildConfigField 'String', 'API_BASE_URL', '"http://10.0.2.2:8080/api/v1/"'; manifestPlaceholders.usesCleartextTraffic = 'true' }
+  debug { buildConfigField 'String', 'API_BASE_URL', '"https://cookly-api-sb9w.onrender.com/api/v1/"'; manifestPlaceholders.usesCleartextTraffic = 'true' }
   release { manifestPlaceholders.usesCleartextTraffic = 'false' }
  }
 }
