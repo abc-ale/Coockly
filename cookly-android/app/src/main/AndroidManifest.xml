@@ -5,6 +5,8 @@
         android:label="Cookly"
         android:theme="@style/TemaCookly"
         android:usesCleartextTraffic="${usesCleartextTraffic}">
+        <activity android:name=".actividades.ActividadNuevaReceta" />
+        <activity android:name=".actividades.ActividadPerfil" />
         <activity android:name=".actividades.ActividadInicio" />
         <activity
             android:name=".actividades.ActividadAcceso"
