@@ -1,5 +1,5 @@
 plugins { id 'com.android.application' }
-def productionApiUrl = project.findProperty('PRODUCTION_API_URL') ?: 'https://REPLACE_WITH_RENDER_URL/api/v1/'
+def productionApiUrl = project.findProperty('PRODUCTION_API_URL') ?: 'https://cookly-api-sb9w.onrender.com'
 android { namespace 'com.cookly'; compileSdk 35
  defaultConfig { applicationId 'com.cookly'; minSdk 26; targetSdk 35; versionCode 1; versionName '1.0.0'; buildConfigField 'String', 'API_BASE_URL', '"' + productionApiUrl + '"'; manifestPlaceholders = [usesCleartextTraffic: 'false'] }
  compileOptions {
