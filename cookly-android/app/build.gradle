@@ -8,7 +8,7 @@ android { namespace 'com.cookly'; compileSdk 35
  }
  buildFeatures { buildConfig true }
  buildTypes {
-  debug { buildConfigField 'String', 'API_BASE_URL', '"https://cookly-api-sb9w.onrender.com/api/v1/"'; manifestPlaceholders.usesCleartextTraffic = 'true' }
+  debug { buildConfigField 'String', 'API_BASE_URL', '"https://cookly-api-sb9w.onrender.com/api/v1/"'; manifestPlaceholders.usesCleartextTraffic = 'false' }
   release { manifestPlaceholders.usesCleartextTraffic = 'false' }
  }
 }
