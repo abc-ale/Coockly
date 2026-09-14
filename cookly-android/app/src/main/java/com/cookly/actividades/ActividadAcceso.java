@@ -30,6 +30,10 @@ public class ActividadAcceso extends AppCompatActivity {
     }
 
     private void acceder() {
+        if (texto(correo).isEmpty() || texto(contrasena).isEmpty()) {
+            Toast.makeText(this, "Escribe tu correo y contraseña.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         ClienteApi.crear(this).acceder(new SolicitudAcceso(texto(correo), texto(contrasena))).enqueue(respuesta("Credenciales inválidas"));
     }
 

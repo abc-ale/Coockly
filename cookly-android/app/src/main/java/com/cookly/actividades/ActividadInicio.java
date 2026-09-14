@@ -1,10 +1,108 @@
 package com.cookly.actividades;
-import android.content.Intent;import android.os.Bundle;import android.view.Gravity;import android.widget.*;import androidx.appcompat.app.AlertDialog;import androidx.appcompat.app.AppCompatActivity;import com.cookly.R;import com.google.android.material.card.MaterialCardView;
-public class ActividadInicio extends AppCompatActivity{
- private LinearLayout lista; private final String[][] recetas={{"🍝","Pasta cremosa de tomate","25 min · Fácil","200 g pasta · 1 taza tomate · 2 cucharadas crema"},{"🥗","Ensalada fresca de garbanzos","15 min · Ligera","1 taza garbanzos · 1 tomate · 2 cucharaditas limón"},{"🍳","Huevos mediterráneos","12 min · Rápida","4 huevos · 1/2 taza tomate · 1 cucharada aceite"}};
- @Override public void onCreate(Bundle b){super.onCreate(b);setContentView(R.layout.actividad_inicio);lista=findViewById(R.id.contenedorRecetas);for(String[] r:recetas)tarjeta(r);findViewById(R.id.botonMenuExpress).setOnClickListener(v->menu());findViewById(R.id.botonAgregar).setOnClickListener(v->startActivity(new Intent(this,ActividadNuevaReceta.class)));findViewById(R.id.botonPerfil).setOnClickListener(v->startActivity(new Intent(this,ActividadPerfil.class)));findViewById(R.id.botonPerfilInferior).setOnClickListener(v->startActivity(new Intent(this,ActividadPerfil.class)));}
- private void tarjeta(String[] r){MaterialCardView c=new MaterialCardView(this);c.setRadius(24);c.setCardElevation(2);LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.setMargins(0,8,0,8);c.setLayoutParams(cp);LinearLayout f=new LinearLayout(this);f.setPadding(16,14,16,14);f.setGravity(Gravity.CENTER_VERTICAL);TextView e=new TextView(this);e.setText(r[0]);e.setTextSize(38);e.setGravity(Gravity.CENTER);f.addView(e,new LinearLayout.LayoutParams(66,66));LinearLayout t=new LinearLayout(this);t.setOrientation(LinearLayout.VERTICAL);LinearLayout.LayoutParams tp=new LinearLayout.LayoutParams(0,-2,1);tp.setMargins(12,0,0,0);t.setLayoutParams(tp);TextView n=new TextView(this);n.setText(r[1]);n.setTextSize(17);n.setTextColor(0xff241B18);n.setTypeface(null,1);t.addView(n);TextView m=new TextView(this);m.setText(r[2]);m.setTextColor(0xff786D67);t.addView(m);f.addView(t);TextView a=new TextView(this);a.setText("›");a.setTextSize(30);a.setTextColor(0xffD65A31);f.addView(a);c.addView(f);c.setOnClickListener(v->detalle(r));lista.addView(c);}
- private void menu(){EditText e=new EditText(this);e.setHint("Ej: huevo, arroz, tomate");new AlertDialog.Builder(this).setTitle("✨ Menú Express").setMessage("Cuéntame qué ingredientes tienes.").setView(e).setPositiveButton("Buscar",(d,w)->Toast.makeText(this,e.getText().toString().trim().isEmpty()?"Escribe al menos un ingrediente":"Buscando ideas con "+e.getText(),Toast.LENGTH_SHORT).show()).setNegativeButton("Cancelar",null).show();}
- private void detalle(String[] r){LinearLayout caja=new LinearLayout(this);caja.setOrientation(LinearLayout.VERTICAL);caja.setPadding(24,8,24,8);TextView v=new TextView(this);v.setTextSize(16);caja.addView(v);TextView etiqueta=new TextView(this);etiqueta.setText("\n¿Para cuántas personas?");etiqueta.setTextSize(16);etiqueta.setTypeface(null,1);caja.addView(etiqueta);NumberPicker p=new NumberPicker(this);p.setMinValue(1);p.setMaxValue(50);p.setValue(2);p.setWrapSelectorWheel(false);caja.addView(p);actualizar(v,r,2);p.setOnValueChangedListener((picker,oldValue,newValue)->actualizar(v,r,newValue));new AlertDialog.Builder(this).setTitle(r[0]+"  "+r[1]).setView(caja).setPositiveButton("Guardar",(d,w)->Toast.makeText(this,"Guardada en favoritos",Toast.LENGTH_SHORT).show()).setNegativeButton("Cerrar",null).show();}
- private void actualizar(TextView v,String[] r,int personas){double f=personas/2d;v.setText("Ingredientes para "+personas+" persona"+(personas==1?"":"s")+"\n\n"+r[3]+"\n\nMultiplicador: ×"+String.format(java.util.Locale.US,"%.2f",f)+"\n\nMedidas fáciles: 1 taza = 240 ml · 1 cucharada = 15 ml · 1 cucharadita = 5 ml.");}
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.Gravity;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
+import com.cookly.R;
+import com.google.android.material.card.MaterialCardView;
+
+/** Inicio ligero y claro: el catálogo se muestra de inmediato y Menú Express usa la API real. */
+public class ActividadInicio extends AppCompatActivity {
+    private LinearLayout lista;
+
+    private final String[][] recetas = {
+            {"🍗", "Arroz con pollo casero", "35 min · Completa", "arroz · pollo · cebolla · ajo · tomate"},
+            {"🍳", "Huevos mediterráneos", "12 min · Rápida", "huevo · tomate · cebolla · ajo"},
+            {"🍋", "Pollo al limón", "25 min · Fácil", "pollo · limón · ajo · cebolla"},
+            {"🥔", "Papas doradas con ajo", "30 min · Económica", "papa · ajo · limón · aceite"},
+            {"🍚", "Arroz salteado con huevo", "18 min · Aprovechamiento", "arroz · huevo · cebolla · tomate"},
+            {"🥗", "Ensalada fresca de garbanzos", "15 min · Ligera", "garbanzo · tomate · cebolla · limón"},
+            {"🍲", "Sopa rápida de pollo y papa", "40 min · Reconfortante", "pollo · papa · tomate · cebolla"},
+            {"🍅", "Tomates rellenos de arroz", "28 min · Vegetariana", "tomate · arroz · cebolla · ajo"}
+    };
+
+    @Override
+    public void onCreate(Bundle estado) {
+        super.onCreate(estado);
+        setContentView(R.layout.actividad_inicio);
+        lista = findViewById(R.id.contenedorRecetas);
+        for (String[] receta : recetas) tarjeta(receta);
+
+        findViewById(R.id.botonMenuExpress).setOnClickListener(v ->
+                startActivity(new Intent(this, ActividadMenuExpress.class)));
+        findViewById(R.id.botonAgregar).setOnClickListener(v ->
+                startActivity(new Intent(this, ActividadNuevaReceta.class)));
+        findViewById(R.id.botonPerfil).setOnClickListener(v ->
+                startActivity(new Intent(this, ActividadPerfil.class)));
+        findViewById(R.id.botonPerfilInferior).setOnClickListener(v ->
+                startActivity(new Intent(this, ActividadPerfil.class)));
+    }
+
+    private void tarjeta(String[] receta) {
+        MaterialCardView tarjeta = new MaterialCardView(this);
+        tarjeta.setRadius(24);
+        tarjeta.setCardElevation(2);
+        tarjeta.setContentPadding(0, 0, 0, 0);
+        LinearLayout.LayoutParams parametros = new LinearLayout.LayoutParams(-1, -2);
+        parametros.setMargins(0, 8, 0, 8);
+        tarjeta.setLayoutParams(parametros);
+
+        LinearLayout fila = new LinearLayout(this);
+        fila.setPadding(16, 14, 16, 14);
+        fila.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView emoji = new TextView(this);
+        emoji.setText(receta[0]);
+        emoji.setTextSize(34);
+        emoji.setGravity(Gravity.CENTER);
+        fila.addView(emoji, new LinearLayout.LayoutParams(66, 66));
+
+        LinearLayout textos = new LinearLayout(this);
+        textos.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams parametrosTexto = new LinearLayout.LayoutParams(0, -2, 1);
+        parametrosTexto.setMargins(12, 0, 8, 0);
+        textos.setLayoutParams(parametrosTexto);
+
+        TextView nombre = new TextView(this);
+        nombre.setText(receta[1]);
+        nombre.setTextSize(17);
+        nombre.setTextColor(0xff241B18);
+        nombre.setTypeface(null, 1);
+        textos.addView(nombre);
+
+        TextView meta = new TextView(this);
+        meta.setText(receta[2]);
+        meta.setTextColor(0xffD65A31);
+        meta.setTextSize(13);
+        textos.addView(meta);
+
+        TextView ingredientes = new TextView(this);
+        ingredientes.setText(receta[3]);
+        ingredientes.setTextColor(0xff786D67);
+        ingredientes.setTextSize(12);
+        textos.addView(ingredientes);
+        fila.addView(textos);
+
+        TextView flecha = new TextView(this);
+        flecha.setText("›");
+        flecha.setTextSize(30);
+        flecha.setTextColor(0xffD65A31);
+        fila.addView(flecha);
+
+        tarjeta.addView(fila);
+        tarjeta.setOnClickListener(v -> detalle(receta));
+        lista.addView(tarjeta);
+    }
+
+    private void detalle(String[] receta) {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(receta[0] + "  " + receta[1])
+                .setMessage(receta[2] + "\n\nIngredientes:\n" + receta[3]
+                        + "\n\nAbre Menú Express para ver qué puedes preparar con lo que tienes.")
+                .setPositiveButton("Entendido", null)
+                .show();
+    }
 }

@@ -1,14 +1,25 @@
 spring:
   profiles:
-    default: local
+    default: ${SPRING_PROFILES_DEFAULT:local}
   datasource:
     url: ${SUPABASE_DATABASE_URL}
     username: ${SUPABASE_DATABASE_USERNAME}
     password: ${SUPABASE_DATABASE_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX:5}
+      minimum-idle: ${DB_POOL_MIN:1}
+      connection-timeout: ${DB_CONNECTION_TIMEOUT:20000}
+      keepalive-time: ${DB_KEEPALIVE:60000}
   jpa:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 25
+        query:
+          in_clause_parameter_padding: true
   jackson:
     default-property-inclusion: non_null
 
@@ -21,6 +32,6 @@ seguridad:
     expiracion-minutos: ${JWT_EXPIRACION_MINUTOS:60}
 
 cloudinary:
-  nombre: ${CLOUDINARY_CLOUD_NAME}
-  clave-api: ${CLOUDINARY_API_KEY}
-  secreto: ${CLOUDINARY_API_SECRET}
+  nombre: ${CLOUDINARY_CLOUD_NAME:}
+  clave-api: ${CLOUDINARY_API_KEY:}
+  secreto: ${CLOUDINARY_API_SECRET:}
