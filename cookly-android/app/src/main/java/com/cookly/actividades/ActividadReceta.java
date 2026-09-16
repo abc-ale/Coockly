@@ -19,6 +19,7 @@ import retrofit2.Response;
 public class ActividadReceta extends AppCompatActivity {
     private LinearLayout contenido, ingredientesVista;
     private RecetaDetalle receta;
+    private String emojiReceta = "🍽";
     private int porciones = 2;
     private TextView contador, pasoActual, tiempo;
     private CountDownTimer temporizador;
@@ -26,8 +27,33 @@ public class ActividadReceta extends AppCompatActivity {
 
     @Override public void onCreate(Bundle estado) {
         super.onCreate(estado);
-        receta = crearReceta(getIntent().getStringExtra("receta"), getIntent().getStringExtra("titulo"));
-        construirVista();
+        long recetaId = getIntent().getLongExtra("recetaId", -1);
+        if (recetaId != -1) {
+            // Viene de una búsqueda real: trae la receta del backend antes de dibujar la pantalla.
+            cargarDesdeBackend(recetaId);
+        } else {
+            // Modo de ejemplo (tarjetas de Inicio / Menú Express con datos locales).
+            String emoji = getIntent().getStringExtra("emoji");
+            if (emoji != null) emojiReceta = emoji;
+            receta = crearReceta(getIntent().getStringExtra("receta"), getIntent().getStringExtra("titulo"));
+            construirVista();
+        }
+    }
+
+    private void cargarDesdeBackend(long id) {
+        ClienteApi.crear(this).detalleReceta(id).enqueue(new retrofit2.Callback<RecetaDetalle>() {
+            @Override public void onResponse(retrofit2.Call<RecetaDetalle> llamada, retrofit2.Response<RecetaDetalle> respuesta) {
+                if (respuesta.body() == null) { avisarErrorYCerrar(); return; }
+                receta = respuesta.body();
+                construirVista();
+            }
+            @Override public void onFailure(retrofit2.Call<RecetaDetalle> llamada, Throwable error) { avisarErrorYCerrar(); }
+        });
+    }
+
+    private void avisarErrorYCerrar() {
+        Toast.makeText(this, "No se pudo cargar la receta. Revisa tu conexión.", Toast.LENGTH_SHORT).show();
+        finish();
     }
 
     private void construirVista() {
@@ -42,7 +68,7 @@ public class ActividadReceta extends AppCompatActivity {
         TextView volver = texto("‹  Volver", 16, 0xffD65A31, true);
         volver.setOnClickListener(v -> finish());
         contenido.addView(volver);
-        TextView hero = texto(getIntent().getStringExtra("emoji") + "  " + receta.nombre, 29, 0xff241B18, true);
+        TextView hero = texto(emojiReceta + "  " + receta.nombre, 29, 0xff241B18, true);
         hero.setPadding(0, 28, 0, 0);
         contenido.addView(hero);
         contenido.addView(texto(receta.descripcion + "\n" + receta.minutosPreparacion + " min  ·  Cocina guiada disponible", 15, 0xff786D67, false));
@@ -86,7 +112,7 @@ public class ActividadReceta extends AppCompatActivity {
         contenido.addView(texto("Preparación", 21, 0xff241B18, true));
         for (PasoReceta paso : receta.pasos) {
             contenido.addView(texto("Paso " + paso.orden + "  " + paso.instruccion
-                    + (paso.segundosTemporizador > 0 ? "  ·  " + (paso.segundosTemporizador / 60) + " min" : ""),
+                            + (paso.segundosTemporizador > 0 ? "  ·  " + (paso.segundosTemporizador / 60) + " min" : ""),
                     16, 0xff241B18, false));
         }
     }
