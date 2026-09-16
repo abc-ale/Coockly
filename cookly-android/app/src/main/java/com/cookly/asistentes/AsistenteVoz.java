@@ -13,7 +13,7 @@ import java.util.Locale;
 /** Envoltorio ligero de SpeechRecognizer/TTS; la UI decide qué hacer con el texto. */
 public class AsistenteVoz {
     private final SpeechRecognizer reconocimiento;
-    private final TextToSpeech lectura;
+    private TextToSpeech lectura; // sin "final": se lee dentro de su propio lambda de inicialización
 
     public AsistenteVoz(Context contexto, Listener listener) {
         reconocimiento = SpeechRecognizer.createSpeechRecognizer(contexto);
@@ -32,7 +32,7 @@ public class AsistenteVoz {
             @Override public void onEvent(int a, Bundle b) { }
         });
         lectura = new TextToSpeech(contexto, estado -> {
-            if (estado == TextToSpeech.SUCCESS) lectura.setLanguage(new Locale("es", "ES"));
+            if (estado == TextToSpeech.SUCCESS && lectura != null) lectura.setLanguage(new Locale("es", "ES"));
         });
     }
 
