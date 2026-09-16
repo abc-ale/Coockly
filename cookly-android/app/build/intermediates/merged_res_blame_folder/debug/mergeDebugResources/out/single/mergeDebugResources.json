@@ -1,0 +1,42 @@
+[
+    {
+        "merged": "com.cookly.app-debug-34:/layout_actividad_recuperacion.xml.flat",
+        "source": "com.cookly.app-main-36:/layout/actividad_recuperacion.xml"
+    },
+    {
+        "merged": "com.cookly.app-debug-34:/layout_actividad_inicio.xml.flat",
+        "source": "com.cookly.app-main-36:/layout/actividad_inicio.xml"
+    },
+    {
+        "merged": "com.cookly.app-debug-34:/drawable_fondo_tarjeta.xml.flat",
+        "source": "com.cookly.app-main-36:/drawable/fondo_tarjeta.xml"
+    },
+    {
+        "merged": "com.cookly.app-debug-34:/layout_elemento_receta_busqueda.xml.flat",
+        "source": "com.cookly.app-main-36:/layout/elemento_receta_busqueda.xml"
+    },
+    {
+        "merged": "com.cookly.app-debug-34:/drawable_fondo_avatar.xml.flat",
+        "source": "com.cookly.app-main-36:/drawable/fondo_avatar.xml"
+    },
+    {
+        "merged": "com.cookly.app-debug-34:/layout_actividad_busqueda.xml.flat",
+        "source": "com.cookly.app-main-36:/layout/actividad_busqueda.xml"
+    },
+    {
+        "merged": "com.cookly.app-debug-34:/layout_elemento_recomendacion.xml.flat",
+        "source": "com.cookly.app-main-36:/layout/elemento_recomendacion.xml"
+    },
+    {
+        "merged": "com.cookly.app-debug-34:/layout_actividad_menu_express.xml.flat",
+        "source": "com.cookly.app-main-36:/layout/actividad_menu_express.xml"
+    },
+    {
+        "merged": "com.cookly.app-debug-34:/layout_fragmento_resultados_busqueda.xml.flat",
+        "source": "com.cookly.app-main-36:/layout/fragmento_resultados_busqueda.xml"
+    },
+    {
+        "merged": "com.cookly.app-debug-34:/layout_actividad_acceso.xml.flat",
+        "source": "com.cookly.app-main-36:/layout/actividad_acceso.xml"
+    }
+]
