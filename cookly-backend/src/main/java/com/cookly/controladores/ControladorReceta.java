@@ -5,6 +5,8 @@ import com.cookly.modelos.*;
 import com.cookly.repositorios.*;
 import com.cookly.servicios.ServicioReceta;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +31,14 @@ public class ControladorReceta {
     @PostMapping("/menu-express")
     public Map<String, List<RecomendacionReceta>> menuExpress(@Valid @RequestBody SolicitudMenuExpress s) {
         return Map.of("recetas", servicio.menuExpress(s));
+    }
+
+    /** Búsqueda por nombre, insensible a mayúsculas, paginada. texto puede ser parcial ("past" encuentra "Pasta cremosa"). */
+    @GetMapping("/buscar")
+    public Page<Receta> buscar(@RequestParam String texto,
+                                @RequestParam(defaultValue = "0") int pagina,
+                                @RequestParam(defaultValue = "20") int tamano) {
+        return recetas.findByNombreContainingIgnoreCase(texto, PageRequest.of(pagina, tamano));
     }
 
     @GetMapping("/{id}")

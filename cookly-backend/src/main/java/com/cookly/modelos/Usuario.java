@@ -25,4 +25,5 @@ public class Usuario {
     public void setContrasena(String v) { contrasena = v; }
     public void setNombre(String v) { nombre = v; }
     public void setRol(Rol v) { rol = v; }
+    public void setActivo(boolean v) { activo = v; }
 }
