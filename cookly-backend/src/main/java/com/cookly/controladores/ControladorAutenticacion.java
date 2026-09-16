@@ -29,7 +29,6 @@ public class ControladorAutenticacion {
     @PostMapping("/solicitar-recuperacion")
     public Map<String, String> solicitar(@Valid @RequestBody SolicitudRecuperacion s) {
         usuarios.findByCorreo(s.correo().toLowerCase()).ifPresent(usuario -> {
-            // TODO producción: crear token de un solo uso con expiración y enviarlo por correo.
         });
         return Map.of("mensaje", "Si el correo existe, recibirás instrucciones de recuperación.");
     }

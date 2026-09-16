@@ -14,7 +14,8 @@ public class Receta {
     @ManyToOne(optional = false) private Usuario creador;
     @OneToMany(mappedBy = "receta", fetch = FetchType.EAGER)
     private Set<IngredienteReceta> detallesIngredientes = new LinkedHashSet<>();
-    @OneToMany(mappedBy = "receta", fetch = FetchType.EAGER, orderBy = "orden ASC")
+    @OneToMany(mappedBy = "receta", fetch = FetchType.EAGER)
+    @OrderBy("orden ASC")
     private List<PasoReceta> pasos = new ArrayList<>();
 
     public Long getId() { return id; }
