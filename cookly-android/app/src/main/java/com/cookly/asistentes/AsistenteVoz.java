@@ -31,16 +31,9 @@ public class AsistenteVoz {
             @Override public void onPartialResults(Bundle b) { }
             @Override public void onEvent(int a, Bundle b) { }
         });
-
-        // 'motorTts' guarda la referencia dentro de un arreglo de 1 posición.
-        // El lambda de abajo se ejecuta DESPUÉS (cuando el motor de voz avisa que
-        // ya está listo), y para entonces motorTts[0] ya tiene el objeto asignado
-        // — así evitamos que Java se queje de leer 'lectura' antes de terminar de asignarla.
-        final TextToSpeech[] motorTts = new TextToSpeech[1];
-        motorTts[0] = new TextToSpeech(contexto, estado -> {
-            if (estado == TextToSpeech.SUCCESS) motorTts[0].setLanguage(new Locale("es", "ES"));
+        lectura = new TextToSpeech(contexto, estado -> {
+            if (estado == TextToSpeech.SUCCESS) lectura.setLanguage(new Locale("es", "ES"));
         });
-        lectura = motorTts[0];
     }
 
     public void escuchar() {
