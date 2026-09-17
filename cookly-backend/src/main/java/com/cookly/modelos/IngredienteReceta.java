@@ -14,6 +14,10 @@ public class IngredienteReceta {
     private Double cantidad;
     private String unidad;
     public IngredienteReceta() { }
+    public IngredienteReceta(Receta receta, Ingrediente ingrediente, Double cantidad, String unidad) {
+        this.receta = receta; this.ingrediente = ingrediente; this.cantidad = cantidad; this.unidad = unidad;
+        this.clave = new ClaveIngredienteReceta(receta.getId(), ingrediente.getId());
+    }
     public Receta getReceta() { return receta; }
     public Ingrediente getIngrediente() { return ingrediente; }
     public Double getCantidad() { return cantidad; }
