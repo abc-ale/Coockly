@@ -81,6 +81,7 @@ public class ActividadAcceso extends AppCompatActivity {
             @Override public void onResponse(Call<RespuestaAcceso> llamada, Response<RespuestaAcceso> respuesta) {
                 if (respuesta.isSuccessful() && respuesta.body() != null) {
                     new AlmacenToken(ActividadAcceso.this).guardar(respuesta.body().token);
+                    new AlmacenToken(ActividadAcceso.this).guardarRol(respuesta.body().rol);
                     abrirInicio();
                 } else Toast.makeText(ActividadAcceso.this, mensajeError, Toast.LENGTH_SHORT).show();
             }

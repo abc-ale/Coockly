@@ -12,6 +12,10 @@ public class PasoReceta {
     private Short orden;
     @Column(nullable = false, length = 2000) private String instruccion;
     @Transient private Integer segundosTemporizador;
+    public PasoReceta() { }
+    public PasoReceta(Receta receta, Short orden, String instruccion) {
+        this.receta = receta; this.orden = orden; this.instruccion = instruccion;
+    }
     public Long getId() { return id; }
     public Short getOrden() { return orden; }
     public String getInstruccion() { return instruccion; }

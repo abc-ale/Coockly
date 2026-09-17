@@ -24,15 +24,15 @@ public final class CargaImagenCloudinary {
                 String url = "https://api.cloudinary.com/v1_1/" + firma.cloudName + "/image/upload";
                 ServicioApi api = ClienteApi.crear(contexto);
                 api.subirCloudinary(url,
-                        RequestBody.create(MediaType.parse("image/*"), imagen),
-                        RequestBody.create(MediaType.parse("text/plain"), firma.apiKey),
-                        RequestBody.create(MediaType.parse("text/plain"), String.valueOf(firma.timestamp)),
-                        RequestBody.create(MediaType.parse("text/plain"), firma.carpeta),
-                        RequestBody.create(MediaType.parse("text/plain"), firma.firma))
+                                RequestBody.create(MediaType.parse("image/*"), imagen),
+                                RequestBody.create(MediaType.parse("text/plain"), firma.apiKey),
+                                RequestBody.create(MediaType.parse("text/plain"), String.valueOf(firma.timestamp)),
+                                RequestBody.create(MediaType.parse("text/plain"), firma.carpeta),
+                                RequestBody.create(MediaType.parse("text/plain"), firma.firma))
                         .enqueue(new retrofit2.Callback<com.cookly.modelos.RespuestaCargaCloudinary>() {
                             @Override public void onResponse(retrofit2.Call<com.cookly.modelos.RespuestaCargaCloudinary> c,
                                                              retrofit2.Response<com.cookly.modelos.RespuestaCargaCloudinary> r) {
-                                if (r.isSuccessful() && r.body() != null) resultado.completo(r.body().secure_url);
+                                if (r.isSuccessful() && r.body() != null) resultado.completo(r.body().secure_url, r.body().public_id);
                                 else resultado.error("Cloudinary rechazó la imagen");
                             }
                             @Override public void onFailure(retrofit2.Call<com.cookly.modelos.RespuestaCargaCloudinary> c, Throwable t) {
@@ -46,5 +46,5 @@ public final class CargaImagenCloudinary {
         });
     }
 
-    public interface Resultado { void completo(String url); void error(String mensaje); }
+    public interface Resultado { void completo(String url, String publicId); void error(String mensaje); }
 }

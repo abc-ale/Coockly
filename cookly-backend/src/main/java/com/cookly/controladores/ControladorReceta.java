@@ -33,6 +33,13 @@ public class ControladorReceta {
         return Map.of("recetas", servicio.menuExpress(s));
     }
 
+    /** Autenticado (ya cubierto por ConfiguracionSeguridad: todo lo que no es /autenticacion/** requiere login). */
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Receta crear(@Valid @RequestBody SolicitudCrearReceta s, Authentication autenticacion) {
+        return servicio.crear(autenticacion.getName(), s);
+    }
+
     /** Búsqueda por nombre, insensible a mayúsculas, paginada. texto puede ser parcial ("past" encuentra "Pasta cremosa"). */
     @GetMapping("/buscar")
     public Page<Receta> buscar(@RequestParam String texto,

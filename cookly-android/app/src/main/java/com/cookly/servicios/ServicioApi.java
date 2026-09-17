@@ -27,6 +27,7 @@ public interface ServicioApi {
     @POST("recetas/menu-express") Call<Map<String,List<RecomendacionReceta>>> menuExpress(@Body SolicitudMenuExpress solicitud);
     @GET("recetas/{id}") Call<RecetaDetalle> detalleReceta(@Path("id") long id);
     @GET("recetas/buscar") Call<RespuestaPaginaRecetas> buscarRecetas(@Query("texto") String texto, @Query("pagina") int pagina, @Query("tamano") int tamano);
+    @POST("recetas") Call<RecetaDetalle> crearReceta(@Body SolicitudCrearReceta solicitud);
     @GET("recetas/favoritos") Call<List<RecetaDetalle>> favoritos();
     @POST("recetas/{id}/favorito") Call<Void> marcarFavorito(@Path("id") long id);
     @DELETE("recetas/{id}/favorito") Call<Void> quitarFavorito(@Path("id") long id);

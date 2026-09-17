@@ -13,6 +13,16 @@
         <activity android:name=".actividades.ActividadReceta" />
         <activity android:name=".actividades.ActividadAsistente" />
         <activity android:name=".actividades.ActividadInicio" />
+        <activity android:name=".actividades.ActividadBusqueda" />
+        <activity android:name=".actividades.ActividadMenuSemanal" />
+        <activity android:name=".actividades.ActividadListasCompra" />
+        <activity android:name=".actividades.ActividadListaCompra" />
+        <activity android:name=".actividades.ActividadHistorial" />
+        <activity android:name=".actividades.ActividadCambiarContrasena" />
+        <activity android:name=".actividades.ActividadPreferencias" />
+        <activity android:name=".actividades.ActividadModeracion" />
+        <activity android:name=".actividades.ActividadAdministracion" />
+        <activity android:name=".actividades.ActividadFavoritos" />
         <activity
             android:name=".actividades.ActividadAcceso"
             android:exported="true">

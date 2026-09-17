@@ -1,12 +1,13 @@
 package com.cookly.actividades;
 
+import com.cookly.almacenamiento.AlmacenToken;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
-import com.cookly.almacenamiento.AlmacenToken;
+
 import com.cookly.modelos.RecetaDetalle;
 import com.cookly.servicios.ClienteApi;
 import com.google.android.material.card.MaterialCardView;
@@ -51,6 +52,25 @@ public class ActividadPerfil extends AppCompatActivity {
 
         contenido.addView(texto("Tus recetas", 21, 0xff241B18, true));
         cargarFavoritos();
+
+        contenido.addView(texto("Herramientas", 21, 0xff241B18, true));
+        contenido.addView(botonNavegacion("🗓  Menú semanal", ActividadMenuSemanal.class));
+        contenido.addView(botonNavegacion("🛒  Listas de compra", ActividadListasCompra.class));
+        contenido.addView(botonNavegacion("🕘  Historial", ActividadHistorial.class));
+
+        contenido.addView(texto("Cuenta", 21, 0xff241B18, true));
+        contenido.addView(botonNavegacion("🔒  Cambiar contraseña", ActividadCambiarContrasena.class));
+        contenido.addView(botonNavegacion("🥗  Restricciones y alergias", ActividadPreferencias.class));
+
+        String rol = new AlmacenToken(this).obtenerRol();
+        if ("MODERADOR".equals(rol) || "ADMINISTRADOR".equals(rol)) {
+            contenido.addView(texto("Moderación", 21, 0xff241B18, true));
+            contenido.addView(botonNavegacion("🚩  Reportes pendientes", ActividadModeracion.class));
+        }
+        if ("ADMINISTRADOR".equals(rol)) {
+            contenido.addView(botonNavegacion("👤  Administrar usuarios", ActividadAdministracion.class));
+        }
+
         Button cerrar = new Button(this);
         cerrar.setText("Cerrar sesión");
         cerrar.setOnClickListener(v -> {
@@ -60,6 +80,13 @@ public class ActividadPerfil extends AppCompatActivity {
             finish();
         });
         contenido.addView(cerrar);
+    }
+
+    private Button botonNavegacion(String texto, Class<?> destino) {
+        Button b = new Button(this);
+        b.setText(texto);
+        b.setOnClickListener(v -> startActivity(new Intent(this, destino)));
+        return b;
     }
 
     private TextView estadistica(String valor, String etiqueta) {
