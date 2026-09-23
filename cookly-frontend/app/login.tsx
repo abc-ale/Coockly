@@ -54,6 +54,10 @@ export default function LoginScreen() {
 
       <Button label="Iniciar sesión" onPress={manejarLogin} loading={cargando} />
 
+      <Link href="/olvide-contrasena" style={styles.olvide}>
+        ¿Olvidaste tu contraseña?
+      </Link>
+
       <View style={styles.footer}>
         <Text style={styles.footerText}>¿No tienes cuenta? </Text>
         <Link href="/register" style={styles.link}>Regístrate</Link>
@@ -76,6 +80,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     ...typography.body,
     color: colors.text,
+  },
+  olvide: {
+    ...typography.bodySmall,
+    color: colors.primary,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: spacing.md,
   },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.lg },
   footerText: { ...typography.bodySmall, color: colors.textMuted },
