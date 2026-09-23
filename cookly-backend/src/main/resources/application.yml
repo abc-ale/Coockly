@@ -24,3 +24,7 @@ cloudinary:
   nombre: ${CLOUDINARY_CLOUD_NAME}
   clave-api: ${CLOUDINARY_API_KEY}
   secreto: ${CLOUDINARY_API_SECRET}
+
+supabase:
+  url: ${SUPABASE_URL}
+  anon-key: ${SUPABASE_ANON_KEY}

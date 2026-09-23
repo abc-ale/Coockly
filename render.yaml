@@ -21,3 +21,7 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+      - key: SUPABASE_URL
+        value: https://fbrufwgzpxscrpeoyzdr.supabase.co
+      - key: SUPABASE_ANON_KEY
+        sync: false

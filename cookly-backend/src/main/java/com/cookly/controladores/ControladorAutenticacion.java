@@ -3,6 +3,7 @@ package com.cookly.controladores;
 import com.cookly.dto.*;
 import com.cookly.repositorios.RepositorioUsuario;
 import com.cookly.servicios.ServicioAutenticacion;
+import com.cookly.servicios.ServicioSupabase;
 import jakarta.validation.Valid;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -12,19 +13,25 @@ import java.util.*;
 @RequestMapping("/api/v1/autenticacion")
 public class ControladorAutenticacion {
     private final ServicioAutenticacion servicio;
+    private final ServicioSupabase servicioSupabase;
     private final RepositorioUsuario usuarios;
-    public ControladorAutenticacion(ServicioAutenticacion servicio, RepositorioUsuario usuarios) {
-        this.servicio = servicio; this.usuarios = usuarios;
+
+    public ControladorAutenticacion(ServicioAutenticacion servicio, ServicioSupabase servicioSupabase, RepositorioUsuario usuarios) {
+        this.servicio = servicio;
+        this.servicioSupabase = servicioSupabase;
+        this.usuarios = usuarios;
     }
+
     @PostMapping("/registro")
     @ResponseStatus(HttpStatus.CREATED)
     public RespuestaAcceso registro(@Valid @RequestBody SolicitudRegistro s) { return servicio.registrar(s); }
+
     @PostMapping("/login")
     public RespuestaAcceso login(@Valid @RequestBody SolicitudAcceso s) { return servicio.acceder(s); }
 
     /**
-     * Respuesta deliberadamente genérica para no revelar si un correo está registrado.
-     * Conecta aquí el proveedor de correo o Supabase Auth antes de producción.
+     * El correo de recuperación lo envía Supabase (supabase.auth.resetPasswordForEmail
+     * desde el frontend). Este endpoint solo confirma que el usuario existe, sin revelarlo.
      */
     @PostMapping("/solicitar-recuperacion")
     public Map<String, String> solicitar(@Valid @RequestBody SolicitudRecuperacion s) {
@@ -33,17 +40,32 @@ public class ControladorAutenticacion {
         return Map.of("mensaje", "Si el correo existe, recibirás instrucciones de recuperación.");
     }
 
-    @PostMapping("/validar-recuperacion")
-    public Map<String, String> validar(@RequestBody Map<String, String> cuerpo) {
-        return Map.of("mensaje", "Código recibido. Implementa aquí la validación de un solo uso.");
+    /**
+     * El usuario ya confirmó su identidad al abrir el enlace del correo (Supabase valida eso).
+     * Aquí solo verificamos el access_token de Supabase y actualizamos la contraseña en nuestra tabla.
+     */
+    @PostMapping("/restablecer-por-supabase")
+    public Map<String, String> restablecerPorSupabase(
+            @RequestHeader("Authorization") String authorization,
+            @Valid @RequestBody SolicitudRestablecerContrasena cuerpo) {
+        String token = authorization.replace("Bearer ", "");
+        String correo = servicioSupabase.obtenerCorreoDesdeToken(token);
+        servicio.restablecerContrasena(correo, cuerpo.nuevaContrasena());
+        return Map.of("mensaje", "Contraseña actualizada");
     }
 
-    @PostMapping("/cambiar-contrasena")
-    public Map<String, String> cambiar(@Valid @RequestBody SolicitudCambioContrasena solicitud) {
-        return Map.of("mensaje", "Endpoint preparado: valida el token antes de actualizar la contraseña.");
+    /**
+     * Login con Google/Facebook: el frontend ya autenticó al usuario contra Supabase
+     * (supabase.auth.signInWithOAuth) y nos manda su access_token. Verificamos ese
+     * token contra Supabase, y creamos o recuperamos el usuario en nuestra tabla.
+     */
+    @PostMapping("/acceso-social")
+    public RespuestaAcceso accesoSocial(@RequestHeader("Authorization") String authorization) {
+        String token = authorization.replace("Bearer ", "");
+        var datos = servicioSupabase.obtenerCorreoYNombre(token);
+        return servicio.accederOCrearPorSocial(datos.correo(), datos.nombre());
     }
-    @PostMapping("/refrescar-token")
-    public Map<String, String> refrescar() { return Map.of("mensaje", "Use el token vigente para renovar."); }
+
     @PostMapping("/cerrar-sesion")
     public ResponseEntity<Void> cerrar() { return ResponseEntity.noContent().build(); }
 }
