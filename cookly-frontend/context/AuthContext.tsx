@@ -58,7 +58,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await supabase.auth.signInWithPassword({ email: correo, password: contrasena });
         }
       } else {
-        await supabase.auth.signInWithPassword({ email: correo, password: contrasena });
+        const { error } = await supabase.auth.signInWithPassword({ email: correo, password: contrasena });
+        if (error) {
+          // La cuenta ya existe en nuestro backend (login exitoso), pero no en Supabase.
+          // Como la contraseña ya fue validada por el backend, la creamos aquí para autorepararla.
+          await supabase.auth.signUp({
+            email: correo,
+            password: contrasena,
+            options: { data: { nombre_completo: nombre } },
+          });
+        }
       }
     } catch (error) {
       console.log('AVISO: no se pudo sincronizar con Supabase (comunidad podría no funcionar):', error);
