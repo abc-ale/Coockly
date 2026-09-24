@@ -73,6 +73,6 @@ public class ServicioAutenticacion {
     }
 
     private RespuestaAcceso respuesta(Usuario u) {
-        return new RespuestaAcceso(token.crear(u.getCorreo(), u.getRol().name()), u.getNombre(), u.getRol().name());
+        return new RespuestaAcceso(token.crear(u.getCorreo(), u.getRol().name()), u.getNombre(), u.getRol().name(), u.getCorreo());
     }
 }

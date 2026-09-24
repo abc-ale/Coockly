@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 import { api } from '../lib/api';
 import { supabase } from '../lib/supabase';
 
@@ -15,6 +17,7 @@ type AuthContextType = {
   cargando: boolean;
   login: (correo: string, contrasena: string) => Promise<void>;
   registrar: (nombre: string, correo: string, contrasena: string) => Promise<void>;
+  loginConGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -86,6 +89,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await sincronizarSupabase(correo, contrasena, nombre, true);
   }
 
+  /**
+   * Login con Google: abre el navegador con el flujo OAuth de Supabase, recupera
+   * el access_token de la sesión de Supabase desde la URL de retorno, y lo manda
+   * al backend (/autenticacion/acceso-social) para crear o recuperar el usuario.
+   */
+  async function loginConGoogle() {
+    const redirectTo = Linking.createURL('auth/callback'); // usa el scheme "cookly" de app.json
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo, skipBrowserRedirect: true },
+    });
+    if (error || !data?.url) throw error ?? new Error('No se pudo iniciar el flujo de Google');
+
+    const resultado = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    if (resultado.type !== 'success' || !resultado.url) {
+      throw new Error('Inicio de sesión con Google cancelado');
+    }
+
+    // Supabase devuelve los tokens en el fragmento (#) de la URL de retorno
+    const parametros = new URLSearchParams(resultado.url.split('#')[1]);
+    const accessToken = parametros.get('access_token');
+    const refreshToken = parametros.get('refresh_token');
+    if (!accessToken || !refreshToken) throw new Error('No se recibió la sesión de Google');
+
+    await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+
+    const { data: respuesta } = await api.post(
+      '/autenticacion/acceso-social',
+      {},
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    await guardarSesion(respuesta.token, { nombre: respuesta.nombre, rol: respuesta.rol, correo: respuesta.correo });
+  }
+
   async function logout() {
     await AsyncStorage.multiRemove(['cookly_token', 'cookly_user']);
     await supabase.auth.signOut();
@@ -94,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ usuario, token, cargando, login, registrar, logout }}>
+    <AuthContext.Provider value={{ usuario, token, cargando, login, registrar, loginConGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -7,7 +7,7 @@ import { colors, radius, spacing, typography } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { login, loginConGoogle } = useAuth();
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [cargando, setCargando] = useState(false);
@@ -24,6 +24,18 @@ export default function LoginScreen() {
     } catch (error: any) {
       const mensaje = error?.response?.data?.mensaje || 'No se pudo iniciar sesión. Verifica tus datos.';
       Alert.alert('Error', mensaje);
+    } finally {
+      setCargando(false);
+    }
+  }
+
+  async function manejarLoginGoogle() {
+    setCargando(true);
+    try {
+      await loginConGoogle();
+      router.replace('/(tabs)/home');
+    } catch (error: any) {
+      Alert.alert('Error', 'No se pudo iniciar sesión con Google.');
     } finally {
       setCargando(false);
     }
@@ -54,6 +66,14 @@ export default function LoginScreen() {
 
       <Button label="Iniciar sesión" onPress={manejarLogin} loading={cargando} />
 
+      <View style={styles.separadorContainer}>
+        <View style={styles.separador} />
+        <Text style={styles.separadorTexto}>o</Text>
+        <View style={styles.separador} />
+      </View>
+
+      <Button label="Continuar con Google" onPress={manejarLoginGoogle} loading={cargando} />
+
       <Link href="/olvide-contrasena" style={styles.olvide}>
         ¿Olvidaste tu contraseña?
       </Link>
@@ -81,6 +101,9 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.text,
   },
+  separadorContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.md },
+  separador: { flex: 1, height: 1, backgroundColor: colors.border },
+  separadorTexto: { ...typography.bodySmall, color: colors.textMuted, marginHorizontal: spacing.sm },
   olvide: {
     ...typography.bodySmall,
     color: colors.primary,
