@@ -1,14 +1,17 @@
 spring:
   profiles:
     default: local
+
   datasource:
     url: ${SUPABASE_DATABASE_URL}
     username: ${SUPABASE_DATABASE_USERNAME}
     password: ${SUPABASE_DATABASE_PASSWORD}
+
   jpa:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+
   jackson:
     default-property-inclusion: non_null
 
