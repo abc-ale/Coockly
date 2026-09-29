@@ -6,30 +6,43 @@ services:
     rootDir: cookly-backend
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/v1/salud
+
     envVars:
       - key: SUPABASE_DATABASE_URL
         sync: false
+
       - key: SUPABASE_DATABASE_USERNAME
         sync: false
+
       - key: SUPABASE_DATABASE_PASSWORD
         sync: false
+
       - key: JWT_SECRETO
         generateValue: true
+
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
+
       - key: CLOUDINARY_API_KEY
         sync: false
+
       - key: CLOUDINARY_API_SECRET
         sync: false
+
       - key: SUPABASE_URL
         value: https://yvqepahrartbffphzrdh.supabase.co
+
       - key: SUPABASE_ANON_KEY
         sync: false
-            - key: BREVO_API_KEY
+
+      - key: BREVO_API_KEY
         sync: false
+
       - key: BREVO_SENDER_EMAIL
         sync: false
+
       - key: BREVO_SENDER_NAME
         value: Cookly
+
       - key: APP_URL_PUBLICA
         value: https://cookly-api-sb9w.onrender.com
