@@ -50,26 +50,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function sincronizarSupabase(correo: string, contrasena: string, nombre: string, esRegistro: boolean) {
+    // URL a la que vuelve la app al tocar el enlace del correo de verificación
+    const emailRedirectTo = Linking.createURL('auth/callback');
+
     try {
       if (esRegistro) {
         const { error } = await supabase.auth.signUp({
           email: correo,
           password: contrasena,
-          options: { data: { nombre_completo: nombre } },
+          options: {
+            data: { nombre_completo: nombre },
+            emailRedirectTo,
+          },
         });
         if (error && error.message.includes('already registered')) {
           await supabase.auth.signInWithPassword({ email: correo, password: contrasena });
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: correo, password: contrasena });
+
         if (error) {
+          const msg = error.message.toLowerCase();
+
+          // Cuenta creada en Supabase pero sin confirmar: NO volver a llamar signUp,
+          // porque cada signUp reenvía otro correo de verificación.
+          if (msg.includes('email not confirmed')) {
+            console.log('AVISO: correo de Supabase pendiente de confirmar.');
+            return;
+          }
+
           // La cuenta ya existe en nuestro backend (login exitoso), pero no en Supabase.
-          // Como la contraseña ya fue validada por el backend, la creamos aquí para autorepararla.
-          await supabase.auth.signUp({
-            email: correo,
-            password: contrasena,
-            options: { data: { nombre_completo: nombre } },
-          });
+          // Solo la autorreparamos si de verdad no existe en Supabase.
+          if (msg.includes('invalid login credentials')) {
+            await supabase.auth.signUp({
+              email: correo,
+              password: contrasena,
+              options: {
+                data: { nombre_completo: nombre },
+                emailRedirectTo,
+              },
+            });
+          }
         }
       }
     } catch (error) {

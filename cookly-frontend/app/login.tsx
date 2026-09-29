@@ -10,14 +10,19 @@ export default function LoginScreen() {
   const { login, loginConGoogle } = useAuth();
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
-  const [cargando, setCargando] = useState(false);
+  const [cargandoEmail, setCargandoEmail] = useState(false);
+  const [cargandoGoogle, setCargandoGoogle] = useState(false);
+
+  // Mientras cualquiera de los dos flujos está en curso, deshabilitamos ambos
+  // botones para que no se puedan disparar dos inicios de sesión a la vez.
+  const cargandoAlguno = cargandoEmail || cargandoGoogle;
 
   async function manejarLogin() {
     if (!correo || !contrasena) {
       Alert.alert('Faltan datos', 'Ingresa tu correo y contraseña.');
       return;
     }
-    setCargando(true);
+    setCargandoEmail(true);
     try {
       await login(correo.trim(), contrasena);
       router.replace('/(tabs)/home');
@@ -25,19 +30,19 @@ export default function LoginScreen() {
       const mensaje = error?.response?.data?.mensaje || 'No se pudo iniciar sesión. Verifica tus datos.';
       Alert.alert('Error', mensaje);
     } finally {
-      setCargando(false);
+      setCargandoEmail(false);
     }
   }
 
   async function manejarLoginGoogle() {
-    setCargando(true);
+    setCargandoGoogle(true);
     try {
       await loginConGoogle();
       router.replace('/(tabs)/home');
     } catch (error: any) {
       Alert.alert('Error', 'No se pudo iniciar sesión con Google.');
     } finally {
-      setCargando(false);
+      setCargandoGoogle(false);
     }
   }
 
@@ -54,6 +59,7 @@ export default function LoginScreen() {
         style={styles.input}
         value={correo}
         onChangeText={setCorreo}
+        editable={!cargandoAlguno}
       />
       <TextInput
         placeholder="Contraseña"
@@ -62,9 +68,15 @@ export default function LoginScreen() {
         style={styles.input}
         value={contrasena}
         onChangeText={setContrasena}
+        editable={!cargandoAlguno}
       />
 
-      <Button label="Iniciar sesión" onPress={manejarLogin} loading={cargando} />
+      <Button
+        label="Iniciar sesión"
+        onPress={manejarLogin}
+        loading={cargandoEmail}
+        disabled={cargandoAlguno}
+      />
 
       <View style={styles.separadorContainer}>
         <View style={styles.separador} />
@@ -72,7 +84,12 @@ export default function LoginScreen() {
         <View style={styles.separador} />
       </View>
 
-      <Button label="Continuar con Google" onPress={manejarLoginGoogle} loading={cargando} />
+      <Button
+        label="Continuar con Google"
+        onPress={manejarLoginGoogle}
+        loading={cargandoGoogle}
+        disabled={cargandoAlguno}
+      />
 
       <Link href="/olvide-contrasena" style={styles.olvide}>
         ¿Olvidaste tu contraseña?
