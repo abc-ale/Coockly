@@ -7,15 +7,16 @@ import { colors, radius, spacing, typography } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginScreen() {
-  const { login, loginConGoogle } = useAuth();
+  const { login, loginConGoogle, loginConFacebook } = useAuth();
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [cargandoEmail, setCargandoEmail] = useState(false);
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
+  const [cargandoFacebook, setCargandoFacebook] = useState(false);
 
   // Mientras cualquiera de los dos flujos está en curso, deshabilitamos ambos
   // botones para que no se puedan disparar dos inicios de sesión a la vez.
-  const cargandoAlguno = cargandoEmail || cargandoGoogle;
+  const cargandoAlguno = cargandoEmail || cargandoGoogle || cargandoFacebook;
 
   async function manejarLogin() {
     if (!correo || !contrasena) {
@@ -31,6 +32,18 @@ export default function LoginScreen() {
       Alert.alert('Error', mensaje);
     } finally {
       setCargandoEmail(false);
+    }
+  }
+
+  async function manejarLoginFacebook() {
+    setCargandoFacebook(true);
+    try {
+      await loginConFacebook();
+      router.replace('/(tabs)/home');
+    } catch {
+      Alert.alert('Error', 'No se pudo iniciar sesión con Facebook.');
+    } finally {
+      setCargandoFacebook(false);
     }
   }
 
@@ -88,6 +101,15 @@ export default function LoginScreen() {
         label="Continuar con Google"
         onPress={manejarLoginGoogle}
         loading={cargandoGoogle}
+        disabled={cargandoAlguno}
+      />
+
+      <View style={{ height: spacing.sm }} />
+
+      <Button
+        label="Continuar con Facebook"
+        onPress={manejarLoginFacebook}
+        loading={cargandoFacebook}
         disabled={cargandoAlguno}
       />
 

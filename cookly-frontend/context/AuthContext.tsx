@@ -18,6 +18,7 @@ type AuthContextType = {
   login: (correo: string, contrasena: string) => Promise<void>;
   registrar: (nombre: string, correo: string, contrasena: string) => Promise<void>;
   loginConGoogle: () => Promise<void>;
+  loginConFacebook: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -116,24 +117,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * al backend (/autenticacion/acceso-social) para crear o recuperar el usuario.
    */
   async function loginConGoogle() {
+    await loginSocial('google');
+  }
+
+  /** Login con Facebook: mismo flujo que Google, pidiendo el permiso de correo. */
+  async function loginConFacebook() {
+    await loginSocial('facebook', 'email,public_profile');
+  }
+
+  async function loginSocial(proveedor: 'google' | 'facebook', scopes?: string) {
     const redirectTo = Linking.createURL('auth/callback'); // usa el scheme "cookly" de app.json
 
     const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo, skipBrowserRedirect: true },
+      provider: proveedor,
+      options: { redirectTo, skipBrowserRedirect: true, ...(scopes ? { scopes } : {}) },
     });
-    if (error || !data?.url) throw error ?? new Error('No se pudo iniciar el flujo de Google');
+    if (error || !data?.url) throw error ?? new Error(`No se pudo iniciar el flujo de ${proveedor}`);
 
     const resultado = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
     if (resultado.type !== 'success' || !resultado.url) {
-      throw new Error('Inicio de sesión con Google cancelado');
+      throw new Error(`Inicio de sesión con ${proveedor} cancelado`);
     }
 
     // Supabase devuelve los tokens en el fragmento (#) de la URL de retorno
     const parametros = new URLSearchParams(resultado.url.split('#')[1]);
     const accessToken = parametros.get('access_token');
     const refreshToken = parametros.get('refresh_token');
-    if (!accessToken || !refreshToken) throw new Error('No se recibió la sesión de Google');
+    if (!accessToken || !refreshToken) throw new Error(`No se recibió la sesión de ${proveedor}`);
 
     await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
 
@@ -154,7 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ usuario, token, cargando, login, registrar, loginConGoogle, logout }}>
+    <AuthContext.Provider value={{ usuario, token, cargando, login, registrar, loginConGoogle, loginConFacebook, logout }}>
       {children}
     </AuthContext.Provider>
   );
