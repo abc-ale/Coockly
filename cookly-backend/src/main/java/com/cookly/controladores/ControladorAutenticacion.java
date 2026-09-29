@@ -1,7 +1,6 @@
 package com.cookly.controladores;
 
 import com.cookly.dto.*;
-import com.cookly.repositorios.RepositorioUsuario;
 import com.cookly.servicios.ServicioAutenticacion;
 import com.cookly.servicios.ServicioSupabase;
 import jakarta.validation.Valid;
@@ -14,12 +13,10 @@ import java.util.*;
 public class ControladorAutenticacion {
     private final ServicioAutenticacion servicio;
     private final ServicioSupabase servicioSupabase;
-    private final RepositorioUsuario usuarios;
 
-    public ControladorAutenticacion(ServicioAutenticacion servicio, ServicioSupabase servicioSupabase, RepositorioUsuario usuarios) {
+    public ControladorAutenticacion(ServicioAutenticacion servicio, ServicioSupabase servicioSupabase) {
         this.servicio = servicio;
         this.servicioSupabase = servicioSupabase;
-        this.usuarios = usuarios;
     }
 
     @PostMapping("/registro")
@@ -29,15 +26,18 @@ public class ControladorAutenticacion {
     @PostMapping("/login")
     public RespuestaAcceso login(@Valid @RequestBody SolicitudAcceso s) { return servicio.acceder(s); }
 
-    /**
-     * El correo de recuperación lo envía Supabase (supabase.auth.resetPasswordForEmail
-     * desde el frontend). Este endpoint solo confirma que el usuario existe, sin revelarlo.
-     */
+    /** Envía el correo de recuperación con Brevo. Siempre responde igual, exista o no el correo. */
     @PostMapping("/solicitar-recuperacion")
     public Map<String, String> solicitar(@Valid @RequestBody SolicitudRecuperacion s) {
-        usuarios.findByCorreo(s.correo().toLowerCase()).ifPresent(usuario -> {
-        });
+        servicio.solicitarRecuperacion(s.correo());
         return Map.of("mensaje", "Si el correo existe, recibirás instrucciones de recuperación.");
+    }
+
+    /** Lo llama la página /restablecer.html con el token del correo. */
+    @PostMapping("/restablecer-con-token")
+    public Map<String, String> restablecerConToken(@Valid @RequestBody SolicitudRestablecerConToken cuerpo) {
+        servicio.restablecerConToken(cuerpo.token(), cuerpo.nuevaContrasena());
+        return Map.of("mensaje", "Contraseña actualizada");
     }
 
     /**
