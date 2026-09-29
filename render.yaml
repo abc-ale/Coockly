@@ -25,3 +25,11 @@ services:
         value: https://yvqepahrartbffphzrdh.supabase.co
       - key: SUPABASE_ANON_KEY
         sync: false
+            - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        sync: false
+      - key: BREVO_SENDER_NAME
+        value: Cookly
+      - key: APP_URL_PUBLICA
+        value: https://cookly-api-sb9w.onrender.com

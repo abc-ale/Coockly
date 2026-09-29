@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Restablecer contraseña - Cookly</title>
+</head>
+<body>
+  <main>
+    <h1>Nueva contraseña</h1>
+
+    <form id="formulario">
+      <label for="nuevaContrasena">Nueva contraseña</label>
+      <input
+        id="nuevaContrasena"
+        type="password"
+        minlength="10"
+        required
+      >
+
+      <label for="confirmacion">Confirmar contraseña</label>
+      <input
+        id="confirmacion"
+        type="password"
+        minlength="10"
+        required
+      >
+
+      <button type="submit">Guardar contraseña</button>
+    </form>
+
+    <p id="mensaje"></p>
+  </main>
+
+  <script src="/restablecer.js"></script>
+</body>
+</html>
