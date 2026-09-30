@@ -1,493 +1,60 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Restablecer contraseña | Cookly</title>
-
-    <link
-        rel="stylesheet"
-        href="/restablecer.css"
-    >
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#FFF8F9">
+<title>Restablecer contraseña | Cookly</title>
+<link rel="stylesheet" href="/restablecer.css">
 </head>
-
 <body>
-    <main class="page-container">
-        <div class="brand">
-            <div class="brand-icon">
-                <svg
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                    focusable="false"
-                >
-                    <path
-                        d="M5 10.5h14v7.2A2.3 2.3 0 0 1 16.7 20H7.3A2.3 2.3 0 0 1 5 17.7v-7.2Z"
-                    />
-
-                    <path
-                        d="M8 10.5V8.8a2.2 2.2 0 0 1 3.9-1.4A2.7 2.7 0 0 1 17 8.8v1.7"
-                    />
-
-                    <path d="M8 14h8" />
-                </svg>
-            </div>
-
-            <span>Cookly</span>
-        </div>
-
-        <section class="password-card">
-            <div id="form-view">
-                <p class="eyebrow">
-                    CUENTA SEGURA
-                </p>
-
-                <h1>
-                    Crea una nueva contraseña
-                </h1>
-
-                <p class="description">
-                    Elige una contraseña nueva para volver a entrar
-                    a tu cuenta de Cookly.
-                </p>
-
-                <form id="reset-form">
-                    <div class="form-group">
-                        <label for="password">
-                            Nueva contraseña
-                        </label>
-
-                        <div class="input-container">
-                            <input
-                                id="password"
-                                type="password"
-                                autocomplete="new-password"
-                                minlength="8"
-                                placeholder="Escribe tu nueva contraseña"
-                                required
-                            >
-
-                            <button
-                                class="password-toggle"
-                                type="button"
-                                data-target="password"
-                                aria-label="Mostrar contraseña"
-                            >
-                                <svg
-                                    class="eye-icon eye-open"
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                    focusable="false"
-                                >
-                                    <path
-                                        d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
-                                    />
-
-                                    <circle
-                                        cx="12"
-                                        cy="12"
-                                        r="2.5"
-                                    />
-                                </svg>
-
-                                <svg
-                                    class="eye-icon eye-closed"
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                    focusable="false"
-                                >
-                                    <path d="M3 3l18 18" />
-
-                                    <path
-                                        d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6 0 9.5 6 9.5 6a16.5 16.5 0 0 1-3.1 3.6"
-                                    />
-
-                                    <path
-                                        d="M6.2 6.7C3.8 8.2 2.5 12 2.5 12s3.5 6 9.5 6c1.2 0 2.3-.2 3.3-.6"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <div class="strength-bars">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
-
-                        <p
-                            id="strength-text"
-                            class="strength-text"
-                        ></p>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="confirm-password">
-                            Confirmar contraseña
-                        </label>
-
-                        <div class="input-container">
-                            <input
-                                id="confirm-password"
-                                type="password"
-                                autocomplete="new-password"
-                                minlength="8"
-                                placeholder="Repite tu nueva contraseña"
-                                required
-                            >
-
-                            <button
-                                class="password-toggle"
-                                type="button"
-                                data-target="confirm-password"
-                                aria-label="Mostrar contraseña"
-                            >
-                                <svg
-                                    class="eye-icon eye-open"
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                    focusable="false"
-                                >
-                                    <path
-                                        d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
-                                    />
-
-                                    <circle
-                                        cx="12"
-                                        cy="12"
-                                        r="2.5"
-                                    />
-                                </svg>
-
-                                <svg
-                                    class="eye-icon eye-closed"
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                    focusable="false"
-                                >
-                                    <path d="M3 3l18 18" />
-
-                                    <path
-                                        d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6 0 9.5 6 9.5 6a16.5 16.5 0 0 1-3.1 3.6"
-                                    />
-
-                                    <path
-                                        d="M6.2 6.7C3.8 8.2 2.5 12 2.5 12s3.5 6 9.5 6c1.2 0 2.3-.2 3.3-.6"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="requirements">
-                        <strong>Recomendación:</strong>
-                        usa al menos 8 caracteres, incluyendo letras
-                        y números.
-                    </div>
-
-                    <button
-                        id="submit-button"
-                        class="submit-button"
-                        type="submit"
-                    >
-                        Guardar contraseña
-                    </button>
-
-                    <div
-                        id="message"
-                        class="message"
-                        role="alert"
-                    ></div>
-                </form>
-            </div>
-
-            <div
-                id="success-view"
-                class="success-view hidden"
-            >
-                <div class="success-icon">
-                    <svg
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                        focusable="false"
-                    >
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="9"
-                        />
-
-                        <path d="m8 12 2.6 2.6L16.5 9" />
-                    </svg>
-                </div>
-
-                <h2>
-                    Contraseña actualizada
-                </h2>
-
-                <p>
-                    Tu contraseña se cambió correctamente.
-                    Ya puedes volver a la aplicación e iniciar sesión.
-                </p>
-            </div>
-        </section>
-
-        <p class="footer-text">
-            Tu cuenta está protegida por Cookly
-        </p>
-    </main>
-
-    <script>
-        const form = document.getElementById("reset-form");
-
-        const passwordInput =
-            document.getElementById("password");
-
-        const confirmPasswordInput =
-            document.getElementById("confirm-password");
-
-        const submitButton =
-            document.getElementById("submit-button");
-
-        const message =
-            document.getElementById("message");
-
-        const strengthText =
-            document.getElementById("strength-text");
-
-        const strengthBars =
-            document.querySelectorAll(
-                ".strength-bars span"
-            );
-
-        const formView =
-            document.getElementById("form-view");
-
-        const successView =
-            document.getElementById("success-view");
-
-        const params = new URLSearchParams(
-            window.location.search
-        );
-
-        const recoveryToken =
-            params.get("token");
-
-        function showMessage(text, type) {
-            message.textContent = text;
-
-            message.className =
-                "message visible " + type;
-        }
-
-        function getPasswordStrength(password) {
-            let score = 0;
-
-            if (password.length >= 8) {
-                score++;
-            }
-
-            if (/[a-z]/.test(password)) {
-                score++;
-            }
-
-            if (/[A-Z]/.test(password)) {
-                score++;
-            }
-
-            if (/[0-9!@#$%^&*]/.test(password)) {
-                score++;
-            }
-
-            return score;
-        }
-
-        function updatePasswordStrength() {
-            const password =
-                passwordInput.value;
-
-            const score =
-                getPasswordStrength(password);
-
-            const colors = [
-                "#eaded5",
-                "#e96d55",
-                "#f2a33b",
-                "#83b85b",
-                "#18845b"
-            ];
-
-            strengthBars.forEach((bar, index) => {
-                bar.style.background =
-                    index < score
-                        ? colors[score]
-                        : colors[0];
-            });
-
-            const labels = [
-                "",
-                "Contraseña muy débil",
-                "Contraseña débil",
-                "Contraseña aceptable",
-                "Contraseña segura"
-            ];
-
-            strengthText.textContent =
-                labels[score] || "";
-        }
-
-        passwordInput.addEventListener(
-            "input",
-            updatePasswordStrength
-        );
-
-        document
-            .querySelectorAll(".password-toggle")
-            .forEach((button) => {
-                button.addEventListener(
-                    "click",
-                    () => {
-                        const input =
-                            document.getElementById(
-                                button.dataset.target
-                            );
-
-                        const isVisible =
-                            input.type === "text";
-
-                        input.type = isVisible
-                            ? "password"
-                            : "text";
-
-                        button.classList.toggle(
-                            "is-visible",
-                            !isVisible
-                        );
-
-                        button.setAttribute(
-                            "aria-label",
-                            isVisible
-                                ? "Mostrar contraseña"
-                                : "Ocultar contraseña"
-                        );
-                    }
-                );
-            });
-
-        if (!recoveryToken) {
-            submitButton.disabled = true;
-
-            showMessage(
-                "Este enlace no contiene un token válido.",
-                "error"
-            );
-        }
-
-        form.addEventListener(
-            "submit",
-            async (event) => {
-                event.preventDefault();
-
-                const password =
-                    passwordInput.value;
-
-                const confirmPassword =
-                    confirmPasswordInput.value;
-
-                if (!recoveryToken) {
-                    showMessage(
-                        "El enlace de recuperación no es válido.",
-                        "error"
-                    );
-
-                    return;
-                }
-
-                if (password.length < 8) {
-                    showMessage(
-                        "La contraseña debe tener al menos 8 caracteres.",
-                        "error"
-                    );
-
-                    return;
-                }
-
-                if (password !== confirmPassword) {
-                    showMessage(
-                        "Las contraseñas no coinciden.",
-                        "error"
-                    );
-
-                    return;
-                }
-
-                submitButton.disabled = true;
-                submitButton.textContent = "Guardando...";
-
-                try {
-                    const response = await fetch(
-                        "/autenticacion/restablecer-con-token",
-                        {
-                            method: "POST",
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-                            body: JSON.stringify({
-                                token: recoveryToken,
-                                nuevaContrasena: password
-                            })
-                        }
-                    );
-
-                    const responseText =
-                        await response.text();
-
-                    let data = {};
-
-                    try {
-                        data = responseText
-                            ? JSON.parse(responseText)
-                            : {};
-                    } catch {
-                        data = {};
-                    }
-
-                    if (!response.ok) {
-                        throw new Error(
-                            data.mensaje ||
-                            data.message ||
-                            responseText ||
-                            "El enlace no es válido o ya venció."
-                        );
-                    }
-
-                    formView.classList.add("hidden");
-                    successView.classList.remove("hidden");
-
-                    window.history.replaceState(
-                        {},
-                        document.title,
-                        window.location.pathname
-                    );
-                } catch (error) {
-                    showMessage(
-                        error.message ||
-                            "No se pudo actualizar la contraseña.",
-                        "error"
-                    );
-
-                    submitButton.disabled = false;
-                    submitButton.textContent =
-                        "Guardar contraseña";
-                }
-            }
-        );
-    </script>
+<main class="page-container">
+<div class="brand">
+<div class="brand-icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 10.5h14v7.2A2.3 2.3 0 0 1 16.7 20H7.3A2.3 2.3 0 0 1 5 17.7v-7.2Z"/><path d="M8 10.5V8.8a2.2 2.2 0 0 1 3.9-1.4A2.7 2.7 0 0 1 17 8.8v1.7"/><path d="M8 14h8"/></svg></div>
+<span>Cookly</span>
+</div>
+
+<section class="password-card">
+<div id="form-view">
+<p class="eyebrow">CUENTA SEGURA</p>
+<h1>Crea una nueva contraseña</h1>
+<p class="description">Elige una contraseña nueva para volver a entrar a tu cuenta de Cookly.</p>
+
+<form id="reset-form" novalidate>
+<div class="form-group">
+<label for="password">Nueva contraseña</label>
+<div class="input-container">
+<input id="password" type="password" autocomplete="new-password" minlength="10" maxlength="72" placeholder="Escribe tu nueva contraseña" required>
+<button class="password-toggle" type="button" data-target="password" aria-label="Mostrar contraseña"><svg class="eye-icon eye-open" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+<svg class="eye-icon eye-closed" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18"/><path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6 0 9.5 6 9.5 6a16.5 16.5 0 0 1-3.1 3.6"/><path d="M6.2 6.7C3.8 8.2 2.5 12 2.5 12s3.5 6 9.5 6c1.2 0 2.3-.2 3.3-.6"/></svg></button>
+</div>
+<div class="strength-bars"><span></span><span></span><span></span><span></span></div>
+<p id="strength-text" class="strength-text"></p>
+</div>
+<div class="form-group">
+<label for="confirm-password">Confirmar contraseña</label>
+<div class="input-container">
+<input id="confirm-password" type="password" autocomplete="new-password" minlength="10" maxlength="72" placeholder="Repite tu nueva contraseña" required>
+<button class="password-toggle" type="button" data-target="confirm-password" aria-label="Mostrar contraseña"><svg class="eye-icon eye-open" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+<svg class="eye-icon eye-closed" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18"/><path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6 0 9.5 6 9.5 6a16.5 16.5 0 0 1-3.1 3.6"/><path d="M6.2 6.7C3.8 8.2 2.5 12 2.5 12s3.5 6 9.5 6c1.2 0 2.3-.2 3.3-.6"/></svg></button>
+</div>
+</div>
+<div class="requirements"><strong>Recomendación:</strong> usa al menos 10 caracteres, incluyendo letras y números.</div>
+<button id="submit-button" class="submit-button" type="submit">Guardar contraseña</button>
+<div id="message" class="message" role="alert"></div>
+</form>
+</div>
+
+<div id="success-view" class="success-view hidden">
+<div class="success-icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.6 2.6L16.5 9"/></svg></div>
+<h2>Contraseña actualizada</h2>
+<p>Tu contraseña se cambió correctamente. Ya puedes volver a la aplicación e iniciar sesión.</p>
+</div>
+</section>
+
+<p class="footer-text">Tu cuenta está protegida por Cookly</p>
+</main>
+<script src="/restablecer.js"></script>
 </body>
 </html>
