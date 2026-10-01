@@ -19,6 +19,19 @@
     message.className = "message visible " + type;
   }
 
+  // Lee la fecha de vencimiento (exp) del token. Es solo un aviso:
+  // la validación real la hace el servidor al guardar.
+  function tokenVencido(t) {
+    try {
+      var p = t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      while (p.length % 4) p += "=";
+      var exp = JSON.parse(atob(p)).exp;
+      return typeof exp === "number" && exp * 1000 <= Date.now();
+    } catch (e) {
+      return false;
+    }
+  }
+
   function strength(p) {
     var s = 0;
     if (p.length >= MIN) s++;
@@ -53,6 +66,9 @@
   if (!recoveryToken) {
     submitButton.disabled = true;
     showMessage("Este enlace no contiene un token válido. Pide uno nuevo desde la app.", "error");
+  } else if (tokenVencido(recoveryToken)) {
+    submitButton.disabled = true;
+    showMessage("Este enlace venció (dura 15 minutos). Pide uno nuevo desde la app.", "error");
   }
 
   form.addEventListener("submit", function (event) {
