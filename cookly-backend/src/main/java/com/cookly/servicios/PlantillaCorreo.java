@@ -2,34 +2,42 @@ package com.cookly.servicios;
 
 /**
  * Plantilla HTML del correo de recuperación de contraseña.
- * Usa tablas y estilos en línea para que se vea igual en Gmail, Outlook y el celular.
+ * Usa tablas y estilos en línea para compatibilidad con clientes de correo.
  */
 public final class PlantillaCorreo {
 
     private PlantillaCorreo() {}
 
-    /** @param nombre nombre completo del usuario (puede venir vacío) @param enlace URL con el token */
     public static String recuperacion(String nombre, String enlace) {
         String primero = primerNombre(nombre);
-        String saludo = primero.isEmpty() ? "Hola," : "Hola <strong>" + esc(primero) + "</strong>,";
+        String saludo = primero.isEmpty()
+                ? "Hola,"
+                : "Hola <strong>" + esc(primero) + "</strong>,";
+
         return RECUPERACION
                 .replace("{{SALUDO}}", saludo)
-                .replace("{{ENLACE}}", esc(enlace))
-                .replace("{{ANIO}}", String.valueOf(java.time.Year.now().getValue()));
+                .replace("{{ENLACE}}", esc(enlace));
     }
 
-    /** Primer nombre; si el "nombre" es en realidad un correo (login social), no se usa. */
     private static String primerNombre(String nombre) {
         if (nombre == null) return "";
+
         String limpio = nombre.trim();
-        if (limpio.isEmpty() || limpio.contains("@")) return "";
+
+        if (limpio.isEmpty() || limpio.contains("@")) {
+            return "";
+        }
+
         return limpio.split("\\s+")[0];
     }
 
-    /** Escapa HTML para que un nombre o enlace raro no pueda romper (ni inyectar) el correo. */
-    private static String esc(String s) {
-        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-                .replace("\"", "&quot;").replace("'", "&#39;");
+    private static String esc(String texto) {
+        return texto
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     private static final String RECUPERACION = """
@@ -48,7 +56,8 @@ public final class PlantillaCorreo {
 
   <tr><td align="center" style="background-color:#C25B70;padding:28px 24px;">
     <div style="font-size:28px;font-weight:bold;color:#FFFFFF;letter-spacing:0.5px;">Cookly</div>
-    <div style="font-size:12px;letter-spacing:2px;color:#FBE4EA;margin-top:6px;">RECETAS Y MEN&Uacute; SEMANAL</div>
+    <div style="font-size:13px;font-weight:bold;color:#FFFFFF;margin-top:9px;line-height:1.5;">&iquest;Para cu&aacute;ntos cocinas hoy? Nosotros hacemos las cuentas.</div>
+    <div style="font-size:12px;color:#FBE4EA;margin-top:4px;line-height:1.5;">Calculamos por ti. T&uacute; solo preoc&uacute;pate de cocinar.</div>
   </td></tr>
 
   <tr><td style="padding:32px 30px 8px 30px;color:#2E2024;">
@@ -80,7 +89,7 @@ public final class PlantillaCorreo {
 
   <tr><td align="center" style="background-color:#FFF8F9;padding:18px 24px;font-size:12px;line-height:1.6;color:#8C7378;">
     Este es un mensaje autom&aacute;tico, por favor no respondas a este correo.<br>
-    &copy; {{ANIO}} Cookly
+    &copy; Cookly
   </td></tr>
 
 </table>
