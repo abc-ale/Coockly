@@ -57,9 +57,6 @@ export default function OlvideContrasenaScreen() {
       <View style={styles.screen}>
         <View style={styles.card}>
           <View style={styles.logo}>
-            <View style={styles.logoMark}>
-              <Text style={styles.logoLetter}>C</Text>
-            </View>
             <Text style={styles.logoText}>Cookly</Text>
           </View>
 
@@ -89,9 +86,6 @@ export default function OlvideContrasenaScreen() {
     >
       <View style={styles.card}>
         <View style={styles.logo}>
-          <View style={styles.logoMark}>
-            <Text style={styles.logoLetter}>C</Text>
-          </View>
           <Text style={styles.logoText}>Cookly</Text>
         </View>
 
@@ -142,26 +136,9 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.sm,
     marginBottom: spacing.lg,
-  },
-
-  logoMark: {
-    width: 42,
-    height: 42,
-    borderRadius: radius.md,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  logoLetter: {
-    color: colors.white,
-    fontSize: 23,
-    fontWeight: '800',
   },
 
   logoText: {
