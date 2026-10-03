@@ -75,8 +75,8 @@ public class ServicioAutenticacion {
                 + jwt;
 
         String html = PlantillaCorreo.recuperacion(
-        usuario.get().getNombre(),
-        enlace
+                usuario.get().getNombre(),
+                enlace
         );
 
         try {
@@ -107,28 +107,28 @@ public class ServicioAutenticacion {
     }
 
     public boolean esTokenRecuperacionValido(String tokenRecuperacion) {
-    if (tokenRecuperacion == null || tokenRecuperacion.isBlank()) {
-        return false;
-    }
-
-    try {
-        var datos = token.validarRecuperacion(tokenRecuperacion);
-
-        var usuario = usuarios.findByCorreo(datos.getSubject())
-                .orElse(null);
-
-        if (usuario == null || !usuario.isActivo()) {
+        if (tokenRecuperacion == null || tokenRecuperacion.isBlank()) {
             return false;
         }
 
-        String selloDelToken = datos.get("sello", String.class);
-        String selloActual = sello(usuario.getContrasena());
+        try {
+            var datos = token.validarRecuperacion(tokenRecuperacion);
 
-        return selloDelToken != null && selloActual.equals(selloDelToken);
-    } catch (Exception e) {
-        return false;
+            var usuario = usuarios.findByCorreo(datos.getSubject())
+                    .orElse(null);
+
+            if (usuario == null || !usuario.isActivo()) {
+                return false;
+            }
+
+            String selloDelToken = datos.get("sello", String.class);
+            String selloActual = sello(usuario.getContrasena());
+
+            return selloDelToken != null && selloActual.equals(selloDelToken);
+        } catch (Exception e) {
+            return false;
+        }
     }
-}
 
     /**
      * Restablece la contraseña usando el token generado por el backend.
@@ -161,11 +161,23 @@ public class ServicioAutenticacion {
             throw new IllegalArgumentException(mensajeError);
         }
 
+        // Va ANTES de guardar: la nueva contraseña no puede ser igual a la actual.
+        if (codificador.matches(nuevaContrasena, usuario.getContrasena())) {
+            throw new IllegalArgumentException(
+                    "La nueva contraseña debe ser distinta a la anterior."
+            );
+        }
+
         usuario.setContrasena(
                 codificador.encode(nuevaContrasena)
         );
 
         usuarios.save(usuario);
+
+        System.out.println(
+                "Recuperación: contraseña restablecida para "
+                        + usuario.getCorreo()
+        );
     }
 
     /**
@@ -222,17 +234,31 @@ public class ServicioAutenticacion {
                 .trim();
 
         Usuario usuario = usuarios.findByCorreo(correo)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Credenciales inválidas"
-                        )
-                );
+                .orElseThrow(() -> {
+                    // Log temporal de diagnóstico (puedes borrarlo después)
+                    System.out.println("Login: no existe el usuario " + correo);
+                    return new IllegalArgumentException(
+                            "Credenciales inválidas"
+                    );
+                });
 
-        if (!usuario.isActivo()
-                || !codificador.matches(
-                        solicitud.contrasena(),
-                        usuario.getContrasena()
-                )) {
+        if (!usuario.isActivo()) {
+            System.out.println("Login: usuario inactivo " + correo);
+            throw new IllegalArgumentException(
+                    "Credenciales inválidas"
+            );
+        }
+
+        if (!codificador.matches(
+                solicitud.contrasena(),
+                usuario.getContrasena()
+        )) {
+            // Log temporal de diagnóstico (nunca se imprime la contraseña)
+            System.out.println(
+                    "Login: contraseña incorrecta para " + correo
+                            + " (longitud recibida: "
+                            + solicitud.contrasena().length() + ")"
+            );
             throw new IllegalArgumentException(
                     "Credenciales inválidas"
             );
