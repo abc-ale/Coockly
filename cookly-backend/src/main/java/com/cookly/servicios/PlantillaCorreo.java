@@ -56,8 +56,7 @@ public final class PlantillaCorreo {
 
   <tr><td align="center" style="background-color:#C25B70;padding:28px 24px;">
     <div style="font-size:28px;font-weight:bold;color:#FFFFFF;letter-spacing:0.5px;">Cookly</div>
-    <div style="font-size:13px;font-weight:bold;color:#FFFFFF;margin-top:9px;line-height:1.5;">&iquest;Para cu&aacute;ntos cocinas hoy? Nosotros hacemos las cuentas.</div>
-    <div style="font-size:12px;color:#FBE4EA;margin-top:4px;line-height:1.5;">Calculamos por ti. T&uacute; solo preoc&uacute;pate de cocinar.</div>
+    <div style="font-size:13px;color:#FBE4EA;margin-top:8px;line-height:1.5;">Calculamos por ti. T&uacute; solo preoc&uacute;pate de cocinar.</div>
   </td></tr>
 
   <tr><td style="padding:32px 30px 8px 30px;color:#2E2024;">
