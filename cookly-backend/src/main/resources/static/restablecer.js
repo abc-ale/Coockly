@@ -1,115 +1,263 @@
 (function () {
   "use strict";
-  var ENDPOINT = "/api/v1/autenticacion/restablecer-con-token"; // ruta completa del backend
-  var MIN = 10; // el backend exige @Size(min = 10, max = 72)
+
+  var ENDPOINT_VALIDAR =
+    "/api/v1/autenticacion/validar-token-recuperacion";
+  var ENDPOINT_RESTABLECER =
+    "/api/v1/autenticacion/restablecer-con-token";
+  var MIN = 10;
+  var MAX = 72;
+
+  var loadingView = document.getElementById("view-loading");
+  var formView = document.getElementById("view-form");
+  var successView = document.getElementById("view-success");
+  var invalidView = document.getElementById("view-invalid");
+  var invalidText = document.getElementById("invalid-text");
 
   var form = document.getElementById("reset-form");
   var passwordInput = document.getElementById("password");
   var confirmInput = document.getElementById("confirm-password");
   var submitButton = document.getElementById("submit-button");
   var message = document.getElementById("message");
-  var strengthText = document.getElementById("strength-text");
-  var strengthBars = document.querySelectorAll(".strength-bars span");
-  var formView = document.getElementById("form-view");
-  var successView = document.getElementById("success-view");
-  var recoveryToken = new URLSearchParams(window.location.search).get("token");
+  var timer = document.getElementById("timer");
+  var timerBanner = document.getElementById("timer-banner");
 
-  function showMessage(text, type) {
-    message.textContent = text;
-    message.className = "message visible " + type;
+  var recoveryToken = new URLSearchParams(window.location.search).get("token");
+  var timerId = null;
+  var enviando = false;
+
+  function mostrarVista(vista) {
+    [loadingView, formView, successView, invalidView].forEach(function (elemento) {
+      elemento.classList.add("hidden");
+    });
+    vista.classList.remove("hidden");
   }
 
-  // Lee la fecha de vencimiento (exp) del token. Es solo un aviso:
-  // la validación real la hace el servidor al guardar.
-  function tokenVencido(t) {
-    try {
-      var p = t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-      while (p.length % 4) p += "=";
-      var exp = JSON.parse(atob(p)).exp;
-      return typeof exp === "number" && exp * 1000 <= Date.now();
-    } catch (e) {
-      return false;
+  function mostrarMensaje(texto) {
+    message.textContent = texto;
+    message.className = "message visible";
+  }
+
+  function limpiarTemporizador() {
+    if (timerId !== null) {
+      window.clearInterval(timerId);
+      timerId = null;
     }
   }
 
-  function strength(p) {
-    var s = 0;
-    if (p.length >= MIN) s++;
-    if (/[a-z]/.test(p) && /[A-Z]/.test(p)) s++;
-    if (/[0-9]/.test(p)) s++;
-    if (/[^A-Za-z0-9]/.test(p) || p.length >= 14) s++;
-    return s;
+  function mostrarEnlaceNoDisponible(texto) {
+    limpiarTemporizador();
+
+    if (texto) {
+      invalidText.textContent = texto;
+    }
+
+    mostrarVista(invalidView);
   }
 
-  function updateStrength() {
-    var p = passwordInput.value;
-    var score = p ? Math.max(1, strength(p)) : 0;
-    var colors = ["#EADDE0", "#E45B5B", "#F2A33B", "#83B85B", "#3F8F43"];
-    var labels = ["", "Contraseña muy débil", "Contraseña débil", "Contraseña aceptable", "Contraseña segura"];
-    strengthBars.forEach(function (bar, i) {
-      bar.style.background = i < score ? colors[score] : colors[0];
+  function leerExpiracion(token) {
+    try {
+      var partes = token.split(".");
+      if (partes.length !== 3) return null;
+
+      var payload = partes[1]
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+      while (payload.length % 4) {
+        payload += "=";
+      }
+
+      var datos = JSON.parse(window.atob(payload));
+      return typeof datos.exp === "number" ? datos.exp : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function respuestaJson(respuesta) {
+    return respuesta.text().then(function (texto) {
+      var datos = {};
+
+      try {
+        datos = texto ? JSON.parse(texto) : {};
+      } catch (error) {
+        datos = {};
+      }
+
+      if (!respuesta.ok) {
+        var errorRespuesta = new Error(
+          datos.mensaje ||
+          datos.message ||
+          "No se pudo completar la solicitud."
+        );
+        errorRespuesta.status = respuesta.status;
+        throw errorRespuesta;
+      }
+
+      return datos;
     });
-    strengthText.textContent = labels[score];
   }
-  passwordInput.addEventListener("input", updateStrength);
 
-  document.querySelectorAll(".password-toggle").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var input = document.getElementById(btn.dataset.target);
-      var visible = input.type === "text";
-      input.type = visible ? "password" : "text";
-      btn.classList.toggle("is-visible", !visible);
-      btn.setAttribute("aria-label", visible ? "Mostrar contraseña" : "Ocultar contraseña");
+  function actualizarTemporizador(expiracion) {
+    var segundos = Math.ceil((expiracion * 1000 - Date.now()) / 1000);
+
+    if (segundos <= 0) {
+      limpiarTemporizador();
+      mostrarEnlaceNoDisponible();
+      return false;
+    }
+
+    var minutos = Math.floor(segundos / 60);
+    var resto = segundos % 60;
+
+    timer.textContent =
+      String(minutos).padStart(2, "0") +
+      ":" +
+      String(resto).padStart(2, "0");
+
+    timerBanner.classList.toggle("urgent", segundos <= 60);
+    return true;
+  }
+
+  function iniciarTemporizador(expiracion) {
+    limpiarTemporizador();
+
+    if (actualizarTemporizador(expiracion)) {
+      timerId = window.setInterval(function () {
+        actualizarTemporizador(expiracion);
+      }, 1000);
+    }
+  }
+
+  function verificarEnlace(expiracion) {
+    fetch(ENDPOINT_VALIDAR, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      body: JSON.stringify({ token: recoveryToken })
+    })
+      .then(respuestaJson)
+      .then(function (datos) {
+        if (datos.valido !== true) {
+          mostrarEnlaceNoDisponible();
+          return;
+        }
+
+        mostrarVista(formView);
+        iniciarTemporizador(expiracion);
+      })
+      .catch(function () {
+        // Si la red falla, dejamos intentar el cambio; el servidor
+        // volverá a validar el token al guardar la contraseña.
+        mostrarVista(formView);
+        iniciarTemporizador(expiracion);
+        mostrarMensaje(
+          "No pudimos comprobar el enlace ahora. Revisa tu conexión e inténtalo."
+        );
+      });
+  }
+
+  document.querySelectorAll(".eye").forEach(function (boton) {
+    boton.addEventListener("click", function () {
+      var input = document.getElementById(boton.dataset.target);
+      var visible = input.type === "password";
+
+      input.type = visible ? "text" : "password";
+      boton.classList.toggle("is-visible", visible);
+      boton.setAttribute(
+        "aria-label",
+        visible ? "Ocultar contraseña" : "Mostrar contraseña"
+      );
+      boton.setAttribute("aria-pressed", visible ? "true" : "false");
     });
   });
 
-  if (!recoveryToken) {
-    submitButton.disabled = true;
-    showMessage("Este enlace no contiene un token válido. Pide uno nuevo desde la app.", "error");
-  } else if (tokenVencido(recoveryToken)) {
-    submitButton.disabled = true;
-    showMessage("Este enlace venció (dura 15 minutos). Pide uno nuevo desde la app.", "error");
-  }
+  form.addEventListener("submit", function (evento) {
+    evento.preventDefault();
 
-  form.addEventListener("submit", function (event) {
-    event.preventDefault();
-    var password = passwordInput.value;
+    if (enviando) return;
 
-    if (!recoveryToken) return showMessage("El enlace de recuperación no es válido.", "error");
-    if (password.length < MIN) return showMessage("La contraseña debe tener al menos " + MIN + " caracteres.", "error");
-    if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password))
-      return showMessage("Incluye al menos una letra y un número.", "error");
-    if (password !== confirmInput.value) return showMessage("Las contraseñas no coinciden.", "error");
+    var nueva = passwordInput.value;
+    var confirmacion = confirmInput.value;
 
+    if (nueva.length < MIN) {
+      mostrarMensaje("La contraseña debe tener al menos 10 caracteres.");
+      return;
+    }
+
+    if (nueva.length > MAX) {
+      mostrarMensaje("La contraseña no puede superar los 72 caracteres.");
+      return;
+    }
+
+    if (!/[A-Za-z]/.test(nueva) || !/[0-9]/.test(nueva)) {
+      mostrarMensaje("Incluye al menos una letra y un número.");
+      return;
+    }
+
+    if (nueva !== confirmacion) {
+      mostrarMensaje("Las contraseñas no coinciden.");
+      return;
+    }
+
+    enviando = true;
     submitButton.disabled = true;
+    submitButton.classList.add("loading");
     submitButton.textContent = "Guardando...";
     message.className = "message";
 
-    fetch(ENDPOINT, {
+    fetch(ENDPOINT_RESTABLECER, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: recoveryToken, nuevaContrasena: password })
-    })
-      .then(function (r) {
-        return r.text().then(function (t) {
-          var data = {};
-          try { data = t ? JSON.parse(t) : {}; } catch (e) {}
-          if (!r.ok) throw new Error(data.mensaje || data.message || "El enlace no es válido o ya venció.");
-        });
+      cache: "no-store",
+      body: JSON.stringify({
+        token: recoveryToken,
+        nuevaContrasena: nueva
       })
+    })
+      .then(respuestaJson)
       .then(function () {
+        limpiarTemporizador();
         passwordInput.value = "";
         confirmInput.value = "";
-        formView.classList.add("hidden");
-        successView.classList.remove("hidden");
-        window.history.replaceState({}, document.title, window.location.pathname);
+        mostrarVista(successView);
       })
-      .catch(function (err) {
-        showMessage(err instanceof TypeError
-          ? "No hay conexión con el servidor. Inténtalo otra vez."
-          : err.message, "error");
+      .catch(function (error) {
+        if (error.status === 400 || error.status === 401) {
+          mostrarEnlaceNoDisponible(error.message);
+          return;
+        }
+
+        mostrarMensaje(
+          error instanceof TypeError
+            ? "No hay conexión con el servidor. Inténtalo otra vez."
+            : error.message
+        );
+
+        enviando = false;
         submitButton.disabled = false;
-        submitButton.textContent = "Guardar contraseña";
+        submitButton.classList.remove("loading");
+        submitButton.textContent = "Cambiar contraseña";
       });
   });
+
+  // Quita el token de la barra de direcciones después de leerlo.
+  try {
+    window.history.replaceState(
+      {},
+      document.title,
+      window.location.pathname
+    );
+  } catch (error) {
+    // Algunos navegadores pueden bloquear replaceState; el flujo sigue funcionando.
+  }
+
+  var expiracion = recoveryToken ? leerExpiracion(recoveryToken) : null;
+
+  if (!recoveryToken || !expiracion || expiracion * 1000 <= Date.now()) {
+    mostrarEnlaceNoDisponible();
+  } else {
+    verificarEnlace(expiracion);
+  }
 })();

@@ -74,24 +74,10 @@ public class ServicioAutenticacion {
                 + "/restablecer.html?token="
                 + jwt;
 
-        String html =
-                "<!DOCTYPE html>"
-                + "<html lang=\"es\">"
-                + "<head>"
-                + "<meta charset=\"UTF-8\">"
-                + "<title>Restablece tu contraseña</title>"
-                + "</head>"
-                + "<body>"
-                + "<p>Recibimos una solicitud para restablecer tu contraseña de Cookly.</p>"
-                + "<p>"
-                + "<a href=\"" + enlace + "\">"
-                + "Continuar para crear una contraseña nueva"
-                + "</a>"
-                + "</p>"
-                + "<p>El enlace vence en 15 minutos.</p>"
-                + "<p>Si no solicitaste este cambio, puedes ignorar este correo.</p>"
-                + "</body>"
-                + "</html>";
+        String html = PlantillaCorreo.recuperacion(
+        usuario.get().getNombre(),
+        enlace
+        );
 
         try {
             servicioCorreo.enviar(
@@ -119,6 +105,30 @@ public class ServicioAutenticacion {
             );
         }
     }
+
+    public boolean esTokenRecuperacionValido(String tokenRecuperacion) {
+    if (tokenRecuperacion == null || tokenRecuperacion.isBlank()) {
+        return false;
+    }
+
+    try {
+        var datos = token.validarRecuperacion(tokenRecuperacion);
+
+        var usuario = usuarios.findByCorreo(datos.getSubject())
+                .orElse(null);
+
+        if (usuario == null || !usuario.isActivo()) {
+            return false;
+        }
+
+        String selloDelToken = datos.get("sello", String.class);
+        String selloActual = sello(usuario.getContrasena());
+
+        return selloDelToken != null && selloActual.equals(selloDelToken);
+    } catch (Exception e) {
+        return false;
+    }
+}
 
     /**
      * Restablece la contraseña usando el token generado por el backend.

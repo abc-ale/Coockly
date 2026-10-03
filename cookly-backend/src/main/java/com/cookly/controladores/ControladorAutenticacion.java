@@ -33,6 +33,16 @@ public class ControladorAutenticacion {
         return Map.of("mensaje", "Si el correo existe, recibirás instrucciones de recuperación.");
     }
 
+    @PostMapping("/validar-token-recuperacion")
+    public Map<String, Boolean> validarTokenRecuperacion(
+            @RequestBody Map<String, String> cuerpo
+    ) {
+        return Map.of(
+                "valido",
+                servicio.esTokenRecuperacionValido(cuerpo.get("token"))
+        );
+    }
+
     /** Lo llama la página /restablecer.html con el token del correo. */
     @PostMapping("/restablecer-con-token")
     public Map<String, String> restablecerConToken(@Valid @RequestBody SolicitudRestablecerConToken cuerpo) {
