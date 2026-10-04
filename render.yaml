@@ -46,3 +46,12 @@ services:
 
       - key: APP_URL_PUBLICA
         value: https://cookly-api-sb9w.onrender.com
+
+      - key: ZONA_HORARIA
+        value: America/Lima
+
+      - key: ADMIN_CORREO
+        sync: false
+
+      - key: ADMIN_CONTRASENA
+        sync: false

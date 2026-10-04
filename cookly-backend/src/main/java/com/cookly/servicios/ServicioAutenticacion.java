@@ -3,9 +3,12 @@ package com.cookly.servicios;
 import com.cookly.dto.RespuestaAcceso;
 import com.cookly.dto.SolicitudAcceso;
 import com.cookly.dto.SolicitudRegistro;
+import com.cookly.modelos.Rol;
 import com.cookly.modelos.Usuario;
 import com.cookly.repositorios.RepositorioUsuario;
 import com.cookly.seguridad.ServicioToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -13,6 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ServicioAutenticacion {
+
+    private static final Logger log = LoggerFactory.getLogger(ServicioAutenticacion.class);
+
+    private static final String MENSAJE_ADMIN_SOLO_CONTRASENA =
+            "Las cuentas de administrador entran con su contraseña, no con Google ni Facebook.";
 
     private final RepositorioUsuario usuarios;
     private final PasswordEncoder codificador;
@@ -50,18 +58,14 @@ public class ServicioAutenticacion {
         java.time.Instant previo = ultimoEnvio.get(destino);
 
         if (previo != null && previo.plusSeconds(60).isAfter(ahora)) {
-            System.out.println(
-                    "Recuperación: solicitud ignorada por límite de 60 segundos."
-            );
+            log.info("Recuperación: solicitud ignorada por límite de 60 segundos.");
             return;
         }
 
         var usuario = usuarios.findByCorreo(destino);
 
         if (usuario.isEmpty() || !usuario.get().isActivo()) {
-            System.out.println(
-                    "Recuperación: usuario no encontrado o inactivo."
-            );
+            log.info("Recuperación: usuario no encontrado o inactivo.");
             return;
         }
 
@@ -89,15 +93,10 @@ public class ServicioAutenticacion {
             // Solo bloqueamos nuevos intentos si Brevo aceptó el correo.
             ultimoEnvio.put(destino, ahora);
 
-            System.out.println(
-                    "Recuperación: Brevo aceptó el correo correctamente."
-            );
+            log.info("Recuperación: Brevo aceptó el correo correctamente.");
 
         } catch (Exception e) {
-            System.err.println(
-                    "Recuperación: Brevo rechazó el correo: "
-                            + e.getMessage()
-            );
+            log.error("Recuperación: Brevo rechazó el correo: {}", e.getMessage());
 
             throw new IllegalStateException(
                     "No se pudo enviar el correo de recuperación.",
@@ -174,10 +173,7 @@ public class ServicioAutenticacion {
 
         usuarios.save(usuario);
 
-        System.out.println(
-                "Recuperación: contraseña restablecida para "
-                        + usuario.getCorreo()
-        );
+        log.info("Recuperación: contraseña restablecida para {}", usuario.getCorreo());
     }
 
     /**
@@ -235,15 +231,14 @@ public class ServicioAutenticacion {
 
         Usuario usuario = usuarios.findByCorreo(correo)
                 .orElseThrow(() -> {
-                    // Log temporal de diagnóstico (puedes borrarlo después)
-                    System.out.println("Login: no existe el usuario " + correo);
+                    log.info("Login rechazado: no existe el usuario {}", correo);
                     return new IllegalArgumentException(
                             "Credenciales inválidas"
                     );
                 });
 
         if (!usuario.isActivo()) {
-            System.out.println("Login: usuario inactivo " + correo);
+            log.info("Login rechazado: usuario inactivo {}", correo);
             throw new IllegalArgumentException(
                     "Credenciales inválidas"
             );
@@ -253,12 +248,7 @@ public class ServicioAutenticacion {
                 solicitud.contrasena(),
                 usuario.getContrasena()
         )) {
-            // Log temporal de diagnóstico (nunca se imprime la contraseña)
-            System.out.println(
-                    "Login: contraseña incorrecta para " + correo
-                            + " (longitud recibida: "
-                            + solicitud.contrasena().length() + ")"
-            );
+            log.info("Login rechazado: contraseña incorrecta para {}", correo);
             throw new IllegalArgumentException(
                     "Credenciales inválidas"
             );
@@ -314,6 +304,14 @@ public class ServicioAutenticacion {
                 )
         );
 
+        // El panel administrativo da acceso a todos los datos: una cuenta de administrador
+        // solo se recupera con el enlace del correo (restablecerConToken).
+        if (usuario.getRol() == Rol.ADMINISTRADOR) {
+            throw new IllegalArgumentException(
+                    "La contraseña de un administrador se recupera con el enlace del correo."
+            );
+        }
+
         usuario.setContrasena(
                 codificador.encode(nuevaContrasena)
         );
@@ -357,6 +355,11 @@ public class ServicioAutenticacion {
             throw new IllegalArgumentException(
                     "Cuenta desactivada"
             );
+        }
+
+        // Evita que alguien con una cuenta de Google/Facebook con el mismo correo entre como administrador.
+        if (usuario.getRol() == Rol.ADMINISTRADOR) {
+            throw new IllegalArgumentException(MENSAJE_ADMIN_SOLO_CONTRASENA);
         }
 
         return respuesta(usuario);

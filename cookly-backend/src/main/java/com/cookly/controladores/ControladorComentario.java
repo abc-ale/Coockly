@@ -27,8 +27,8 @@ public class ControladorComentario {
     @DeleteMapping("/{comentarioId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminar(@PathVariable Long recetaId, @PathVariable Long comentarioId, Authentication autenticacion) {
-        boolean esModeradorOAdmin = autenticacion.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_MODERADOR") || a.getAuthority().equals("ROLE_ADMINISTRADOR"));
-        servicio.eliminar(comentarioId, autenticacion.getName(), esModeradorOAdmin);
+        boolean esAdmin = autenticacion.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR"));
+        servicio.eliminar(comentarioId, autenticacion.getName(), esAdmin);
     }
 }

@@ -37,10 +37,14 @@ public class ConfiguracionSeguridad {
                                 "/restablecer.html",
                                 "/restablecer.js",
                                 "/restablecer.css",
-                                "/favicon.ico"
+                                "/favicon.ico",
+                                "/admin",
+                                "/admin/",
+                                "/admin/**",
+                                "/api/v1/panel/acceso"
                         ).permitAll()
                         .requestMatchers("/api/v1/administracion/**").hasRole("ADMINISTRADOR")
-                        .requestMatchers("/api/v1/moderacion/**").hasAnyRole("MODERADOR", "ADMINISTRADOR")
+                        .requestMatchers("/api/v1/moderacion/**").hasRole("ADMINISTRADOR")
                         .anyRequest().authenticated())
                 .addFilterBefore(filtro, UsernamePasswordAuthenticationFilter.class)
                 .build();

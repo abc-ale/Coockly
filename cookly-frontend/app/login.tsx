@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { Link, router } from 'expo-router';
 import Button from '../components/Button';
+import PasswordInput from '../components/PasswordInput';
 import { colors, radius, spacing, typography } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
@@ -74,10 +75,9 @@ export default function LoginScreen() {
         onChangeText={setCorreo}
         editable={!cargandoAlguno}
       />
-      <TextInput
+      <PasswordInput
         placeholder="Contraseña"
         placeholderTextColor={colors.textMuted}
-        secureTextEntry
         style={styles.input}
         value={contrasena}
         onChangeText={setContrasena}

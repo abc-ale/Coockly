@@ -6,9 +6,6 @@ spring:
     url: ${SUPABASE_DATABASE_URL}
     username: ${SUPABASE_DATABASE_USERNAME}
     password: ${SUPABASE_DATABASE_PASSWORD}
-    hikari:
-      data-source-properties:
-        prepareThreshold: "0"
 
   jpa:
     hibernate:
@@ -17,6 +14,12 @@ spring:
 
   jackson:
     default-property-inclusion: non_null
+
+  # Respaldos: el valor por defecto de Spring es 1 MB y rechazaría el archivo de recuperación.
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
 
 server:
   port: ${PORT:8080}
@@ -38,6 +41,13 @@ supabase:
 
 app:
   url-publica: ${APP_URL_PUBLICA:https://cookly-api-sb9w.onrender.com}
+  zona-horaria: ${ZONA_HORARIA:America/Lima}
+
+# Cuenta de administrador: se crea al arrancar si las dos variables tienen valor.
+admin:
+  correo: ${ADMIN_CORREO:}
+  contrasena: ${ADMIN_CONTRASENA:}
+  nombre: ${ADMIN_NOMBRE:Administrador}
 
 brevo:
   api-key: ${BREVO_API_KEY:}

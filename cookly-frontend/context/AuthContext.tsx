@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
@@ -42,6 +43,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })();
   }, []);
+
+  // Monitoreo de uso: mientras la app está abierta y hay sesión, avisa al servidor cada 30 s.
+  // El panel administrativo suma esos avisos para mostrar cuánto tiempo se usa Cookly.
+  useEffect(() => {
+    if (!token) return;
+
+    const enviarLatido = () => {
+      api.post('/uso/latido', { plataforma: Platform.OS }).catch(() => {});
+    };
+
+    let temporizador: ReturnType<typeof setInterval> | null = null;
+    const iniciar = () => {
+      if (temporizador) return;
+      enviarLatido();
+      temporizador = setInterval(enviarLatido, 30000);
+    };
+    const detener = () => {
+      if (temporizador) {
+        clearInterval(temporizador);
+        temporizador = null;
+      }
+    };
+
+    if (AppState.currentState === 'active') iniciar();
+    const suscripcion = AppState.addEventListener('change', (estado) => {
+      if (estado === 'active') iniciar();
+      else detener();
+    });
+
+    return () => {
+      detener();
+      suscripcion.remove();
+    };
+  }, [token]);
 
   async function guardarSesion(nuevoToken: string, nuevoUsuario: Usuario) {
     await AsyncStorage.setItem('cookly_token', nuevoToken);
