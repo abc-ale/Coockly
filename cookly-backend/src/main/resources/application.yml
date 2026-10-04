@@ -6,6 +6,9 @@ spring:
     url: ${SUPABASE_DATABASE_URL}
     username: ${SUPABASE_DATABASE_USERNAME}
     password: ${SUPABASE_DATABASE_PASSWORD}
+    hikari:
+      data-source-properties:
+        prepareThreshold: "0"
 
   jpa:
     hibernate:
