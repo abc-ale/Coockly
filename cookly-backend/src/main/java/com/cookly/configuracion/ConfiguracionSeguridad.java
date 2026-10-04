@@ -41,6 +41,7 @@ public class ConfiguracionSeguridad {
                                 "/admin",
                                 "/admin/",
                                 "/admin/**",
+                                "/webjars/**",
                                 "/api/v1/panel/acceso"
                         ).permitAll()
                         .requestMatchers("/api/v1/administracion/**").hasRole("ADMINISTRADOR")
