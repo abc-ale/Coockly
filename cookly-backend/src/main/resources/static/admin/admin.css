@@ -234,3 +234,6 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
   * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
 td.largo { white-space: normal; min-width: 260px; max-width: 520px; }
+.acceso-formulario .acceso-ayuda { margin-top: 18px; }
+.acceso-formulario .acceso-ayuda a { color: var(--rosa); text-underline-offset: 3px; font-weight: 600; }
+.acceso-formulario .acceso-ayuda a:hover { color: #a3415a; }
