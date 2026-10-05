@@ -2,6 +2,7 @@ package com.cookly.excepciones;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -22,8 +23,15 @@ public class ManejadorErrores {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> general(Exception e) {
-        // El detalle real queda en los Logs de Render.
         log.error("Error no controlado: {}", e.getMessage(), e);
-        return ResponseEntity.status(500).body(Map.of("mensaje", "Ocurrió un error al procesar la solicitud."));
+
+        // TEMPORAL PARA DIAGNOSTICO: muestra la causa real en el aviso rojo del panel.
+        // Cuando todo funcione, borra estas 3 lineas y deja el mensaje generico de abajo.
+        Throwable causa = NestedExceptionUtils.getMostSpecificCause(e);
+        String detalle = causa.getClass().getSimpleName() + ": " + String.valueOf(causa.getMessage());
+        if (detalle.length() > 300) detalle = detalle.substring(0, 300);
+
+        return ResponseEntity.status(500).body(Map.of("mensaje", "Ocurrió un error al procesar la solicitud. [" + detalle + "]"));
+        // return ResponseEntity.status(500).body(Map.of("mensaje", "Ocurrió un error al procesar la solicitud."));
     }
 }

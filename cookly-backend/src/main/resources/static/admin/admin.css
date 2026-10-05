@@ -233,3 +233,4 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
+td.largo { white-space: normal; min-width: 260px; max-width: 520px; }

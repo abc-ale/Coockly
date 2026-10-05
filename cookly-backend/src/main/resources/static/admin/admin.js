@@ -26,6 +26,9 @@
     usuarios: { titulo: 'Usuarios',              sub: 'Personas registradas, su tiempo de uso y su rol.' },
     uso:      { titulo: 'Uso de la app',         sub: 'Cuánto, cuándo y quién usa Cookly.' },
     reportes: { titulo: 'Reportes de recetas',   sub: 'Recetas señaladas por la comunidad.' },
+    comentarios: { titulo: 'Comentarios',          sub: 'Lo que escribe la comunidad. Elimina lo que no corresponda.' },
+    recetas:  { titulo: 'Recetas',               sub: 'Todas las recetas publicadas, con su autor.' },
+    historial: { titulo: 'Historial de acciones', sub: 'Qué hicieron los administradores y cuándo (últimas 200).' },
     respaldo: { titulo: 'Respaldo y recuperación', sub: 'Copia de seguridad de los datos y cómo recuperarlos.' }
   };
 
@@ -181,6 +184,7 @@
     else if (s === 'usuarios') tarea = cargarUsuarios();
     else if (s === 'reportes') tarea = cargarReportes();
     else if (s === 'respaldo') tarea = cargarRespaldo();
+    else if (LISTAS[s]) tarea = cargarLista(s);
     if (tarea) tarea.catch(function (e) { if (e.message !== 'sesion') aviso(e.message, true); });
     if (s !== 'reportes') actualizarInsignia();
   }
@@ -552,6 +556,69 @@
       .then(function () { boton.disabled = false; boton.textContent = 'Recuperar datos'; });
   }
 
+  // ------------------------------------------------------------------ comentarios, recetas e historial
+
+  var LISTAS = {
+    comentarios: { ruta: '/administracion/comentarios', cont: 'lista-comentarios', buscar: 'c-buscar', vacio: 'No hay comentarios.',
+      cols: [['Fecha', 'fecha'], ['Autor', 'autor'], ['Receta', 'recetaNombre'], ['Comentario', 'contenido']],
+      pregunta: '¿Eliminar este comentario?' },
+    recetas: { ruta: '/administracion/recetas', cont: 'lista-recetas', buscar: 're-buscar', vacio: 'No hay recetas.',
+      cols: [['Fecha', 'fecha'], ['Receta', 'nombre'], ['Autor', 'autor'], ['Comentarios', 'comentarios'], ['Favoritos', 'favoritos']],
+      pregunta: '¿Eliminar esta receta con todos sus datos? No se puede deshacer.' },
+    historial: { ruta: '/administracion/auditoria', cont: 'lista-historial', vacio: 'Todavía no hay acciones registradas.',
+      cols: [['Fecha', 'fecha'], ['Administrador', 'admin'], ['Acción', 'accion'], ['Detalle', 'detalle']] }
+  };
+
+  function cargarLista(nombre) {
+    var cfg = LISTAS[nombre];
+    var q = cfg.buscar ? $(cfg.buscar).value.trim() : '';
+    return json(cfg.ruta + (q ? '?q=' + encodeURIComponent(q) : '')).then(function (filas) { pintarLista(nombre, filas); });
+  }
+
+  function pintarLista(nombre, filas) {
+    var cfg = LISTAS[nombre];
+    var cont = $(cfg.cont);
+    vaciar(cont);
+    if (!filas.length) {
+      cont.appendChild(el('div', { clase: 'estado-vacio' }, [el('strong', { texto: 'Nada por aquí' }), el('span', { texto: cfg.vacio })]));
+      return;
+    }
+    var cab = el('tr', null, cfg.cols.map(function (c) { return el('th', { texto: c[0] }); }));
+    var puedeBorrar = nombre !== 'historial';
+    if (puedeBorrar) cab.appendChild(el('th'));
+    var cuerpo = filas.map(function (f) {
+      var tr = el('tr', null, cfg.cols.map(function (c) {
+        var v = f[c[1]];
+        var largo = c[1] === 'contenido' || c[1] === 'detalle';
+        return el('td', { clase: largo ? 'largo' : null, texto: v === null || v === undefined ? '' : String(v) });
+      }));
+      if (puedeBorrar) tr.appendChild(el('td', null, [el('button', { type: 'button', clase: 'boton chico peligro', 'data-id': f.id, texto: 'Eliminar' })]));
+      return tr;
+    });
+    cont.appendChild(el('div', { clase: 'tabla-envoltura' }, [el('table', null, [el('thead', null, [cab]), el('tbody', null, cuerpo)])]));
+  }
+
+  function iniciarListas() {
+    ['comentarios', 'recetas'].forEach(function (nombre) {
+      var cfg = LISTAS[nombre];
+      var espera = null;
+      $(cfg.buscar).addEventListener('input', function () {
+        clearTimeout(espera);
+        espera = setTimeout(function () {
+          cargarLista(nombre).catch(function (e) { if (e.message !== 'sesion') aviso(e.message, true); });
+        }, 350);
+      });
+      $(cfg.cont).addEventListener('click', function (e) {
+        var b = e.target.closest('button[data-id]');
+        if (!b || b.disabled || !window.confirm(cfg.pregunta)) return;
+        b.disabled = true;
+        json(cfg.ruta + '/' + b.getAttribute('data-id'), { method: 'DELETE' })
+          .then(function () { aviso('Eliminado.'); return cargarLista(nombre); })
+          .catch(function (ex) { if (ex.message !== 'sesion') { aviso(ex.message, true); b.disabled = false; } });
+      });
+    });
+  }
+
   // ------------------------------------------------------------------ eventos
 
   function iniciarEventos() {
@@ -575,6 +642,37 @@
         })
         .catch(function (ex) { err.textContent = ex.message === 'Failed to fetch' ? 'No se pudo conectar con el servidor.' : ex.message; err.hidden = false; })
         .then(function () { boton.disabled = false; boton.textContent = 'Entrar'; });
+    });
+
+    iniciarListas();
+
+    // recuperar contraseña (el enlace llega por correo y abre /restablecer.html)
+    function verOlvide(ver) {
+      $('form-acceso').hidden = ver;
+      $('form-olvide').hidden = !ver;
+      $('olvide-mensaje').hidden = true;
+      if (ver) $('olvide-correo').value = $('acceso-correo').value.trim();
+    }
+    $('enlace-olvide').addEventListener('click', function (e) { e.preventDefault(); verOlvide(true); });
+    $('enlace-volver').addEventListener('click', function (e) { e.preventDefault(); verOlvide(false); });
+    $('form-olvide').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var correo = $('olvide-correo').value.trim();
+      var msg = $('olvide-mensaje');
+      var boton = $('olvide-boton');
+      msg.hidden = true;
+      if (!correo) { msg.textContent = 'Escribe tu correo.'; msg.hidden = false; return; }
+      boton.disabled = true;
+      boton.textContent = 'Enviando…';
+      fetch(API + '/autenticacion/solicitar-recuperacion', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ correo: correo }) })
+        .then(function (r) { return r.json().catch(function () { return null; }).then(function (c) { return { ok: r.ok, c: c, estado: r.status }; }); })
+        .then(function (r) {
+          if (!r.ok) throw new Error(r.estado >= 500 ? 'No se pudo enviar el correo. Revisa la configuración de Brevo en Render.' : mensajeDeError(r.c, r.estado));
+          msg.textContent = 'Si el correo existe, recibirás el enlace en unos minutos. Revisa también spam.';
+          msg.hidden = false;
+        })
+        .catch(function (ex) { msg.textContent = ex.message === 'Failed to fetch' ? 'No se pudo conectar con el servidor.' : ex.message; msg.hidden = false; })
+        .then(function () { boton.disabled = false; boton.textContent = 'Enviar enlace'; });
     });
 
     $('btn-salir').addEventListener('click', function () { cerrarSesion(); });

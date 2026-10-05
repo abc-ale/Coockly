@@ -6,6 +6,11 @@ spring:
     url: ${SUPABASE_DATABASE_URL}
     username: ${SUPABASE_DATABASE_USERNAME}
     password: ${SUPABASE_DATABASE_PASSWORD}
+    hikari:
+      maximum-pool-size: 5
+      data-source-properties:
+        # El pooler de Supabase (puerto 6543) no admite sentencias preparadas en el servidor.
+        prepareThreshold: "0"
 
   jpa:
     hibernate:

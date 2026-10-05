@@ -4,6 +4,7 @@ import com.cookly.dto.SolicitudCambioRol;
 import com.cookly.dto.SolicitudRevisionReporte;
 import com.cookly.dto.UsuarioResumen;
 import com.cookly.servicios.ServicioAdministracion;
+import com.cookly.servicios.ServicioAuditoria;
 import com.cookly.servicios.ServicioEstadisticas;
 import com.cookly.servicios.ServicioReportes;
 import com.cookly.servicios.ServicioRespaldo;
@@ -30,13 +31,16 @@ public class ControladorAdministracion {
     private final ServicioEstadisticas estadisticas;
     private final ServicioReportes reportes;
     private final ServicioRespaldo respaldo;
+    private final ServicioAuditoria auditoria;
 
     public ControladorAdministracion(ServicioAdministracion administracion, ServicioEstadisticas estadisticas,
-                                     ServicioReportes reportes, ServicioRespaldo respaldo) {
+                                     ServicioReportes reportes, ServicioRespaldo respaldo,
+                                     ServicioAuditoria auditoria) {
         this.administracion = administracion;
         this.estadisticas = estadisticas;
         this.reportes = reportes;
         this.respaldo = respaldo;
+        this.auditoria = auditoria;
     }
 
     // ---------------------------------------------------------------- dashboard
@@ -62,6 +66,7 @@ public class ControladorAdministracion {
     public Map<String, String> cambiarRol(@PathVariable Long id, @Valid @RequestBody SolicitudCambioRol s,
                                           Authentication autenticacion) {
         var u = administracion.cambiarRol(id, s.rol(), autenticacion.getName());
+        auditoria.registrar(autenticacion.getName(), "CAMBIO_ROL", u.getCorreo() + " -> " + u.getRol().name());
         return Map.of("mensaje", "Rol actualizado", "correo", u.getCorreo(), "rol", u.getRol().name());
     }
 
@@ -69,6 +74,7 @@ public class ControladorAdministracion {
     public Map<String, String> cambiarActivo(@PathVariable Long id, @RequestParam boolean valor,
                                              Authentication autenticacion) {
         var u = administracion.cambiarActivo(id, valor, autenticacion.getName());
+        auditoria.registrar(autenticacion.getName(), valor ? "CUENTA_ACTIVADA" : "CUENTA_DESACTIVADA", u.getCorreo());
         return Map.of("mensaje", "Estado actualizado", "correo", u.getCorreo(), "activo", String.valueOf(u.isActivo()));
     }
 
@@ -98,6 +104,7 @@ public class ControladorAdministracion {
                                                @RequestParam(defaultValue = "false") boolean eliminarReceta,
                                                Authentication autenticacion) {
         administracion.resolverReporte(id, autenticacion.getName(), s.estado(), eliminarReceta);
+        auditoria.registrar(autenticacion.getName(), "REPORTE_" + s.estado(), "Reporte #" + id + (eliminarReceta ? " (receta eliminada)" : ""));
         return Map.of("mensaje", "Reporte actualizado");
     }
 

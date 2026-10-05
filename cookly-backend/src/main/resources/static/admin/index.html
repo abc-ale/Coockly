@@ -28,6 +28,19 @@
 
         <p id="acceso-error" class="error-linea" role="alert" hidden></p>
         <button type="submit" id="acceso-boton" class="boton primario ancho">Entrar</button>
+        <p class="acceso-ayuda"><a href="#" id="enlace-olvide">¿Olvidaste tu contraseña?</a></p>
+      </form>
+
+      <form id="form-olvide" novalidate hidden>
+        <h1>Recuperar contraseña</h1>
+        <p class="acceso-ayuda">Escribe el correo de la cuenta de administrador. Te enviaremos un enlace válido por 15 minutos.</p>
+
+        <label for="olvide-correo">Correo</label>
+        <input id="olvide-correo" type="email" autocomplete="username" required>
+
+        <p id="olvide-mensaje" class="error-linea" role="alert" hidden></p>
+        <button type="submit" id="olvide-boton" class="boton primario ancho">Enviar enlace</button>
+        <p class="acceso-ayuda"><a href="#" id="enlace-volver">Volver a entrar</a></p>
       </form>
     </section>
   </div>
@@ -44,6 +57,9 @@
         <a href="#usuarios" data-nav="usuarios">Usuarios</a>
         <a href="#uso" data-nav="uso">Uso de la app</a>
         <a href="#reportes" data-nav="reportes">Reportes de recetas <span id="insignia-reportes" class="insignia" hidden></span></a>
+        <a href="#comentarios" data-nav="comentarios">Comentarios</a>
+        <a href="#recetas" data-nav="recetas">Recetas</a>
+        <a href="#historial" data-nav="historial">Historial</a>
         <a href="#respaldo" data-nav="respaldo">Respaldo</a>
       </nav>
       <div class="lateral-pie">
@@ -176,6 +192,25 @@
       <!-- Reportes de recetas -->
       <section data-seccion="reportes" hidden>
         <div id="lista-reportes" class="lista-reportes"></div>
+      </section>
+
+      <!-- Comentarios -->
+      <section data-seccion="comentarios" hidden>
+        <div class="herramientas"><div class="campo"><label for="c-buscar" class="solo-lectores">Buscar comentario</label>
+          <input id="c-buscar" type="search" placeholder="Buscar por texto, autor o correo" autocomplete="off"></div></div>
+        <div id="lista-comentarios"></div>
+      </section>
+
+      <!-- Recetas -->
+      <section data-seccion="recetas" hidden>
+        <div class="herramientas"><div class="campo"><label for="re-buscar" class="solo-lectores">Buscar receta</label>
+          <input id="re-buscar" type="search" placeholder="Buscar por receta, autor o correo" autocomplete="off"></div></div>
+        <div id="lista-recetas"></div>
+      </section>
+
+      <!-- Historial -->
+      <section data-seccion="historial" hidden>
+        <div id="lista-historial"></div>
       </section>
 
       <!-- Respaldo -->
