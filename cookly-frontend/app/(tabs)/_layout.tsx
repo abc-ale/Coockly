@@ -30,6 +30,7 @@ export default function TabsLayout() {
       initialRouteName={esAdmin ? 'admin-panel' : 'home'}
       screenOptions={{
         headerShown: false,
+        freezeOnBlur: true, // las pestañas que no se ven dejan de re-renderizar
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {

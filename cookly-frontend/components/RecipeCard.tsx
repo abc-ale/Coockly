@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography, shadow } from '../constants/theme';
 
@@ -22,11 +23,17 @@ type Props = {
   onToggleFavorite?: () => void;
 };
 
-export default function RecipeCard({ recipe, onPress, onToggleFavorite }: Props) {
+function RecipeCard({ recipe, onPress, onToggleFavorite }: Props) {
   return (
     <Pressable onPress={onPress} style={[styles.card, shadow.card]}>
       <View>
-        <Image source={{ uri: recipe.image }} style={styles.image} />
+        <Image
+          source={{ uri: recipe.image }}
+          style={styles.image}
+          contentFit="cover"
+          transition={150}
+          cachePolicy="memory-disk"
+        />
 
         <View style={styles.ratingBadge}>
           <Ionicons name="star" size={11} color={colors.warning} />
@@ -61,6 +68,8 @@ export default function RecipeCard({ recipe, onPress, onToggleFavorite }: Props)
     </Pressable>
   );
 }
+
+export default React.memo(RecipeCard);
 
 function Meta({ icon, text }: { icon: any; text: string }) {
   return (

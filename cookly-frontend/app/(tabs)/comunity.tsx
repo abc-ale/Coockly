@@ -1,9 +1,12 @@
-import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
+import React, { memo, useCallback, useRef, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { colors, radius, spacing, typography, shadow } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
+
+const POR_PAGINA = 10;
 
 type Post = {
   id: string;
@@ -17,72 +20,53 @@ type Post = {
   commentsCount: number;
 };
 
-export default function CommunityScreen() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [refrescando, setRefrescando] = useState(false);
+/** Trae UNA página de posts. Los contadores vienen agregados (count) en vez de listas completas. */
+async function traerPagina(desde: number): Promise<Post[]> {
+  const { data: sesion } = await supabase.auth.getSession();
+  const userId = sesion.session?.user.id;
 
-  const cargarPosts = async () => {
-    const { data: sesion } = await supabase.auth.getSession();
-    const userId = sesion.session?.user.id;
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*, profiles(username, nombre_completo), likes(count), comments(count)')
+    .order('created_at', { ascending: false })
+    .range(desde, desde + POR_PAGINA - 1);
 
-    const { data, error } = await supabase
-      .from('posts')
-      .select('*, profiles(username, nombre_completo), likes(user_id), comments(id)')
-      .order('created_at', { ascending: false });
+  if (error) throw error;
+  const lista: any[] = data ?? [];
 
-    if (error) {
-      console.log('ERROR AL CARGAR POSTS:', error.message);
-      setCargando(false);
-      setRefrescando(false);
-      return;
-    }
+  // Solo pedimos MIS likes de los posts de esta página (una consulta pequeña).
+  let propios = new Set<string>();
+  if (userId && lista.length) {
+    const { data: misLikes } = await supabase
+      .from('likes')
+      .select('post_id')
+      .eq('user_id', userId)
+      .in('post_id', lista.map((p) => p.id));
+    propios = new Set((misLikes ?? []).map((l: any) => l.post_id));
+  }
 
-    const procesados = (data || []).map((post: any) => ({
-      ...post,
-      likesCount: post.likes?.length || 0,
-      yaLeDiLike: userId ? post.likes?.some((l: any) => l.user_id === userId) : false,
-      commentsCount: post.comments?.length || 0,
-    }));
+  return lista.map((p) => {
+    const { likes, comments, ...resto } = p;
+    return {
+      ...resto,
+      likesCount: likes?.[0]?.count ?? 0,
+      commentsCount: comments?.[0]?.count ?? 0,
+      yaLeDiLike: propios.has(p.id),
+    } as Post;
+  });
+}
 
-    setPosts(procesados);
-    setCargando(false);
-    setRefrescando(false);
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      cargarPosts();
-    }, [])
-  );
-
-  const alternarLike = async (post: Post) => {
-    const { data: sesion } = await supabase.auth.getSession();
-    const userId = sesion.session?.user.id;
-
-    if (!userId) {
-      router.push('/login');
-      return;
-    }
-
-    if (post.yaLeDiLike) {
-      await supabase.from('likes').delete().match({ post_id: post.id, user_id: userId });
-    } else {
-      await supabase.from('likes').insert({ post_id: post.id, user_id: userId });
-    }
-    cargarPosts();
-  };
-
-  const irACrearPost = async () => {
-    const { data: sesion } = await supabase.auth.getSession();
-    if (!sesion.session) {
-      router.push('/login');
-      return;
-    }
-    router.push('/create-post');
-  };
-
-  const renderPost = ({ item }: { item: Post }) => (
+// Tarjeta memoizada: al dar like solo se vuelve a dibujar ESA tarjeta, no toda la lista.
+const PostCard = memo(function PostCard({
+  item,
+  onLike,
+  onComentarios,
+}: {
+  item: Post;
+  onLike: (post: Post) => void;
+  onComentarios: (id: string) => void;
+}) {
+  return (
     <View style={[styles.postCard, shadow.card]}>
       <View style={styles.postHeader}>
         <View style={styles.avatarChico} />
@@ -92,20 +76,128 @@ export default function CommunityScreen() {
         </View>
       </View>
 
-      {item.contenido && <Text style={styles.contenido}>{item.contenido}</Text>}
-      {item.imagen_url && <Image source={{ uri: item.imagen_url }} style={styles.imagenPost} />}
+      {item.contenido ? <Text style={styles.contenido}>{item.contenido}</Text> : null}
+      {item.imagen_url ? (
+        <Image
+          source={{ uri: item.imagen_url }}
+          style={styles.imagenPost}
+          contentFit="cover"
+          transition={150}
+          cachePolicy="memory-disk"
+          recyclingKey={item.id}
+        />
+      ) : null}
 
       <View style={styles.accionesRow}>
-        <TouchableOpacity style={styles.accionBoton} onPress={() => alternarLike(item)}>
-          <Ionicons name={item.yaLeDiLike ? 'heart' : 'heart-outline'} size={20} color={item.yaLeDiLike ? colors.primary : colors.textMuted} />
+        <TouchableOpacity style={styles.accionBoton} onPress={() => onLike(item)}>
+          <Ionicons
+            name={item.yaLeDiLike ? 'heart' : 'heart-outline'}
+            size={20}
+            color={item.yaLeDiLike ? colors.primary : colors.textMuted}
+          />
           <Text style={styles.accionTexto}>{item.likesCount}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.accionBoton} onPress={() => router.push(`/comments/${item.id}`)}>
+        <TouchableOpacity style={styles.accionBoton} onPress={() => onComentarios(item.id)}>
           <Ionicons name="chatbubble-outline" size={19} color={colors.textMuted} />
           <Text style={styles.accionTexto}>{item.commentsCount}</Text>
         </TouchableOpacity>
       </View>
     </View>
+  );
+});
+
+export default function CommunityScreen() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [refrescando, setRefrescando] = useState(false);
+  const [cargandoMas, setCargandoMas] = useState(false);
+  const [hayMas, setHayMas] = useState(true);
+  const ocupado = useRef(false);
+
+  /** Primera página. Si ya hay posts en pantalla se actualiza en silencio (sin spinner ni saltos). */
+  const refrescar = useCallback(async (reemplazar: boolean) => {
+    try {
+      const primera = await traerPagina(0);
+      setHayMas(primera.length === POR_PAGINA);
+      setPosts((prev) => {
+        if (reemplazar || prev.length === 0) return primera;
+        const ids = new Set(primera.map((p) => p.id));
+        return [...primera, ...prev.filter((p) => !ids.has(p.id))];
+      });
+    } catch (e: any) {
+      console.log('ERROR AL CARGAR POSTS:', e?.message);
+    } finally {
+      setCargando(false);
+      setRefrescando(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      refrescar(false);
+    }, [refrescar])
+  );
+
+  const cargarMas = useCallback(async () => {
+    if (ocupado.current || !hayMas || cargando) return;
+    ocupado.current = true;
+    setCargandoMas(true);
+    try {
+      const siguiente = await traerPagina(posts.length);
+      setHayMas(siguiente.length === POR_PAGINA);
+      setPosts((prev) => {
+        const ids = new Set(prev.map((p) => p.id));
+        return [...prev, ...siguiente.filter((p) => !ids.has(p.id))];
+      });
+    } catch (e: any) {
+      console.log('ERROR AL CARGAR MÁS POSTS:', e?.message);
+    } finally {
+      ocupado.current = false;
+      setCargandoMas(false);
+    }
+  }, [hayMas, cargando, posts.length]);
+
+  // Like "optimista": la UI cambia al instante y la red trabaja detrás. Si falla, se revierte.
+  const alternarLike = useCallback(async (post: Post) => {
+    const { data: sesion } = await supabase.auth.getSession();
+    const userId = sesion.session?.user.id;
+
+    if (!userId) {
+      router.push('/login');
+      return;
+    }
+
+    const darLike = !post.yaLeDiLike;
+    const aplicar = (like: boolean) =>
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === post.id ? { ...p, yaLeDiLike: like, likesCount: Math.max(0, p.likesCount + (like ? 1 : -1)) } : p
+        )
+      );
+
+    aplicar(darLike);
+
+    const { error } = darLike
+      ? await supabase.from('likes').insert({ post_id: post.id, user_id: userId })
+      : await supabase.from('likes').delete().match({ post_id: post.id, user_id: userId });
+
+    if (error) aplicar(!darLike);
+  }, []);
+
+  const irAComentarios = useCallback((id: string) => router.push(`/comments/${id}`), []);
+
+  const irACrearPost = useCallback(async () => {
+    const { data: sesion } = await supabase.auth.getSession();
+    if (!sesion.session) {
+      router.push('/login');
+      return;
+    }
+    router.push('/create-post');
+  }, []);
+
+  const renderPost = useCallback(
+    ({ item }: { item: Post }) => <PostCard item={item} onLike={alternarLike} onComentarios={irAComentarios} />,
+    [alternarLike, irAComentarios]
   );
 
   if (cargando) {
@@ -125,7 +217,22 @@ export default function CommunityScreen() {
         keyExtractor={(item) => item.id}
         renderItem={renderPost}
         contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
-        refreshControl={<RefreshControl refreshing={refrescando} onRefresh={() => { setRefrescando(true); cargarPosts(); }} />}
+        initialNumToRender={5}
+        maxToRenderPerBatch={5}
+        windowSize={7}
+        removeClippedSubviews
+        onEndReached={cargarMas}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={cargandoMas ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null}
+        refreshControl={
+          <RefreshControl
+            refreshing={refrescando}
+            onRefresh={() => {
+              setRefrescando(true);
+              refrescar(true);
+            }}
+          />
+        }
         ListEmptyComponent={
           <View style={styles.centrado}>
             <Text style={styles.vacioTexto}>Aún no hay publicaciones. ¡Sé la primera en compartir algo! 🍳</Text>
