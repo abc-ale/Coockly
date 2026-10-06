@@ -1,11 +1,21 @@
 // app/login.tsx
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
 import { Link, router } from 'expo-router';
 import Button from '../components/Button';
 import PasswordInput from '../components/PasswordInput';
 import { colors, radius, spacing, typography } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
+import { despertarServidor } from '../lib/api';
+
+// Mensaje claro según qué falló (servidor dormido, red caída, error del backend...).
+function mensajeDeError(error: any, porDefecto: string) {
+  if (error?.response?.data?.mensaje) return error.response.data.mensaje;
+  if (error?.code === 'ECONNABORTED' || error?.message === 'Network Error' || error?.response?.status >= 502) {
+    return 'El servidor está despertando. Espera unos segundos e inténtalo de nuevo.';
+  }
+  return porDefecto;
+}
 
 export default function LoginScreen() {
   const { login, loginConGoogle, loginConFacebook } = useAuth();
@@ -19,42 +29,51 @@ export default function LoginScreen() {
   // botones para que no se puedan disparar dos inicios de sesión a la vez.
   const cargandoAlguno = cargandoEmail || cargandoGoogle || cargandoFacebook;
 
+  // Despierta el servidor apenas se abre la pantalla de login.
+  useEffect(() => {
+    despertarServidor();
+  }, []);
+
   async function manejarLogin() {
     if (!correo || !contrasena) {
       Alert.alert('Faltan datos', 'Ingresa tu correo y contraseña.');
       return;
     }
+    if (cargandoAlguno) return;
     setCargandoEmail(true);
     try {
       await login(correo.trim(), contrasena);
       router.replace('/(tabs)/home');
     } catch (error: any) {
-      const mensaje = error?.response?.data?.mensaje || 'No se pudo iniciar sesión. Verifica tus datos.';
-      Alert.alert('Error', mensaje);
+      Alert.alert('Error', mensajeDeError(error, 'No se pudo iniciar sesión. Verifica tus datos.'));
     } finally {
       setCargandoEmail(false);
     }
   }
 
   async function manejarLoginFacebook() {
+    if (cargandoAlguno) return;
     setCargandoFacebook(true);
     try {
       await loginConFacebook();
       router.replace('/(tabs)/home');
-    } catch {
-      Alert.alert('Error', 'No se pudo iniciar sesión con Facebook.');
+    } catch (error: any) {
+      if (String(error?.message).includes('cancelado')) return;
+      Alert.alert('Error', mensajeDeError(error, 'No se pudo iniciar sesión con Facebook.'));
     } finally {
       setCargandoFacebook(false);
     }
   }
 
   async function manejarLoginGoogle() {
+    if (cargandoAlguno) return;
     setCargandoGoogle(true);
     try {
       await loginConGoogle();
       router.replace('/(tabs)/home');
     } catch (error: any) {
-      Alert.alert('Error', 'No se pudo iniciar sesión con Google.');
+      if (String(error?.message).includes('cancelado')) return;
+      Alert.alert('Error', mensajeDeError(error, 'No se pudo iniciar sesión con Google.'));
     } finally {
       setCargandoGoogle(false);
     }
@@ -88,7 +107,6 @@ export default function LoginScreen() {
         label="Iniciar sesión"
         onPress={manejarLogin}
         loading={cargandoEmail}
-        disabled={cargandoAlguno}
       />
 
       <View style={styles.separadorContainer}>
@@ -101,7 +119,6 @@ export default function LoginScreen() {
         label="Continuar con Google"
         onPress={manejarLoginGoogle}
         loading={cargandoGoogle}
-        disabled={cargandoAlguno}
       />
 
       <View style={{ height: spacing.sm }} />
@@ -110,7 +127,6 @@ export default function LoginScreen() {
         label="Continuar con Facebook"
         onPress={manejarLoginFacebook}
         loading={cargandoFacebook}
-        disabled={cargandoAlguno}
       />
 
       <Link href="/olvide-contrasena" style={styles.olvide}>
@@ -121,11 +137,27 @@ export default function LoginScreen() {
         <Text style={styles.footerText}>¿No tienes cuenta? </Text>
         <Link href="/register" style={styles.link}>Regístrate</Link>
       </View>
+
+      {/* Pantalla de "Entrando..." mientras se valida la sesión: evita ver el login con todo opaco */}
+      {cargandoAlguno && (
+        <View style={styles.overlay}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.overlayTexto}>Entrando a Cookly...</Text>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+  },
+  overlayTexto: { ...typography.body, color: colors.textMuted },
   screen: { flex: 1, backgroundColor: colors.background, padding: spacing.lg, justifyContent: 'center' },
   title: { ...typography.h1, color: colors.text, textAlign: 'center' },
   subtitle: { ...typography.body, color: colors.textMuted, textAlign: 'center', marginTop: spacing.xs, marginBottom: spacing.lg },
