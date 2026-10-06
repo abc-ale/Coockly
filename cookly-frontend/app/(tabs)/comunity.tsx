@@ -1,6 +1,5 @@
 import React, { memo, useCallback, useRef, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
-import { Image } from 'expo-image';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { colors, radius, spacing, typography, shadow } from '../../constants/theme';
@@ -81,10 +80,7 @@ const PostCard = memo(function PostCard({
         <Image
           source={{ uri: item.imagen_url }}
           style={styles.imagenPost}
-          contentFit="cover"
-          transition={150}
-          cachePolicy="memory-disk"
-          recyclingKey={item.id}
+          resizeMode="cover"
         />
       ) : null}
 

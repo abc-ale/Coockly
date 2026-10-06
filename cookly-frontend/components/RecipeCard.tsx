@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { Image } from 'expo-image';
+import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography, shadow } from '../constants/theme';
 
@@ -30,9 +29,7 @@ function RecipeCard({ recipe, onPress, onToggleFavorite }: Props) {
         <Image
           source={{ uri: recipe.image }}
           style={styles.image}
-          contentFit="cover"
-          transition={150}
-          cachePolicy="memory-disk"
+          resizeMode="cover"
         />
 
         <View style={styles.ratingBadge}>
