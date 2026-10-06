@@ -31,7 +31,7 @@ public class ControladorPanel {
         this.autenticacion = autenticacion;
     }
 
-    @GetMapping({"/admin", "/admin/"})
+    @GetMapping({"/", "/admin", "/admin/"})
     public ResponseEntity<Void> entrada() {
         return ResponseEntity.status(302).header("Location", "/admin/index.html").build();
     }

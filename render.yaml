@@ -30,7 +30,7 @@ services:
         sync: false
 
       - key: SUPABASE_URL
-        value: https://yvqepahrartbffphzrdh.supabase.co
+        value: https://torfbgyqvvyajmtbyuvb.supabase.co
 
       - key: SUPABASE_ANON_KEY
         sync: false

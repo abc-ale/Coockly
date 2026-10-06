@@ -8,13 +8,16 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 
 @Service
 public class ServicioSupabase {
     @Value("${supabase.url}") private String supabaseUrl;
     @Value("${supabase.anon-key}") private String anonKey;
 
-    private final HttpClient cliente = HttpClient.newHttpClient();
+    private final HttpClient cliente = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(5))
+            .build();
     private final ObjectMapper mapper = new ObjectMapper();
 
     public record DatosUsuarioSupabase(String correo, String nombre) {}
@@ -35,6 +38,7 @@ public class ServicioSupabase {
                     .uri(URI.create(supabaseUrl + "/auth/v1/user"))
                     .header("apikey", anonKey)
                     .header("Authorization", "Bearer " + accessToken)
+                    .timeout(Duration.ofSeconds(10))
                     .GET()
                     .build();
 

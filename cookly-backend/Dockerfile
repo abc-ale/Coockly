@@ -8,4 +8,5 @@ RUN mvn -q -DskipTests package
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+# Flags pensados para el plan gratis de Render (512 MB): arranque más rápido y menos memoria.
+ENTRYPOINT ["java", "-XX:TieredStopAtLevel=1", "-XX:+UseSerialGC", "-XX:MaxRAMPercentage=75", "-Xss512k", "-jar", "/app/app.jar"]

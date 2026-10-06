@@ -38,6 +38,7 @@ public class ConfiguracionSeguridad {
                                 "/restablecer.js",
                                 "/restablecer.css",
                                 "/favicon.ico",
+                                "/",
                                 "/admin",
                                 "/admin/",
                                 "/admin/**",

@@ -29,6 +29,10 @@ spring:
 server:
   port: ${PORT:8080}
   forward-headers-strategy: framework
+  # Respuestas JSON comprimidas: menos datos por la red móvil.
+  compression:
+    enabled: true
+    min-response-size: 1024
 
 seguridad:
   jwt:
