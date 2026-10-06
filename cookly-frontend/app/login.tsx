@@ -1,12 +1,13 @@
 // app/login.tsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Link, router } from 'expo-router';
 import Button from '../components/Button';
 import PasswordInput from '../components/PasswordInput';
 import { colors, radius, spacing, typography } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 import { despertarServidor } from '../lib/api';
+import { mostrarAlerta } from '../components/Dialogo';
 
 // Mensaje claro según qué falló (servidor dormido, red caída, error del backend...).
 function mensajeDeError(error: any, porDefecto: string) {
@@ -36,7 +37,7 @@ export default function LoginScreen() {
 
   async function manejarLogin() {
     if (!correo || !contrasena) {
-      Alert.alert('Faltan datos', 'Ingresa tu correo y contraseña.');
+      mostrarAlerta('Faltan datos', 'Ingresa tu correo y contraseña.');
       return;
     }
     if (cargandoAlguno) return;
@@ -45,7 +46,7 @@ export default function LoginScreen() {
       await login(correo.trim(), contrasena);
       router.replace('/(tabs)/home');
     } catch (error: any) {
-      Alert.alert('Error', mensajeDeError(error, 'No se pudo iniciar sesión. Verifica tus datos.'));
+      mostrarAlerta('Error', mensajeDeError(error, 'No se pudo iniciar sesión. Verifica tus datos.'));
     } finally {
       setCargandoEmail(false);
     }
@@ -59,7 +60,7 @@ export default function LoginScreen() {
       router.replace('/(tabs)/home');
     } catch (error: any) {
       if (String(error?.message).includes('cancelado')) return;
-      Alert.alert('Error', mensajeDeError(error, 'No se pudo iniciar sesión con Facebook.'));
+      mostrarAlerta('Error', mensajeDeError(error, 'No se pudo iniciar sesión con Facebook.'));
     } finally {
       setCargandoFacebook(false);
     }
@@ -73,7 +74,7 @@ export default function LoginScreen() {
       router.replace('/(tabs)/home');
     } catch (error: any) {
       if (String(error?.message).includes('cancelado')) return;
-      Alert.alert('Error', mensajeDeError(error, 'No se pudo iniciar sesión con Google.'));
+      mostrarAlerta('Error', mensajeDeError(error, 'No se pudo iniciar sesión con Google.'));
     } finally {
       setCargandoGoogle(false);
     }

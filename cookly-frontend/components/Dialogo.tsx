@@ -14,7 +14,24 @@ type BotonAlerta = {
 
 type Pedido = { titulo: string; mensaje?: string; botones: BotonAlerta[] };
 
-const alertaOriginal = Alert.alert;
+type Manejador = (titulo: string, mensaje?: string, botones?: BotonAlerta[]) => void;
+
+// Guardamos el Alert.alert ORIGINAL en una global para que, con Fast Refresh, nunca se guarde el ya reemplazado.
+const g = globalThis as any;
+g.__alertaOriginal = g.__alertaOriginal ?? Alert.alert;
+const alertaOriginal: typeof Alert.alert = g.__alertaOriginal;
+
+let manejador: Manejador | null = null;
+
+/** Úsala en vez de Alert.alert: muestra el diálogo de Cookly (o el nativo si el provider aún no montó). */
+export function mostrarAlerta(titulo: string, mensaje?: string, botones?: BotonAlerta[]) {
+  console.log('[Dialogo] mostrarAlerta ->', titulo, manejador ? '(diálogo Cookly)' : '(nativo)');
+  if (manejador) manejador(titulo, mensaje, botones);
+  else alertaOriginal.call(Alert, titulo, mensaje, botones as any);
+}
+
+// Reemplazo global inmediato: cualquier Alert.alert de la app pasa por aquí apenas se importa este archivo.
+(Alert as any).alert = mostrarAlerta;
 
 /** Elige icono y color según el contenido del aviso. */
 function estiloDe(p: Pedido) {
@@ -71,12 +88,11 @@ export function DialogoProvider({ children }: { children: React.ReactNode }) {
     [abrir]
   );
 
-  // Reemplaza Alert.alert por este diálogo mientras el provider esté montado.
+  // Conecta este provider con mostrarAlerta mientras esté montado.
   useEffect(() => {
-    (Alert as any).alert = (titulo: string, mensaje?: string, botones?: BotonAlerta[]) =>
-      mostrar(titulo, mensaje, botones);
+    manejador = mostrar;
     return () => {
-      (Alert as any).alert = alertaOriginal;
+      if (manejador === mostrar) manejador = null;
     };
   }, [mostrar]);
 

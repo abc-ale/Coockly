@@ -1,17 +1,18 @@
 // app/(tabs)/profile.tsx
 import React from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import Button from '../../components/Button';
 import { colors, radius, spacing, typography } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
+import { mostrarAlerta } from '../../components/Dialogo';
 
 export default function ProfileScreen() {
   const { usuario, logout } = useAuth();
 
   function confirmarCerrarSesion() {
-    Alert.alert('Cerrar sesión', '¿Seguro que quieres salir?', [
+    mostrarAlerta('Cerrar sesión', '¿Seguro que quieres salir?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Cerrar sesión',
