@@ -27,7 +27,7 @@
   // Si el enlace se pidió desde el panel web, al terminar se vuelve al panel y no a la app.
   var desdePanel = parametros.get("origen") === "panel";
 
-  if (desdePanel) {
+  function usarPanel() {
     var enlaceExito = document.getElementById("enlace-exito");
     var textoExito = document.getElementById("exito-texto");
     var enlaceNuevo = document.getElementById("enlace-nuevo");
@@ -41,6 +41,8 @@
     enlaceLogin.setAttribute("href", "/admin/");
     enlaceLogin.textContent = "Volver al panel";
   }
+
+  if (desdePanel) usarPanel();
   var timerId = null;
   var enviando = false;
 
@@ -161,6 +163,9 @@
           mostrarEnlaceNoDisponible();
           return;
         }
+
+        // Cuenta de administrador: al terminar se vuelve al panel web, nunca a la app.
+        if (datos.panel === true) usarPanel();
 
         mostrarVista(formView);
         iniciarTemporizador(expiracion);

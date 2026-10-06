@@ -138,6 +138,18 @@ public class ServicioAutenticacion {
         }
     }
 
+    /** True si el enlace de recuperación pertenece a una cuenta de administrador (se devuelve al panel, no a la app). */
+    public boolean esRecuperacionDeAdministrador(String tokenRecuperacion) {
+        try {
+            var datos = token.validarRecuperacion(tokenRecuperacion);
+            return usuarios.findByCorreo(datos.getSubject())
+                    .map(u -> u.getRol() == Rol.ADMINISTRADOR)
+                    .orElse(false);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     /**
      * Restablece la contraseña usando el token generado por el backend.
      */

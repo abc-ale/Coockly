@@ -37,9 +37,11 @@ public class ControladorAutenticacion {
     public Map<String, Boolean> validarTokenRecuperacion(
             @RequestBody Map<String, String> cuerpo
     ) {
+        String enlace = cuerpo.get("token");
+        boolean valido = servicio.esTokenRecuperacionValido(enlace);
         return Map.of(
-                "valido",
-                servicio.esTokenRecuperacionValido(cuerpo.get("token"))
+                "valido", valido,
+                "panel", valido && servicio.esRecuperacionDeAdministrador(enlace)
         );
     }
 
