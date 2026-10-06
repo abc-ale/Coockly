@@ -12,36 +12,77 @@
   <!-- ============ Inicio de sesión ============ -->
   <div id="vista-acceso" class="acceso" hidden>
     <section class="acceso-historia" aria-hidden="true">
-      <p class="acceso-marca">Cookly</p>
-      <p class="acceso-lema">Lo que pasa en la cocina de Cookly, de un vistazo.</p>
+      <span class="forma forma-1"></span>
+      <span class="forma forma-2"></span>
+      <span class="forma forma-3"></span>
+
+      <div class="acceso-logo">
+        <span class="acceso-logo-marca">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M5 10.5h14v7.2A2.3 2.3 0 0 1 16.7 20H7.3A2.3 2.3 0 0 1 5 17.7v-7.2Z"/><path d="M8 10.5V8.8a2.2 2.2 0 0 1 3.9-1.4A2.7 2.7 0 0 1 17 8.8v1.7"/><path d="M8 14h8"/></svg>
+        </span>
+        <span class="acceso-marca">Cookly</span>
+      </div>
+
+      <div class="historia-centro">
+        <p class="acceso-lema">Lo que pasa en la cocina de Cookly, de un vistazo.</p>
+        <ul class="historia-lista">
+          <li><span class="historia-icono"><svg class="ico" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 5.2a3.5 3.5 0 0 1 0 6.6M18 14.4c2 .7 3.5 2.6 3.5 5.6"/></svg></span>Usuarios y roles</li>
+          <li><span class="historia-icono"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Uso de la app en tiempo real</li>
+          <li><span class="historia-icono"><svg class="ico" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg></span>Reportes y moderación</li>
+          <li><span class="historia-icono"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.5 3 8 7.5 9.5 4.5-1.5 7.5-5 7.5-9.5V6L12 3Z"/><path d="m9 12 2 2 4-4"/></svg></span>Respaldo de tus datos</li>
+        </ul>
+      </div>
+
+      <p class="historia-pie">Panel administrativo · Acceso restringido</p>
     </section>
+
     <section class="acceso-formulario">
-      <form id="form-acceso" novalidate>
-        <h1>Panel administrativo</h1>
-        <p class="acceso-ayuda">Entra con la cuenta de administrador.</p>
+      <div class="acceso-tarjeta">
+        <form id="form-acceso" novalidate>
+          <span class="acceso-insignia" aria-hidden="true">
+            <svg class="ico" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          </span>
+          <h1>Panel administrativo</h1>
+          <p class="acceso-ayuda">Entra con la cuenta de administrador.</p>
 
-        <label for="acceso-correo">Correo</label>
-        <input id="acceso-correo" type="email" autocomplete="username" required>
+          <label for="acceso-correo">Correo</label>
+          <div class="campo-icono">
+            <svg class="ico icono-campo" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            <input id="acceso-correo" type="email" autocomplete="username" placeholder="tucorreo@ejemplo.com" required>
+          </div>
 
-        <label for="acceso-contrasena">Contraseña</label>
-        <input id="acceso-contrasena" type="password" autocomplete="current-password" required>
+          <label for="acceso-contrasena">Contraseña</label>
+          <div class="campo-icono">
+            <svg class="ico icono-campo" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+            <input id="acceso-contrasena" type="password" autocomplete="current-password" placeholder="Tu contraseña" required>
+            <button type="button" id="ojo-acceso" class="ojo" aria-label="Mostrar contraseña">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/><path class="ojo-tachado" d="M3 3l18 18"/></svg>
+            </button>
+          </div>
 
-        <p id="acceso-error" class="error-linea" role="alert" hidden></p>
-        <button type="submit" id="acceso-boton" class="boton primario ancho">Entrar</button>
-        <p class="acceso-ayuda"><a href="#" id="enlace-olvide">¿Olvidaste tu contraseña?</a></p>
-      </form>
+          <p id="acceso-error" class="error-linea" role="alert" hidden></p>
+          <button type="submit" id="acceso-boton" class="boton primario ancho">Entrar</button>
+          <p class="acceso-ayuda"><a href="#" id="enlace-olvide">¿Olvidaste tu contraseña?</a></p>
+        </form>
 
-      <form id="form-olvide" novalidate hidden>
-        <h1>Recuperar contraseña</h1>
-        <p class="acceso-ayuda">Escribe el correo de la cuenta de administrador. Te enviaremos un enlace válido por 15 minutos.</p>
+        <form id="form-olvide" novalidate hidden>
+          <span class="acceso-insignia" aria-hidden="true">
+            <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+          </span>
+          <h1>Recuperar contraseña</h1>
+          <p class="acceso-ayuda">Escribe el correo de la cuenta de administrador. Te enviaremos un enlace válido por 15 minutos.</p>
 
-        <label for="olvide-correo">Correo</label>
-        <input id="olvide-correo" type="email" autocomplete="username" required>
+          <label for="olvide-correo">Correo</label>
+          <div class="campo-icono">
+            <svg class="ico icono-campo" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            <input id="olvide-correo" type="email" autocomplete="username" placeholder="tucorreo@ejemplo.com" required>
+          </div>
 
-        <p id="olvide-mensaje" class="error-linea" role="alert" hidden></p>
-        <button type="submit" id="olvide-boton" class="boton primario ancho">Enviar enlace</button>
-        <p class="acceso-ayuda"><a href="#" id="enlace-volver">← Volver a iniciar sesión</a></p>
-      </form>
+          <p id="olvide-mensaje" class="error-linea" role="alert" hidden></p>
+          <button type="submit" id="olvide-boton" class="boton primario ancho">Enviar enlace</button>
+          <p class="acceso-ayuda"><a href="#" id="enlace-volver">← Volver a iniciar sesión</a></p>
+        </form>
+      </div>
     </section>
   </div>
 

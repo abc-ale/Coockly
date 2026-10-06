@@ -29,7 +29,7 @@ public class ControladorAutenticacion {
     /** Envía el correo de recuperación con Brevo. Siempre responde igual, exista o no el correo. */
     @PostMapping("/solicitar-recuperacion")
     public Map<String, String> solicitar(@Valid @RequestBody SolicitudRecuperacion s) {
-        servicio.solicitarRecuperacion(s.correo());
+        servicio.solicitarRecuperacion(s.correo(), s.origen());
         return Map.of("mensaje", "Si el correo existe, recibirás instrucciones de recuperación.");
     }
 

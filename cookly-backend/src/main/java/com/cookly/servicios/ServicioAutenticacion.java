@@ -52,6 +52,14 @@ public class ServicioAutenticacion {
      * pero si Brevo falla, el error queda registrado en los logs de Render.
      */
     public void solicitarRecuperacion(String correoUsuario) {
+        solicitarRecuperacion(correoUsuario, null);
+    }
+
+    /**
+     * @param origen "panel" si la solicitud viene del panel web: el enlace del correo llevará ese dato
+     *               para que, al terminar, la página devuelva a la persona al panel y no a la app.
+     */
+    public void solicitarRecuperacion(String correoUsuario, String origen) {
         String destino = correoUsuario.toLowerCase().trim();
 
         java.time.Instant ahora = java.time.Instant.now();
@@ -76,7 +84,8 @@ public class ServicioAutenticacion {
 
         String enlace = urlPublica
                 + "/restablecer.html?token="
-                + jwt;
+                + jwt
+                + ("panel".equalsIgnoreCase(origen) ? "&origen=panel" : "");
 
         String html = PlantillaCorreo.recuperacion(
                 usuario.get().getNombre(),

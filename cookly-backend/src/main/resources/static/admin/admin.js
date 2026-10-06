@@ -622,6 +622,15 @@
   // ------------------------------------------------------------------ eventos
 
   function iniciarEventos() {
+    var ojo = $('ojo-acceso');
+    ojo.addEventListener('click', function () {
+      var campo = $('acceso-contrasena');
+      var ver = campo.type === 'password';
+      campo.type = ver ? 'text' : 'password';
+      ojo.classList.toggle('is-visible', ver);
+      ojo.setAttribute('aria-label', ver ? 'Ocultar contraseña' : 'Mostrar contraseña');
+    });
+
     $('form-acceso').addEventListener('submit', function (e) {
       e.preventDefault();
       var correo = $('acceso-correo').value.trim();
@@ -651,23 +660,30 @@
       $('form-acceso').hidden = ver;
       $('form-olvide').hidden = !ver;
       $('olvide-mensaje').hidden = true;
+      $('olvide-mensaje').className = 'error-linea';
       if (ver) $('olvide-correo').value = $('acceso-correo').value.trim();
     }
     $('enlace-olvide').addEventListener('click', function (e) { e.preventDefault(); verOlvide(true); });
     $('enlace-volver').addEventListener('click', function (e) { e.preventDefault(); verOlvide(false); });
+    if (window.location.hash === '#recuperar') {
+      verOlvide(true);
+      try { window.history.replaceState({}, document.title, window.location.pathname); } catch (x) { /* sin problema */ }
+    }
     $('form-olvide').addEventListener('submit', function (e) {
       e.preventDefault();
       var correo = $('olvide-correo').value.trim();
       var msg = $('olvide-mensaje');
       var boton = $('olvide-boton');
       msg.hidden = true;
+      msg.className = 'error-linea';
       if (!correo) { msg.textContent = 'Escribe tu correo.'; msg.hidden = false; return; }
       boton.disabled = true;
       boton.textContent = 'Enviando…';
-      fetch(API + '/autenticacion/solicitar-recuperacion', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ correo: correo }) })
+      fetch(API + '/autenticacion/solicitar-recuperacion', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ correo: correo, origen: 'panel' }) })
         .then(function (r) { return r.json().catch(function () { return null; }).then(function (c) { return { ok: r.ok, c: c, estado: r.status }; }); })
         .then(function (r) {
           if (!r.ok) throw new Error(r.estado >= 500 ? 'No se pudo enviar el correo. Revisa la configuración de Brevo en Render.' : mensajeDeError(r.c, r.estado));
+          msg.className = 'exito-linea';
           msg.textContent = 'Si el correo existe, recibirás el enlace en unos minutos. Revisa también spam.';
           msg.hidden = false;
         })

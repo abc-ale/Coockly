@@ -22,7 +22,25 @@
   var timer = document.getElementById("timer");
   var timerBanner = document.getElementById("timer-banner");
 
-  var recoveryToken = new URLSearchParams(window.location.search).get("token");
+  var parametros = new URLSearchParams(window.location.search);
+  var recoveryToken = parametros.get("token");
+  // Si el enlace se pidió desde el panel web, al terminar se vuelve al panel y no a la app.
+  var desdePanel = parametros.get("origen") === "panel";
+
+  if (desdePanel) {
+    var enlaceExito = document.getElementById("enlace-exito");
+    var textoExito = document.getElementById("exito-texto");
+    var enlaceNuevo = document.getElementById("enlace-nuevo");
+    var enlaceLogin = document.getElementById("enlace-login");
+
+    enlaceExito.setAttribute("href", "/admin/");
+    enlaceExito.textContent = "Ir al panel";
+    textoExito.textContent =
+      "Ya puedes entrar al panel administrativo con tu contraseña nueva.";
+    enlaceNuevo.setAttribute("href", "/admin/#recuperar");
+    enlaceLogin.setAttribute("href", "/admin/");
+    enlaceLogin.textContent = "Volver al panel";
+  }
   var timerId = null;
   var enviando = false;
 
