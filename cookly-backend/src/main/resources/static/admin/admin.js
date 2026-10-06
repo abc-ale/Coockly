@@ -622,15 +622,6 @@
   // ------------------------------------------------------------------ eventos
 
   function iniciarEventos() {
-    var ojo = $('ojo-acceso');
-    ojo.addEventListener('click', function () {
-      var campo = $('acceso-contrasena');
-      var ver = campo.type === 'password';
-      campo.type = ver ? 'text' : 'password';
-      ojo.classList.toggle('is-visible', ver);
-      ojo.setAttribute('aria-label', ver ? 'Ocultar contraseña' : 'Mostrar contraseña');
-    });
-
     $('form-acceso').addEventListener('submit', function (e) {
       e.preventDefault();
       var correo = $('acceso-correo').value.trim();
