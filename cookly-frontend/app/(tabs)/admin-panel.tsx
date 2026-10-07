@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import Button from '../../components/Button';
-import { BarraApilada, Cifra, GraficaBarras, GraficaRanking, Segmentos, Tarjeta } from '../../components/admin/Graficas';
+import { BarraApilada, Cifra, GraficaLineas, GraficaRanking, Segmentos, Tarjeta } from '../../components/admin/Graficas';
 import { API_BASE_URL } from '../../constants/config';
 import { colors, spacing, typography } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
@@ -154,10 +154,10 @@ function VistaResumen({ resumen: r, graficas: g, irAReportes }: { resumen: Resum
       </Text>
 
       <Tarjeta titulo="Usuarios nuevos por día">
-        <GraficaBarras datos={g.usuariosPorDia.map((d) => ({ etiqueta: etiquetaDia(d.dia), valor: d.valor }))} color={colors.primaryDark} />
+        <GraficaLineas datos={g.usuariosPorDia.map((d) => ({ etiqueta: etiquetaDia(d.dia), valor: d.valor }))} color={colors.primaryDark} />
       </Tarjeta>
       <Tarjeta titulo="Recetas nuevas por día">
-        <GraficaBarras datos={g.recetasPorDia.map((d) => ({ etiqueta: etiquetaDia(d.dia), valor: d.valor }))} color="#E9A25E" />
+        <GraficaLineas datos={g.recetasPorDia.map((d) => ({ etiqueta: etiquetaDia(d.dia), valor: d.valor }))} color="#E9A25E" />
       </Tarjeta>
       <Tarjeta titulo="Recetas más vistas">
         <GraficaRanking datos={g.topRecetasVistas} color={colors.primaryDark} vacio="Todavía no hay vistas registradas." />
@@ -193,17 +193,17 @@ function VistaUso({ resumen: r, graficas: g }: { resumen: Resumen; graficas: Gra
 
       <View style={{ height: spacing.md }} />
       <Tarjeta titulo="Minutos de uso por día">
-        <GraficaBarras
+        <GraficaLineas
           datos={g.usoPorDia.map((d) => ({ etiqueta: etiquetaDia(d.dia), valor: d.minutos }))}
           color={colors.primaryDark}
           formato={formatoMinutos}
         />
       </Tarjeta>
       <Tarjeta titulo="Personas activas por día">
-        <GraficaBarras datos={g.usoPorDia.map((d) => ({ etiqueta: etiquetaDia(d.dia), valor: d.activos }))} color={CIRUELA} />
+        <GraficaLineas datos={g.usoPorDia.map((d) => ({ etiqueta: etiquetaDia(d.dia), valor: d.activos }))} color={CIRUELA} />
       </Tarjeta>
       <Tarjeta titulo="Horas de mayor uso">
-        <GraficaBarras datos={g.horasPico.map((h) => ({ etiqueta: `${h.hora} h`, valor: h.valor }))} color="#E9A25E" formato={(n) => `${n} sesiones`} />
+        <GraficaLineas datos={g.horasPico.map((h) => ({ etiqueta: `${h.hora} h`, valor: h.valor }))} color="#E9A25E" formato={(n) => `${n} sesiones`} />
       </Tarjeta>
       <Tarjeta titulo="Quién usa más la app">
         <GraficaRanking datos={g.topUsuariosTiempo} color={CIRUELA} formato={formatoMinutos} vacio="Todavía no hay uso registrado." />

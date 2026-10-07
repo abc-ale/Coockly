@@ -258,7 +258,7 @@
       data: {
         labels: dias.map(function (d) { return etiquetaDia(d.dia); }),
         datasets: [
-          { type: 'bar', label: 'Minutos de uso', data: dias.map(function (d) { return Number(d.minutos); }), backgroundColor: color('--rosa-marca'), borderRadius: 4, yAxisID: 'y' },
+          { type: 'line', label: 'Minutos de uso', data: dias.map(function (d) { return Number(d.minutos); }), borderColor: color('--rosa-marca'), backgroundColor: conAlfa(color('--rosa-marca'), '26'), fill: true, tension: 0.3, pointRadius: 2, yAxisID: 'y' },
           { type: 'line', label: 'Personas activas', data: dias.map(function (d) { return Number(d.activos); }), borderColor: color('--ciruela'), backgroundColor: color('--ciruela'), tension: 0.3, pointRadius: 2, yAxisID: 'y1' }
         ]
       },
@@ -272,10 +272,10 @@
     });
 
     crearGrafico('g-horas', {
-      type: 'bar',
+      type: 'line',
       data: {
         labels: g.horasPico.map(function (h) { return h.hora + ' h'; }),
-        datasets: [{ label: 'Sesiones iniciadas', data: g.horasPico.map(function (h) { return Number(h.valor); }), backgroundColor: color('--durazno'), borderRadius: 4 }]
+        datasets: [{ label: 'Sesiones iniciadas', data: g.horasPico.map(function (h) { return Number(h.valor); }), borderColor: color('--durazno'), backgroundColor: conAlfa(color('--durazno'), '26'), fill: true, tension: 0.3, borderWidth: 2, pointRadius: 3 }]
       },
       options: { scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxTicksLimit: 8 } } }, plugins: { legend: { display: false } } }
     });
@@ -312,14 +312,28 @@
     graficos[id] = new Chart($(id), { type: config.type, data: config.data, options: opciones });
   }
 
-  function dibujarBarras(id, serie, nombre, colorBarra) {
+  function conAlfa(hex, alfa) {
+    return /^#[0-9a-f]{6}$/i.test(hex) ? hex + alfa : hex;
+  }
+
+  function dibujarBarras(id, serie, nombre, colorLinea) {
     crearGrafico(id, {
-      type: 'bar',
+      type: 'line',
       data: {
         labels: serie.map(function (d) { return etiquetaDia(d.dia); }),
-        datasets: [{ label: nombre, data: serie.map(function (d) { return Number(d.valor); }), backgroundColor: colorBarra, borderRadius: 4 }]
+        datasets: [{
+          label: nombre,
+          data: serie.map(function (d) { return Number(d.valor); }),
+          borderColor: colorLinea,
+          backgroundColor: conAlfa(colorLinea, '26'),
+          fill: true,
+          tension: 0.3,
+          borderWidth: 2,
+          pointRadius: serie.length > 31 ? 0 : 3,
+          pointHoverRadius: 5
+        }]
       },
-      options: { scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxTicksLimit: 10 } } } }
+      options: { interaction: { mode: 'index', intersect: false }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxTicksLimit: 10 } } } }
     });
   }
 

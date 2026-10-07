@@ -122,6 +122,116 @@ export function GraficaBarras({ datos, color = colors.primaryDark, formato }: {
   );
 }
 
+/**
+ * Gráfica de líneas hecha solo con View: cada tramo es una barrita fina girada entre dos puntos.
+ * Toca la gráfica para ver el valor exacto de un día.
+ */
+export function GraficaLineas({ datos, color = colors.primaryDark, formato }: {
+  datos: PuntoBarra[];
+  color?: string;
+  formato?: (n: number) => string;
+}) {
+  const [seleccion, setSeleccion] = useState<number | null>(null);
+  const [ancho, setAncho] = useState(0);
+  const ALTO = 120;
+  const MARGEN = 8;
+
+  if (datos.length === 0) return <Text style={estilos.vacio}>Todavía no hay datos.</Text>;
+
+  const n = datos.length;
+  const maximo = Math.max(1, ...datos.map((d) => d.valor));
+  const mostrar = formato ?? ((v: number) => String(v));
+  const actual = seleccion !== null ? datos[seleccion] : null;
+  const medio = datos[Math.floor((n - 1) / 2)];
+  const util = ALTO - MARGEN * 2;
+  const puntos = datos.map((d, i) => ({
+    x: n === 1 ? ancho / 2 : MARGEN + (i * (ancho - MARGEN * 2)) / (n - 1),
+    y: MARGEN + (1 - d.valor / maximo) * util,
+  }));
+  const verPuntos = n <= 31;
+
+  return (
+    <View>
+      <Text style={estilos.lectura} accessibilityLiveRegion="polite">
+        {actual ? `${actual.etiqueta}: ${mostrar(actual.valor)}` : 'Toca la gráfica para ver el valor'}
+      </Text>
+      <View style={{ height: ALTO }} onLayout={(e) => setAncho(e.nativeEvent.layout.width)}>
+        {ancho > 0 && seleccion !== null ? (
+          <View
+            pointerEvents="none"
+            style={{ position: 'absolute', left: puntos[seleccion].x, top: 0, width: 1, height: ALTO, backgroundColor: color, opacity: 0.35 }}
+          />
+        ) : null}
+        {ancho > 0
+          ? puntos.slice(1).map((p, i) => {
+              const a = puntos[i];
+              const dx = p.x - a.x;
+              const dy = p.y - a.y;
+              const largo = Math.sqrt(dx * dx + dy * dy);
+              return (
+                <View
+                  key={`tramo-${i}`}
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    left: (a.x + p.x) / 2 - largo / 2,
+                    top: (a.y + p.y) / 2 - 1.5,
+                    width: largo,
+                    height: 3,
+                    borderRadius: 2,
+                    backgroundColor: color,
+                    transform: [{ rotate: `${Math.atan2(dy, dx)}rad` }],
+                  }}
+                />
+              );
+            })
+          : null}
+        {ancho > 0
+          ? puntos.map((p, i) => {
+              const elegido = seleccion === i;
+              if (!verPuntos && !elegido) return null;
+              const t = elegido ? 11 : 7;
+              return (
+                <View
+                  key={`punto-${i}`}
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    left: p.x - t / 2,
+                    top: p.y - t / 2,
+                    width: t,
+                    height: t,
+                    borderRadius: t / 2,
+                    backgroundColor: elegido ? colors.text : color,
+                    borderWidth: 1.5,
+                    borderColor: '#FFFFFF',
+                  }}
+                />
+              );
+            })
+          : null}
+        <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, flexDirection: 'row' }}>
+          {datos.map((d, i) => (
+            <Pressable
+              key={`zona-${d.etiqueta}-${i}`}
+              style={{ flex: 1 }}
+              onPress={() => setSeleccion(seleccion === i ? null : i)}
+              accessibilityLabel={`${d.etiqueta}: ${mostrar(d.valor)}`}
+            />
+          ))}
+        </View>
+      </View>
+      <View style={estilos.base} />
+      <View style={estilos.ejeX}>
+        <Text style={estilos.ejeTexto}>{datos[0].etiqueta}</Text>
+        <Text style={estilos.ejeTexto}>{n > 2 ? medio.etiqueta : ''}</Text>
+        <Text style={estilos.ejeTexto}>{datos[n - 1].etiqueta}</Text>
+      </View>
+      <Text style={estilos.maximo}>Máximo: {mostrar(maximo)}</Text>
+    </View>
+  );
+}
+
 export function GraficaRanking({ datos, color = colors.primaryDark, formato, vacio }: {
   datos: { nombre: string; valor: number }[];
   color?: string;

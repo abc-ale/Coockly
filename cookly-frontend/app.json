@@ -1,7 +1,7 @@
 {
   "expo": {
     "scheme": "cookly",
-    "name": "cookly-frontend",
+    "name": "Cookly",
     "slug": "cookly-frontend",
     "version": "1.0.0",
     "orientation": "portrait",
