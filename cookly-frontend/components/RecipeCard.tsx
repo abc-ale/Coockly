@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography, shadow } from '../constants/theme';
 
 export type Recipe = {
-  id: string;
+  id: number;
   title: string;
   description: string;
   image: string;
@@ -22,11 +22,15 @@ type Props = {
   onToggleFavorite?: () => void;
 };
 
-export default function RecipeCard({ recipe, onPress, onToggleFavorite }: Props) {
+function RecipeCard({ recipe, onPress, onToggleFavorite }: Props) {
   return (
     <Pressable onPress={onPress} style={[styles.card, shadow.card]}>
       <View>
-        <Image source={{ uri: recipe.image }} style={styles.image} />
+        <Image
+          source={{ uri: recipe.image }}
+          style={styles.image}
+          resizeMode="cover"
+        />
 
         <View style={styles.ratingBadge}>
           <Ionicons name="star" size={11} color={colors.warning} />
@@ -61,6 +65,8 @@ export default function RecipeCard({ recipe, onPress, onToggleFavorite }: Props)
     </Pressable>
   );
 }
+
+export default React.memo(RecipeCard);
 
 function Meta({ icon, text }: { icon: any; text: string }) {
   return (

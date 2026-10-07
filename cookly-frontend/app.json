@@ -1,7 +1,7 @@
 {
   "expo": {
     "scheme": "cookly",
-    "name": "cookly-frontend",
+    "name": "Cookly",
     "slug": "cookly-frontend",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -36,7 +36,8 @@
       "expo-status-bar",
       "expo-font",
       "expo-speech-recognition",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-image"
     ],
     "extra": {
       "router": {},

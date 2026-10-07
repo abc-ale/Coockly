@@ -1,9 +1,11 @@
-import React from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet, FlatList, Pressable } from 'react-native';
+// app/(tabs)/home.tsx
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, TextInput, ScrollView, StyleSheet, ActivityIndicator, Alert, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import RecipeCard, { Recipe } from '../../components/RecipeCard';
 import { colors, radius, spacing, typography } from '../../constants/theme';
+import { api } from '../../lib/api';
 
 const categories = [
   { label: 'Peruana', icon: '🌶️' },
@@ -12,83 +14,108 @@ const categories = [
   { label: 'Postres', icon: '🍰' },
 ];
 
-const trending: Recipe[] = [
-  {
-    id: '1',
-    title: 'Ceviche Clásico',
-    description: 'Pescado fresco marinado en limón con ají amarillo.',
-    image: 'https://picsum.photos/seed/ceviche/300/200',
-    rating: 4.9,
-    difficulty: 'Fácil',
-    minutes: 25,
-    servings: 4,
-    kcal: 220,
-  },
-  {
-    id: '2',
-    title: 'Torta de Chocolate',
-    description: 'Bizcocho húmedo con ganache intenso de cacao.',
-    image: 'https://picsum.photos/seed/torta/300/200',
-    rating: 4.8,
-    difficulty: 'Media',
-    minutes: 50,
-    servings: 8,
-    kcal: 410,
-  },
-];
-
 export default function HomeScreen() {
+  const [texto, setTexto] = useState('');
+  const [recetas, setRecetas] = useState<Recipe[]>([]);
+  const [favoritosIds, setFavoritosIds] = useState<Set<number>>(new Set());
+  const [cargando, setCargando] = useState(true);
+
+  const buscarRecetas = useCallback(async (busqueda: string) => {
+    setCargando(true);
+    try {
+      const [resRecetas, resFavoritos] = await Promise.all([
+        api.get('/recetas/buscar', { params: { texto: busqueda, pagina: 0, tamano: 20 } }),
+        api.get('/recetas/favoritos'),
+      ]);
+      const idsFavoritos = new Set<number>(resFavoritos.data.map((r: any) => r.id));
+      setFavoritosIds(idsFavoritos);
+      setRecetas(resRecetas.data.content ?? []);
+    } catch (error: any) {
+      Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudieron cargar las recetas.');
+    } finally {
+      setCargando(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    buscarRecetas('');
+  }, [buscarRecetas]);
+
+  async function alternarFavorito(receta: Recipe) {
+    const esFavorito = favoritosIds.has(receta.id);
+    try {
+      if (esFavorito) {
+        await api.delete(`/recetas/${receta.id}/favorito`);
+        setFavoritosIds((prev) => {
+          const copia = new Set(prev);
+          copia.delete(receta.id);
+          return copia;
+        });
+      } else {
+        await api.post(`/recetas/${receta.id}/favorito`);
+        setFavoritosIds((prev) => new Set(prev).add(receta.id));
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudo actualizar el favorito.');
+    }
+  }
+
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: spacing.xl }}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>¡Hola, Chef! 👋</Text>
-          <Text style={styles.subtitle}>¿Qué cocinamos hoy?</Text>
+    <View style={{ flex: 1 }}>
+      <ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: spacing.xl }}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>¡Hola, Chef! 👋</Text>
+            <Text style={styles.subtitle}>¿Qué cocinamos hoy?</Text>
+          </View>
+          <Pressable style={styles.chatBubble} onPress={() => router.push('/chatbot')}>
+            <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.white} />
+          </Pressable>
         </View>
-        <Pressable style={styles.chatBubble} onPress={() => router.push('/chatbot')}>
-          <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.white} />
-        </Pressable>
-      </View>
 
-      <View style={styles.searchBar}>
-        <Ionicons name="search" size={18} color={colors.textMuted} />
-        <TextInput
-          placeholder="Buscar recetas, ingredientes..."
-          placeholderTextColor={colors.textMuted}
-          style={styles.searchInput}
-        />
-      </View>
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={18} color={colors.textMuted} />
+          <TextInput
+            placeholder="Buscar recetas por nombre..."
+            placeholderTextColor={colors.textMuted}
+            style={styles.searchInput}
+            value={texto}
+            onChangeText={setTexto}
+            onSubmitEditing={() => buscarRecetas(texto)}
+            returnKeyType="search"
+          />
+        </View>
 
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Categorías</Text>
-        <Text style={styles.sectionLink}>Ver todo</Text>
-      </View>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>
+            {texto ? `Resultados para "${texto}"` : 'Todas las recetas'}
+          </Text>
+        </View>
 
-      <FlatList
-        data={categories}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.label}
-        contentContainerStyle={{ gap: spacing.sm, paddingHorizontal: spacing.md }}
-        renderItem={({ item }) => (
-          <View style={styles.categoryChip}>
-            <Text style={{ fontSize: 20 }}>{item.icon}</Text>
-            <Text style={styles.categoryLabel}>{item.label}</Text>
+        {cargando ? (
+          <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
+        ) : recetas.length === 0 ? (
+          <Text style={styles.emptyText}>
+            {texto ? 'No se encontraron recetas.' : 'Todavía no hay recetas cargadas. Toca el botón + para crear la primera.'}
+          </Text>
+        ) : (
+          <View style={styles.grid}>
+            {recetas.map((receta) => (
+              <RecipeCard
+                key={receta.id}
+                recipe={{ ...receta, isFavorite: favoritosIds.has(receta.id) }}
+                onPress={() => router.push(`/receta/${receta.id}`)}
+                onToggleFavorite={() => alternarFavorito(receta)}
+              />
+            ))}
           </View>
         )}
-      />
+      </ScrollView>
 
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>🔥 Trending</Text>
-        <Text style={styles.sectionLink}>Ver todo</Text>
-      </View>
-
-      <View style={styles.grid}>
-        {trending.map((recipe) => (
-          <RecipeCard key={recipe.id} recipe={recipe} onPress={() => {}} onToggleFavorite={() => {}} />
-        ))}
-      </View>
-    </ScrollView>
+      <Pressable style={styles.fab} onPress={() => router.push('/crear-receta')}>
+        <Ionicons name="add" size={26} color={colors.white} />
+      </Pressable>
+    </View>
   );
 }
 
@@ -125,33 +152,38 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, ...typography.body, color: colors.text },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: spacing.md,
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
   },
   sectionTitle: { ...typography.h3, color: colors.text },
-  sectionLink: { ...typography.bodySmall, color: colors.primary },
-  categoryChip: {
-    backgroundColor: colors.primaryLight,
-    borderRadius: radius.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    alignItems: 'center',
-    width: 90,
-  },
-  categoryLabel: {
-    ...typography.caption,
-    color: colors.primaryDark,
-    marginTop: 4,
+  emptyText: {
+    ...typography.body,
+    color: colors.textMuted,
     textAlign: 'center',
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: spacing.lg,
+    right: spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
 });

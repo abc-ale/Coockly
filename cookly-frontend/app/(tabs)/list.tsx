@@ -1,118 +1,136 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+// app/(tabs)/list.tsx
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router, useFocusEffect } from 'expo-router';
 import { colors, radius, spacing, typography, shadow } from '../../constants/theme';
+import { api } from '../../lib/api';
+import Button from '../../components/Button';
 
-type ItemLista = {
-  id: string;
-  nombre: string;
-  comprado: boolean;
-};
+type ElementoLista = { id: number; comprado: boolean };
+type ListaCompra = { id: number; nombre: string; creadaEn: string; elementos: ElementoLista[] };
 
-export default function ListScreen() {
-  const [items, setItems] = useState<ItemLista[]>([
-    { id: '1', nombre: 'Ají amarillo', comprado: false },
-    { id: '2', nombre: 'Limón', comprado: true },
-    { id: '3', nombre: 'Pescado fresco', comprado: false },
-  ]);
-  const [nuevoItem, setNuevoItem] = useState('');
+export default function ListaCompraScreen() {
+  const [listas, setListas] = useState<ListaCompra[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [creando, setCreando] = useState(false);
+  const [nombreNueva, setNombreNueva] = useState('');
+  const [mostrarForm, setMostrarForm] = useState(false);
 
-  const agregarItem = () => {
-    if (!nuevoItem.trim()) return;
-    setItems((prev) => [...prev, { id: Date.now().toString(), nombre: nuevoItem.trim(), comprado: false }]);
-    setNuevoItem('');
-  };
+  const cargar = useCallback(async () => {
+    setCargando(true);
+    try {
+      const { data } = await api.get('/listas-compra');
+      setListas(data);
+    } catch (error: any) {
+      Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudieron cargar tus listas.');
+    } finally {
+      setCargando(false);
+    }
+  }, []);
 
-  const alternarComprado = (id: string) => {
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, comprado: !i.comprado } : i)));
-  };
+  useFocusEffect(
+    useCallback(() => {
+      cargar();
+    }, [cargar])
+  );
 
-  const eliminarItem = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
-  };
+  async function crearLista() {
+    if (!nombreNueva.trim()) {
+      Alert.alert('Falta el nombre', 'Ponle un nombre a tu lista.');
+      return;
+    }
+    setCreando(true);
+    try {
+      const { data } = await api.post('/listas-compra', { nombre: nombreNueva.trim() });
+      setNombreNueva('');
+      setMostrarForm(false);
+      router.push(`/lista-compra/${data.id}`);
+    } catch (error: any) {
+      console.log('ERROR STATUS:', error?.response?.status);
+      console.log('ERROR DATA:', JSON.stringify(error?.response?.data));
+      console.log('ERROR MESSAGE:', error?.message);
+      Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudo crear la lista.');
+    } finally {
+      setCreando(false);
+    }
+  }
 
   return (
-    <View style={styles.screen}>
-      <Text style={styles.titulo}>Lista de compras</Text>
-
-      <View style={styles.inputRow}>
-        <TextInput
-          style={styles.input}
-          placeholder="Agregar ingrediente..."
-          placeholderTextColor={colors.textMuted}
-          value={nuevoItem}
-          onChangeText={setNuevoItem}
-          onSubmitEditing={agregarItem}
-        />
-        <TouchableOpacity style={styles.addBoton} onPress={agregarItem}>
-          <Ionicons name="add" size={22} color={colors.white} />
-        </TouchableOpacity>
+    <ScrollView style={styles.screen} contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl }}>
+      <View style={styles.header}>
+        <Text style={styles.titulo}>Listas de compras</Text>
+        <Pressable style={styles.botonAgregar} onPress={() => setMostrarForm((v) => !v)}>
+          <Ionicons name={mostrarForm ? 'close' : 'add'} size={20} color={colors.white} />
+        </Pressable>
       </View>
 
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
-        renderItem={({ item }) => (
-          <View style={[styles.itemCard, shadow.card]}>
-            <TouchableOpacity style={styles.itemLeft} onPress={() => alternarComprado(item.id)}>
-              <Ionicons
-                name={item.comprado ? 'checkmark-circle' : 'ellipse-outline'}
-                size={22}
-                color={item.comprado ? colors.success : colors.textMuted}
-              />
-              <Text style={[styles.itemTexto, item.comprado && styles.itemTachado]}>{item.nombre}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => eliminarItem(item.id)}>
-              <Ionicons name="trash-outline" size={18} color={colors.danger} />
-            </TouchableOpacity>
-          </View>
-        )}
-        ListEmptyComponent={
-          <View style={styles.vacio}>
-            <Ionicons name="cart-outline" size={40} color={colors.textMuted} />
-            <Text style={styles.vacioTexto}>Tu lista está vacía</Text>
-          </View>
-        }
-      />
-    </View>
+      {mostrarForm && (
+        <View style={styles.formNueva}>
+          <TextInput
+            style={styles.input}
+            placeholder="Nombre de la lista (ej. Compras de la semana)"
+            placeholderTextColor={colors.textMuted}
+            value={nombreNueva}
+            onChangeText={setNombreNueva}
+          />
+          <Button label="Crear lista" onPress={crearLista} loading={creando} />
+        </View>
+      )}
+
+      {cargando ? (
+        <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
+      ) : listas.length === 0 ? (
+        <Text style={styles.vacioTexto}>Todavía no tienes listas. Toca + para crear una.</Text>
+      ) : (
+        listas.map((lista) => {
+          const total = lista.elementos.length;
+          const comprados = lista.elementos.filter((e) => e.comprado).length;
+          return (
+            <Pressable key={lista.id} style={styles.tarjeta} onPress={() => router.push(`/lista-compra/${lista.id}`)}>
+              <View style={styles.iconoLista}>
+                <Ionicons name="cart-outline" size={20} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.nombreLista}>{lista.nombre}</Text>
+                <Text style={styles.progresoLista}>
+                  {total === 0 ? 'Sin ítems todavía' : `${comprados} de ${total} comprados`}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </Pressable>
+          );
+        })
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background, paddingTop: spacing.lg },
-  titulo: { ...typography.h1, color: colors.text, paddingHorizontal: spacing.md, marginBottom: spacing.md },
-  inputRow: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.md, marginBottom: spacing.sm },
+  screen: { flex: 1, backgroundColor: colors.background },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
+  titulo: { ...typography.h1, color: colors.text },
+  botonAgregar: {
+    width: 36, height: 36, borderRadius: radius.pill, backgroundColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  formNueva: {
+    backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md,
+    marginBottom: spacing.md, gap: spacing.sm, ...shadow.card,
+  },
   input: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    height: 46,
-    borderWidth: 1,
-    borderColor: colors.border,
-    color: colors.text,
-    ...typography.body,
+    backgroundColor: colors.background, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border,
+    paddingHorizontal: spacing.md, paddingVertical: spacing.sm, ...typography.body, color: colors.text,
   },
-  addBoton: {
-    backgroundColor: colors.primary,
-    width: 46,
-    height: 46,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
+  vacioTexto: { ...typography.body, color: colors.textMuted, marginTop: spacing.lg, textAlign: 'center' },
+  tarjeta: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surface,
+    borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, ...shadow.card,
   },
-  itemCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  iconoLista: {
+    width: 40, height: 40, borderRadius: radius.md, backgroundColor: colors.primaryLight,
+    alignItems: 'center', justifyContent: 'center',
   },
-  itemLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
-  itemTexto: { ...typography.body, color: colors.text },
-  itemTachado: { textDecorationLine: 'line-through', color: colors.textMuted },
-  vacio: { alignItems: 'center', marginTop: spacing.xl * 2, gap: spacing.sm },
-  vacioTexto: { ...typography.body, color: colors.textMuted, textAlign: 'center' },
+  nombreLista: { ...typography.h3, color: colors.text },
+  progresoLista: { ...typography.bodySmall, color: colors.textMuted, marginTop: 2 },
 });

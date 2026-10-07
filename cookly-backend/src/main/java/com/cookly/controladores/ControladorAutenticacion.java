@@ -29,7 +29,7 @@ public class ControladorAutenticacion {
     /** Envía el correo de recuperación con Brevo. Siempre responde igual, exista o no el correo. */
     @PostMapping("/solicitar-recuperacion")
     public Map<String, String> solicitar(@Valid @RequestBody SolicitudRecuperacion s) {
-        servicio.solicitarRecuperacion(s.correo());
+        servicio.solicitarRecuperacion(s.correo(), s.origen());
         return Map.of("mensaje", "Si el correo existe, recibirás instrucciones de recuperación.");
     }
 
@@ -37,9 +37,11 @@ public class ControladorAutenticacion {
     public Map<String, Boolean> validarTokenRecuperacion(
             @RequestBody Map<String, String> cuerpo
     ) {
+        String enlace = cuerpo.get("token");
+        boolean valido = servicio.esTokenRecuperacionValido(enlace);
         return Map.of(
-                "valido",
-                servicio.esTokenRecuperacionValido(cuerpo.get("token"))
+                "valido", valido,
+                "panel", valido && servicio.esRecuperacionDeAdministrador(enlace)
         );
     }
 

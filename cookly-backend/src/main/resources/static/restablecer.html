@@ -129,10 +129,10 @@
           </svg>
         </div>
         <h1>Contraseña actualizada</h1>
-        <p class="sub">
+        <p class="sub" id="exito-texto">
           Ya puedes volver a Cookly e iniciar sesión con tu contraseña nueva.
         </p>
-        <a class="btn btn-primary" href="cookly://login">Abrir Cookly</a>
+        <a class="btn btn-primary" id="enlace-exito" href="cookly://login">Abrir Cookly</a>
       </div>
 
       <div id="view-invalid" class="state hidden" role="status">
@@ -147,10 +147,10 @@
           Este enlace venció o ya fue utilizado. Los enlaces duran 15 minutos
           y solo se pueden usar una vez.
         </p>
-        <a class="btn btn-primary" href="cookly://olvide-contrasena">
+        <a class="btn btn-primary" id="enlace-nuevo" href="cookly://olvide-contrasena">
           Solicitar un enlace nuevo
         </a>
-        <a class="link" href="cookly://login">Volver al inicio de sesión</a>
+        <a class="link" id="enlace-login" href="cookly://login">Volver al inicio de sesión</a>
       </div>
     </section>
   </main>

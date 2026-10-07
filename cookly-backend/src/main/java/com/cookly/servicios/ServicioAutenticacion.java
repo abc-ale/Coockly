@@ -3,9 +3,12 @@ package com.cookly.servicios;
 import com.cookly.dto.RespuestaAcceso;
 import com.cookly.dto.SolicitudAcceso;
 import com.cookly.dto.SolicitudRegistro;
+import com.cookly.modelos.Rol;
 import com.cookly.modelos.Usuario;
 import com.cookly.repositorios.RepositorioUsuario;
 import com.cookly.seguridad.ServicioToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -13,6 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ServicioAutenticacion {
+
+    private static final Logger log = LoggerFactory.getLogger(ServicioAutenticacion.class);
+
+    private static final String MENSAJE_ADMIN_SOLO_CONTRASENA =
+            "Las cuentas de administrador entran con su contraseña, no con Google ni Facebook.";
 
     private final RepositorioUsuario usuarios;
     private final PasswordEncoder codificador;
@@ -44,24 +52,28 @@ public class ServicioAutenticacion {
      * pero si Brevo falla, el error queda registrado en los logs de Render.
      */
     public void solicitarRecuperacion(String correoUsuario) {
+        solicitarRecuperacion(correoUsuario, null);
+    }
+
+    /**
+     * @param origen "panel" si la solicitud viene del panel web: el enlace del correo llevará ese dato
+     *               para que, al terminar, la página devuelva a la persona al panel y no a la app.
+     */
+    public void solicitarRecuperacion(String correoUsuario, String origen) {
         String destino = correoUsuario.toLowerCase().trim();
 
         java.time.Instant ahora = java.time.Instant.now();
         java.time.Instant previo = ultimoEnvio.get(destino);
 
         if (previo != null && previo.plusSeconds(60).isAfter(ahora)) {
-            System.out.println(
-                    "Recuperación: solicitud ignorada por límite de 60 segundos."
-            );
+            log.info("Recuperación: solicitud ignorada por límite de 60 segundos.");
             return;
         }
 
         var usuario = usuarios.findByCorreo(destino);
 
         if (usuario.isEmpty() || !usuario.get().isActivo()) {
-            System.out.println(
-                    "Recuperación: usuario no encontrado o inactivo."
-            );
+            log.info("Recuperación: usuario no encontrado o inactivo.");
             return;
         }
 
@@ -72,11 +84,12 @@ public class ServicioAutenticacion {
 
         String enlace = urlPublica
                 + "/restablecer.html?token="
-                + jwt;
+                + jwt
+                + ("panel".equalsIgnoreCase(origen) ? "&origen=panel" : "");
 
         String html = PlantillaCorreo.recuperacion(
-        usuario.get().getNombre(),
-        enlace
+                usuario.get().getNombre(),
+                enlace
         );
 
         try {
@@ -89,15 +102,10 @@ public class ServicioAutenticacion {
             // Solo bloqueamos nuevos intentos si Brevo aceptó el correo.
             ultimoEnvio.put(destino, ahora);
 
-            System.out.println(
-                    "Recuperación: Brevo aceptó el correo correctamente."
-            );
+            log.info("Recuperación: Brevo aceptó el correo correctamente.");
 
         } catch (Exception e) {
-            System.err.println(
-                    "Recuperación: Brevo rechazó el correo: "
-                            + e.getMessage()
-            );
+            log.error("Recuperación: Brevo rechazó el correo: {}", e.getMessage());
 
             throw new IllegalStateException(
                     "No se pudo enviar el correo de recuperación.",
@@ -107,28 +115,40 @@ public class ServicioAutenticacion {
     }
 
     public boolean esTokenRecuperacionValido(String tokenRecuperacion) {
-    if (tokenRecuperacion == null || tokenRecuperacion.isBlank()) {
-        return false;
-    }
-
-    try {
-        var datos = token.validarRecuperacion(tokenRecuperacion);
-
-        var usuario = usuarios.findByCorreo(datos.getSubject())
-                .orElse(null);
-
-        if (usuario == null || !usuario.isActivo()) {
+        if (tokenRecuperacion == null || tokenRecuperacion.isBlank()) {
             return false;
         }
 
-        String selloDelToken = datos.get("sello", String.class);
-        String selloActual = sello(usuario.getContrasena());
+        try {
+            var datos = token.validarRecuperacion(tokenRecuperacion);
 
-        return selloDelToken != null && selloActual.equals(selloDelToken);
-    } catch (Exception e) {
-        return false;
+            var usuario = usuarios.findByCorreo(datos.getSubject())
+                    .orElse(null);
+
+            if (usuario == null || !usuario.isActivo()) {
+                return false;
+            }
+
+            String selloDelToken = datos.get("sello", String.class);
+            String selloActual = sello(usuario.getContrasena());
+
+            return selloDelToken != null && selloActual.equals(selloDelToken);
+        } catch (Exception e) {
+            return false;
+        }
     }
-}
+
+    /** True si el enlace de recuperación pertenece a una cuenta de administrador (se devuelve al panel, no a la app). */
+    public boolean esRecuperacionDeAdministrador(String tokenRecuperacion) {
+        try {
+            var datos = token.validarRecuperacion(tokenRecuperacion);
+            return usuarios.findByCorreo(datos.getSubject())
+                    .map(u -> u.getRol() == Rol.ADMINISTRADOR)
+                    .orElse(false);
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     /**
      * Restablece la contraseña usando el token generado por el backend.
@@ -161,11 +181,20 @@ public class ServicioAutenticacion {
             throw new IllegalArgumentException(mensajeError);
         }
 
+        // Va ANTES de guardar: la nueva contraseña no puede ser igual a la actual.
+        if (codificador.matches(nuevaContrasena, usuario.getContrasena())) {
+            throw new IllegalArgumentException(
+                    "La nueva contraseña debe ser distinta a la anterior."
+            );
+        }
+
         usuario.setContrasena(
                 codificador.encode(nuevaContrasena)
         );
 
         usuarios.save(usuario);
+
+        log.info("Recuperación: contraseña restablecida para {}", usuario.getCorreo());
     }
 
     /**
@@ -222,17 +251,25 @@ public class ServicioAutenticacion {
                 .trim();
 
         Usuario usuario = usuarios.findByCorreo(correo)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Credenciales inválidas"
-                        )
-                );
+                .orElseThrow(() -> {
+                    log.info("Login rechazado: no existe el usuario {}", correo);
+                    return new IllegalArgumentException(
+                            "Credenciales inválidas"
+                    );
+                });
 
-        if (!usuario.isActivo()
-                || !codificador.matches(
-                        solicitud.contrasena(),
-                        usuario.getContrasena()
-                )) {
+        if (!usuario.isActivo()) {
+            log.info("Login rechazado: usuario inactivo {}", correo);
+            throw new IllegalArgumentException(
+                    "Credenciales inválidas"
+            );
+        }
+
+        if (!codificador.matches(
+                solicitud.contrasena(),
+                usuario.getContrasena()
+        )) {
+            log.info("Login rechazado: contraseña incorrecta para {}", correo);
             throw new IllegalArgumentException(
                     "Credenciales inválidas"
             );
@@ -288,6 +325,14 @@ public class ServicioAutenticacion {
                 )
         );
 
+        // El panel administrativo da acceso a todos los datos: una cuenta de administrador
+        // solo se recupera con el enlace del correo (restablecerConToken).
+        if (usuario.getRol() == Rol.ADMINISTRADOR) {
+            throw new IllegalArgumentException(
+                    "La contraseña de un administrador se recupera con el enlace del correo."
+            );
+        }
+
         usuario.setContrasena(
                 codificador.encode(nuevaContrasena)
         );
@@ -331,6 +376,11 @@ public class ServicioAutenticacion {
             throw new IllegalArgumentException(
                     "Cuenta desactivada"
             );
+        }
+
+        // Evita que alguien con una cuenta de Google/Facebook con el mismo correo entre como administrador.
+        if (usuario.getRol() == Rol.ADMINISTRADOR) {
+            throw new IllegalArgumentException(MENSAJE_ADMIN_SOLO_CONTRASENA);
         }
 
         return respuesta(usuario);

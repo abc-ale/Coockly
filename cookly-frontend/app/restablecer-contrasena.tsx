@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
   Alert,
 } from 'react-native';
@@ -12,6 +11,7 @@ import {
 } from 'expo-router';
 
 import Button from '../components/Button';
+import PasswordInput from '../components/PasswordInput';
 import { colors, radius, spacing, typography } from '../constants/theme';
 import { api } from '../lib/api';
 
@@ -92,24 +92,18 @@ export default function RestablecerContrasenaScreen() {
         Crea una contraseña nueva para tu cuenta.
       </Text>
 
-      <TextInput
+      <PasswordInput
         placeholder="Nueva contraseña"
         placeholderTextColor={colors.textMuted}
-        secureTextEntry
-        autoCapitalize="none"
-        autoCorrect={false}
         style={styles.input}
         value={nueva}
         onChangeText={setNueva}
         editable={!cargando}
       />
 
-      <TextInput
+      <PasswordInput
         placeholder="Confirmar contraseña"
         placeholderTextColor={colors.textMuted}
-        secureTextEntry
-        autoCapitalize="none"
-        autoCorrect={false}
         style={styles.input}
         value={confirmacion}
         onChangeText={setConfirmacion}

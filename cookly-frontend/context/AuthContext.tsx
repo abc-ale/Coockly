@@ -1,8 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import { api } from '../lib/api';
+import { router } from 'expo-router';
+import { api, despertarServidor, registrarNoAutorizado } from '../lib/api';
 import { supabase } from '../lib/supabase';
 
 type Usuario = {
@@ -43,12 +45,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  async function guardarSesion(nuevoToken: string, nuevoUsuario: Usuario) {
-    await AsyncStorage.setItem('cookly_token', nuevoToken);
-    await AsyncStorage.setItem('cookly_user', JSON.stringify(nuevoUsuario));
+  // Si el servidor responde 401 (sesión vencida), cerramos la sesión de verdad y volvemos al login.
+  useEffect(() => {
+    registrarNoAutorizado(() => {
+      setToken(null);
+      setUsuario(null);
+      router.replace('/login');
+    });
+    return () => registrarNoAutorizado(null);
+  }, []);
+
+  // Monitoreo de uso: mientras la app está abierta y hay sesión, avisa al servidor cada 30 s.
+  useEffect(() => {
+    if (!token) return;
+
+    const enviarLatido = () => {
+      api.post('/uso/latido', { plataforma: Platform.OS }).catch(() => {});
+    };
+
+    let temporizador: ReturnType<typeof setInterval> | null = null;
+    const iniciar = () => {
+      if (temporizador) return;
+      enviarLatido();
+      temporizador = setInterval(enviarLatido, 30000);
+    };
+    const detener = () => {
+      if (temporizador) {
+        clearInterval(temporizador);
+        temporizador = null;
+      }
+    };
+
+    if (AppState.currentState === 'active') iniciar();
+    const suscripcion = AppState.addEventListener('change', (estado) => {
+      if (estado === 'active') iniciar();
+      else detener();
+    });
+
+    return () => {
+      detener();
+      suscripcion.remove();
+    };
+  }, [token]);
+
+  const guardarSesion = useCallback(async (nuevoToken: string, nuevoUsuario: Usuario) => {
+    // Los dos guardados en paralelo (antes eran secuenciales).
+    await Promise.all([
+      AsyncStorage.setItem('cookly_token', nuevoToken),
+      AsyncStorage.setItem('cookly_user', JSON.stringify(nuevoUsuario)),
+    ]);
     setToken(nuevoToken);
     setUsuario(nuevoUsuario);
-  }
+  }, []);
 
   async function sincronizarSupabase(correo: string, contrasena: string, nombre: string, esRegistro: boolean) {
     // URL a la que vuelve la app al tocar el enlace del correo de verificación
@@ -81,7 +129,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
 
           // La cuenta ya existe en nuestro backend (login exitoso), pero no en Supabase.
-          // Solo la autorreparamos si de verdad no existe en Supabase.
           if (msg.includes('invalid login credentials')) {
             await supabase.auth.signUp({
               email: correo,
@@ -99,75 +146,84 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function login(correo: string, contrasena: string) {
-    const { data } = await api.post('/autenticacion/login', { correo, contrasena });
-    await guardarSesion(data.token, { nombre: data.nombre, rol: data.rol, correo });
-    await sincronizarSupabase(correo, contrasena, data.nombre, false);
-  }
+  const login = useCallback(
+    async (correo: string, contrasena: string) => {
+      const { data } = await api.post('/autenticacion/login', { correo, contrasena }, { reintentar: true });
+      await guardarSesion(data.token, { nombre: data.nombre, rol: data.rol, correo });
+      // Ya NO se espera a Supabase: el usuario entra a la app de inmediato y la
+      // sincronización con la comunidad ocurre en segundo plano.
+      void sincronizarSupabase(correo, contrasena, data.nombre, false);
+    },
+    [guardarSesion]
+  );
 
-  async function registrar(nombre: string, correo: string, contrasena: string) {
-    const { data } = await api.post('/autenticacion/registro', { nombre, correo, contrasena });
-    await guardarSesion(data.token, { nombre: data.nombre, rol: data.rol, correo });
-    await sincronizarSupabase(correo, contrasena, nombre, true);
-  }
+  const registrar = useCallback(
+    async (nombre: string, correo: string, contrasena: string) => {
+      const { data } = await api.post('/autenticacion/registro', { nombre, correo, contrasena });
+      await guardarSesion(data.token, { nombre: data.nombre, rol: data.rol, correo });
+      void sincronizarSupabase(correo, contrasena, nombre, true);
+    },
+    [guardarSesion]
+  );
 
   /**
-   * Login con Google: abre el navegador con el flujo OAuth de Supabase, recupera
-   * el access_token de la sesión de Supabase desde la URL de retorno, y lo manda
-   * al backend (/autenticacion/acceso-social) para crear o recuperar el usuario.
+   * Login social (Google/Facebook): abre el navegador con el flujo OAuth de Supabase, recupera
+   * el access_token de la URL de retorno y lo manda al backend para crear o recuperar el usuario.
    */
-  async function loginConGoogle() {
-    await loginSocial('google');
-  }
+  const loginSocial = useCallback(
+    async (proveedor: 'google' | 'facebook', scopes?: string) => {
+      const redirectTo = Linking.createURL('auth/callback'); // usa el scheme "cookly" de app.json
 
-  /** Login con Facebook: mismo flujo que Google, pidiendo el permiso de correo. */
-  async function loginConFacebook() {
-    await loginSocial('facebook', 'email,public_profile');
-  }
+      // Mientras la persona elige su cuenta en el navegador, el servidor se va despertando.
+      despertarServidor();
 
-  async function loginSocial(proveedor: 'google' | 'facebook', scopes?: string) {
-    const redirectTo = Linking.createURL('auth/callback'); // usa el scheme "cookly" de app.json
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: proveedor,
+        options: { redirectTo, skipBrowserRedirect: true, ...(scopes ? { scopes } : {}) },
+      });
+      if (error || !data?.url) throw error ?? new Error(`No se pudo iniciar el flujo de ${proveedor}`);
 
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: proveedor,
-      options: { redirectTo, skipBrowserRedirect: true, ...(scopes ? { scopes } : {}) },
-    });
-    if (error || !data?.url) throw error ?? new Error(`No se pudo iniciar el flujo de ${proveedor}`);
+      const resultado = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      if (resultado.type !== 'success' || !resultado.url) {
+        throw new Error(`Inicio de sesión con ${proveedor} cancelado`);
+      }
 
-    const resultado = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-    if (resultado.type !== 'success' || !resultado.url) {
-      throw new Error(`Inicio de sesión con ${proveedor} cancelado`);
-    }
+      // Supabase devuelve los tokens en el fragmento (#) de la URL de retorno
+      const parametros = new URLSearchParams(resultado.url.split('#')[1]);
+      const accessToken = parametros.get('access_token');
+      const refreshToken = parametros.get('refresh_token');
+      if (!accessToken || !refreshToken) throw new Error(`No se recibió la sesión de ${proveedor}`);
 
-    // Supabase devuelve los tokens en el fragmento (#) de la URL de retorno
-    const parametros = new URLSearchParams(resultado.url.split('#')[1]);
-    const accessToken = parametros.get('access_token');
-    const refreshToken = parametros.get('refresh_token');
-    if (!accessToken || !refreshToken) throw new Error(`No se recibió la sesión de ${proveedor}`);
+      // setSession y la llamada al backend en paralelo (antes eran una tras otra).
+      const [, { data: respuesta }] = await Promise.all([
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }),
+        api.post(
+          '/autenticacion/acceso-social',
+          {},
+          { headers: { Authorization: `Bearer ${accessToken}` }, reintentar: true, timeout: 30000 }
+        ),
+      ]);
 
-    await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+      await guardarSesion(respuesta.token, { nombre: respuesta.nombre, rol: respuesta.rol, correo: respuesta.correo });
+    },
+    [guardarSesion]
+  );
 
-    const { data: respuesta } = await api.post(
-      '/autenticacion/acceso-social',
-      {},
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
+  const loginConGoogle = useCallback(() => loginSocial('google'), [loginSocial]);
+  const loginConFacebook = useCallback(() => loginSocial('facebook', 'email,public_profile'), [loginSocial]);
 
-    await guardarSesion(respuesta.token, { nombre: respuesta.nombre, rol: respuesta.rol, correo: respuesta.correo });
-  }
-
-  async function logout() {
-    await AsyncStorage.multiRemove(['cookly_token', 'cookly_user']);
-    await supabase.auth.signOut();
+  const logout = useCallback(async () => {
     setToken(null);
     setUsuario(null);
-  }
+    await Promise.all([AsyncStorage.multiRemove(['cookly_token', 'cookly_user']), supabase.auth.signOut()]);
+  }, []);
 
-  return (
-    <AuthContext.Provider value={{ usuario, token, cargando, login, registrar, loginConGoogle, loginConFacebook, logout }}>
-      {children}
-    </AuthContext.Provider>
+  const valor = useMemo(
+    () => ({ usuario, token, cargando, login, registrar, loginConGoogle, loginConFacebook, logout }),
+    [usuario, token, cargando, login, registrar, loginConGoogle, loginConFacebook, logout]
   );
+
+  return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
