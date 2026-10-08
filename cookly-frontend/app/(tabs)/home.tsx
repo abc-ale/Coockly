@@ -13,6 +13,34 @@ const categories = [
   { label: 'Saludables', icon: '🥗' },
   { label: 'Comida rápida', icon: '🍔' },
   { label: 'Platos fuertes', icon: '🍖' },
+<<<<<<< HEAD
+=======
+];
+
+const trending: Recipe[] = [
+  {
+    id: '1',
+    title: 'Ceviche Clásico',
+    description: 'Pescado fresco marinado en limón con ají amarillo.',
+    image: 'https://picsum.photos/seed/ceviche/300/200',
+    rating: 4.9,
+    difficulty: 'Fácil',
+    minutes: 25,
+    servings: 4,
+    kcal: 220,
+  },
+  {
+    id: '2',
+    title: 'Torta de Chocolate',
+    description: 'Bizcocho húmedo con ganache intenso de cacao.',
+    image: 'https://picsum.photos/seed/torta/300/200',
+    rating: 4.8,
+    difficulty: 'Media',
+    minutes: 50,
+    servings: 8,
+    kcal: 410,
+  },
+>>>>>>> 9ae833d (Categorías: Postres, Saludables, Comida rápida y Platos fuertes)
 ];
 
 export default function HomeScreen() {
