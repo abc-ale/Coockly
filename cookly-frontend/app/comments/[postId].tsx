@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { colors, radius, spacing, typography } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
+import BotonReportarContenido from '../../components/BotonReportarContenido';
 
 type Comentario = {
   id: string;
