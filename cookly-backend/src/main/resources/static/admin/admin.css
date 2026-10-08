@@ -238,3 +238,16 @@ td.largo { white-space: normal; min-width: 260px; max-width: 520px; }
 .acceso-formulario .acceso-ayuda a { color: var(--rosa); text-underline-offset: 3px; font-weight: 600; }
 .acceso-formulario .acceso-ayuda a:hover { color: #a3415a; }
 .exito-linea { color: #2f6b4a; margin-top: 14px; font-weight: 500; }
+
+/* ojito para mostrar / ocultar la contraseña */
+.campo-clave { position: relative; }
+.campo-clave input { padding-right: 46px; }
+.ojo {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 36px; height: 36px; display: grid; place-items: center;
+  border: 0; border-radius: 8px; background: transparent; color: #b58f99; cursor: pointer;
+}
+.ojo:hover { background: var(--rosa-pastel); color: var(--rosa); }
+.ojo svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ojo .ojo-tachado { display: none; }
+.ojo.is-visible .ojo-tachado { display: block; }

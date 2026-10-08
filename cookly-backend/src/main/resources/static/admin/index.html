@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Cookly · Panel administrativo</title>
-  <link rel="stylesheet" href="admin.css?v=4">
+  <link rel="stylesheet" href="admin.css?v=5">
 </head>
 <body>
 
@@ -24,7 +24,12 @@
         <input id="acceso-correo" type="email" autocomplete="username" required>
 
         <label for="acceso-contrasena">Contraseña</label>
-        <input id="acceso-contrasena" type="password" autocomplete="current-password" required>
+        <div class="campo-clave">
+          <input id="acceso-contrasena" type="password" autocomplete="current-password" required>
+          <button type="button" id="ojo-acceso" class="ojo" aria-label="Mostrar contraseña">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/><path class="ojo-tachado" d="M3 3l18 18"/></svg>
+          </button>
+        </div>
 
         <p id="acceso-error" class="error-linea" role="alert" hidden></p>
         <button type="submit" id="acceso-boton" class="boton primario ancho">Entrar</button>
@@ -253,6 +258,6 @@
   <div id="avisos" class="avisos" role="status" aria-live="polite"></div>
 
   <script src="vendor/chart.umd.js"></script>
-  <script src="admin.js?v=4"></script>
+  <script src="admin.js?v=5"></script>
 </body>
 </html>

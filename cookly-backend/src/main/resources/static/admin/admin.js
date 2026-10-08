@@ -258,7 +258,7 @@
       data: {
         labels: dias.map(function (d) { return etiquetaDia(d.dia); }),
         datasets: [
-          { type: 'line', label: 'Minutos de uso', data: dias.map(function (d) { return Number(d.minutos); }), borderColor: color('--rosa-marca'), backgroundColor: conAlfa(color('--rosa-marca'), '26'), fill: true, tension: 0.3, pointRadius: 2, yAxisID: 'y' },
+          { type: 'bar', label: 'Minutos de uso', data: dias.map(function (d) { return Number(d.minutos); }), backgroundColor: color('--rosa-marca'), borderRadius: 4, yAxisID: 'y' },
           { type: 'line', label: 'Personas activas', data: dias.map(function (d) { return Number(d.activos); }), borderColor: color('--ciruela'), backgroundColor: color('--ciruela'), tension: 0.3, pointRadius: 2, yAxisID: 'y1' }
         ]
       },
@@ -272,10 +272,10 @@
     });
 
     crearGrafico('g-horas', {
-      type: 'line',
+      type: 'bar',
       data: {
         labels: g.horasPico.map(function (h) { return h.hora + ' h'; }),
-        datasets: [{ label: 'Sesiones iniciadas', data: g.horasPico.map(function (h) { return Number(h.valor); }), borderColor: color('--durazno'), backgroundColor: conAlfa(color('--durazno'), '26'), fill: true, tension: 0.3, borderWidth: 2, pointRadius: 3 }]
+        datasets: [{ label: 'Sesiones iniciadas', data: g.horasPico.map(function (h) { return Number(h.valor); }), backgroundColor: color('--durazno'), borderRadius: 4 }]
       },
       options: { scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxTicksLimit: 8 } } }, plugins: { legend: { display: false } } }
     });
@@ -312,28 +312,14 @@
     graficos[id] = new Chart($(id), { type: config.type, data: config.data, options: opciones });
   }
 
-  function conAlfa(hex, alfa) {
-    return /^#[0-9a-f]{6}$/i.test(hex) ? hex + alfa : hex;
-  }
-
-  function dibujarBarras(id, serie, nombre, colorLinea) {
+  function dibujarBarras(id, serie, nombre, colorBarra) {
     crearGrafico(id, {
-      type: 'line',
+      type: 'bar',
       data: {
         labels: serie.map(function (d) { return etiquetaDia(d.dia); }),
-        datasets: [{
-          label: nombre,
-          data: serie.map(function (d) { return Number(d.valor); }),
-          borderColor: colorLinea,
-          backgroundColor: conAlfa(colorLinea, '26'),
-          fill: true,
-          tension: 0.3,
-          borderWidth: 2,
-          pointRadius: serie.length > 31 ? 0 : 3,
-          pointHoverRadius: 5
-        }]
+        datasets: [{ label: nombre, data: serie.map(function (d) { return Number(d.valor); }), backgroundColor: colorBarra, borderRadius: 4 }]
       },
-      options: { interaction: { mode: 'index', intersect: false }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxTicksLimit: 10 } } } }
+      options: { scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxTicksLimit: 10 } } } }
     });
   }
 
@@ -636,6 +622,18 @@
   // ------------------------------------------------------------------ eventos
 
   function iniciarEventos() {
+    // Ojito: muestra u oculta la contraseña
+    var ojo = $('ojo-acceso');
+    if (ojo) {
+      ojo.addEventListener('click', function () {
+        var campo = $('acceso-contrasena');
+        var ver = campo.type === 'password';
+        campo.type = ver ? 'text' : 'password';
+        ojo.classList.toggle('is-visible', ver);
+        ojo.setAttribute('aria-label', ver ? 'Ocultar contraseña' : 'Mostrar contraseña');
+      });
+    }
+
     $('form-acceso').addEventListener('submit', function (e) {
       e.preventDefault();
       var correo = $('acceso-correo').value.trim();
