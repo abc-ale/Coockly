@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography, shadow } from '../constants/theme';
 
 export type Recipe = {
-  id: string;
+  id: number;
   title: string;
   description: string;
   image: string;
