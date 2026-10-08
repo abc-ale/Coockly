@@ -6,10 +6,10 @@ import RecipeCard, { Recipe } from '../../components/RecipeCard';
 import { colors, radius, spacing, typography } from '../../constants/theme';
 
 const categories = [
-  { label: 'Peruana', icon: '🌶️' },
-  { label: 'Platos Fuertes', icon: '🍖' },
-  { label: 'Entradas', icon: '🥗' },
   { label: 'Postres', icon: '🍰' },
+  { label: 'Saludables', icon: '🥗' },
+  { label: 'Comida rápida', icon: '🍔' },
+  { label: 'Platos fuertes', icon: '🍖' },
 ];
 
 const trending: Recipe[] = [
