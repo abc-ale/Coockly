@@ -4,7 +4,6 @@ import { View, Text, TextInput, ScrollView, StyleSheet, ActivityIndicator, Alert
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import RecipeCard, { Recipe } from '../../components/RecipeCard';
-import FiltroEtiquetas from '../../components/FiltroEtiquetas';
 import { colors, radius, spacing, typography } from '../../constants/theme';
 import { api } from '../../lib/api';
 
@@ -17,29 +16,19 @@ const categories = [
 
 export default function HomeScreen() {
   const [texto, setTexto] = useState('');
-  const [etiquetaSeleccionada, setEtiquetaSeleccionada] = useState<number | null>(null);
   const [recetas, setRecetas] = useState<Recipe[]>([]);
   const [favoritosIds, setFavoritosIds] = useState<Set<number>>(new Set());
   const [cargando, setCargando] = useState(true);
 
-  const buscarRecetas = useCallback(async (busqueda: string, etiquetaId: number | null) => {
+  const buscarRecetas = useCallback(async (busqueda: string) => {
     setCargando(true);
     try {
-      let resRecetas;
-      const resFavoritos = await api.get('/recetas/favoritos');
+      const [resRecetas, resFavoritos] = await Promise.all([
+        api.get('/recetas/buscar', { params: { texto: busqueda, pagina: 0, tamano: 20 } }),
+        api.get('/recetas/favoritos'),
+      ]);
       const idsFavoritos = new Set<number>(resFavoritos.data.map((r: any) => r.id));
       setFavoritosIds(idsFavoritos);
-
-      if (etiquetaId !== null) {
-        resRecetas = await api.get(`/recetas/por-etiqueta/${etiquetaId}`, {
-          params: { pagina: 0, tamano: 20 },
-        });
-      } else {
-        resRecetas = await api.get('/recetas/buscar', {
-          params: { texto: busqueda, pagina: 0, tamano: 20 },
-        });
-      }
-
       setRecetas(resRecetas.data.content ?? []);
     } catch (error: any) {
       Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudieron cargar las recetas.');
@@ -49,8 +38,8 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    buscarRecetas(texto, etiquetaSeleccionada);
-  }, [texto, etiquetaSeleccionada, buscarRecetas]);
+    buscarRecetas('');
+  }, [buscarRecetas]);
 
   async function alternarFavorito(receta: Recipe) {
     const esFavorito = favoritosIds.has(receta.id);
@@ -91,24 +80,15 @@ export default function HomeScreen() {
             placeholderTextColor={colors.textMuted}
             style={styles.searchInput}
             value={texto}
-            onChangeText={(val) => {
-              setTexto(val);
-              if (val) setEtiquetaSeleccionada(null);
-            }}
+            onChangeText={setTexto}
+            onSubmitEditing={() => buscarRecetas(texto)}
             returnKeyType="search"
           />
         </View>
 
-      <FiltroEtiquetas 
-        seleccionada={etiquetaSeleccionada}
-        onCambiar={(id: number | null) => {
-            setEtiquetaSeleccionada(id);
-            if (id !== null) setTexto('');
-        }}
-         />
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>
-            {texto ? `Resultados para "${texto}"` : etiquetaSeleccionada !== null ? 'Filtrado por etiqueta' : 'Todas las recetas'}
+            {texto ? `Resultados para "${texto}"` : 'Todas las recetas'}
           </Text>
         </View>
 
@@ -116,7 +96,7 @@ export default function HomeScreen() {
           <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
         ) : recetas.length === 0 ? (
           <Text style={styles.emptyText}>
-            {texto || etiquetaSeleccionada !== null ? 'No se encontraron recetas.' : 'Todavía no hay recetas cargadas. Toca el botón + para crear la primera.'}
+            {texto ? 'No se encontraron recetas.' : 'Todavía no hay recetas cargadas. Toca el botón + para crear la primera.'}
           </Text>
         ) : (
           <View style={styles.grid}>
@@ -173,7 +153,7 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, ...typography.body, color: colors.text },
   sectionHeader: {
     paddingHorizontal: spacing.md,
-    marginTop: spacing.md,
+    marginTop: spacing.lg,
     marginBottom: spacing.sm,
   },
   sectionTitle: { ...typography.h3, color: colors.text },

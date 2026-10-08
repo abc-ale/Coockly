@@ -1,5 +1,5 @@
 // app/(tabs)/admin-reportes.tsx
-// Reportes administrados por la comunidad y recetas.
+// Recetas reportadas por la comunidad. Ahora las atiende el administrador (ya no existe el rol moderador).
 import React, { useCallback, useState } from 'react';
 import { View, Text, FlatList, Alert, RefreshControl, ActivityIndicator, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,7 +7,6 @@ import { useFocusEffect } from 'expo-router';
 import Button from '../../components/Button';
 import { colors, radius, spacing, typography } from '../../constants/theme';
 import { ReporteAdmin, listarReportes, mensajeDeError, resolverReporte } from '../../lib/admin';
-import ReportesComunidad, { PestanasReportes, Vista } from '../../components/ReportesComunidad';
 
 export default function AdminReportesScreen() {
   const insets = useSafeAreaInsets();
@@ -16,7 +15,6 @@ export default function AdminReportesScreen() {
   const [refrescando, setRefrescando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState<number | null>(null);
-  const [vista, setVista] = useState<Vista>('recetas');
 
   const cargar = useCallback(async (esRefresco = false) => {
     if (esRefresco) setRefrescando(true);
@@ -60,8 +58,6 @@ export default function AdminReportesScreen() {
     );
   }
 
-  if (vista === 'comunidad') return <ReportesComunidad vista={vista} onCambiar={setVista} />;
-
   return (
     <FlatList
       style={estilos.pantalla}
@@ -71,7 +67,6 @@ export default function AdminReportesScreen() {
       refreshControl={<RefreshControl refreshing={refrescando} onRefresh={() => cargar(true)} colors={[colors.primary]} tintColor={colors.primary} />}
       ListHeaderComponent={
         <View style={{ paddingTop: insets.top + spacing.md, marginBottom: spacing.md }}>
-          <PestanasReportes vista={vista} onCambiar={setVista} />
           <Text style={estilos.titulo}>Reportes de recetas</Text>
           <Text style={estilos.subtitulo}>Recetas señaladas por la comunidad.</Text>
           {error ? (
@@ -112,7 +107,7 @@ export default function AdminReportesScreen() {
 
 const estilos = StyleSheet.create({
   pantalla: { flex: 1, backgroundColor: colors.background },
-  titulo: { ...typography.h1, color: colors.text, marginTop: spacing.sm },
+  titulo: { ...typography.h1, color: colors.text },
   subtitulo: { ...typography.body, color: colors.textMuted, marginTop: 4 },
   error: { backgroundColor: '#FDECEC', borderRadius: radius.md, padding: spacing.md, marginTop: spacing.md, gap: spacing.sm },
   errorTexto: { ...typography.body, color: colors.danger },
