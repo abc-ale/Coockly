@@ -5,27 +5,65 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Cookly · Panel administrativo</title>
-  <link rel="stylesheet" href="admin.css?v=5">
+  <link rel="icon" type="image/png" href="img/favicon.png">
+<link rel="stylesheet" href="admin.css?v=6">
 </head>
 <body>
 
-  <!-- ============ Inicio de sesión ============ -->
+    <!-- ============ Inicio de sesión ============ -->
   <div id="vista-acceso" class="acceso" hidden>
     <section class="acceso-historia" aria-hidden="true">
-      <p class="acceso-marca">Cookly</p>
-      <p class="acceso-lema">Lo que pasa en la cocina de Cookly, de un vistazo.</p>
+      <!-- manchas rosas decorativas -->
+      <svg class="mancha mancha-arriba" viewBox="0 0 300 260" fill="none"><path d="M300 0v200c-40 22-95 6-125-28-24-27-22-52-60-72C80 82 40 70 24 40 14 20 30 6 46 0h254Z" fill="#FF4D80"/><path d="M300 0v120c-34 20-78 12-100-12-20-22-8-48-34-70-8-7-18-12-28-16-10-4-20-8-22-22h184Z" fill="#F3D9DC"/></svg>
+      <svg class="mancha mancha-abajo" viewBox="0 0 230 240" fill="none"><path d="M0 36C52 28 100 68 118 118c14 38 52 68 90 78 14 10 14 30 0 44H0V36Z" fill="#FF4D80"/><path d="M0 112c26-2 46 16 54 40 8 22 28 34 54 40-24 24-62 32-108 18V112Z" fill="#F3D9DC"/></svg>
+
+      <p class="acceso-marca"><img src="img/isotipo-claro.png" alt=""><span>ookly</span></p>
+
+      <div class="acceso-texto">
+        <p class="acceso-lema">Lo que pasa en la cocina de <em>Cookly</em>, de un vistazo.</p>
+        <p class="acceso-detalle">Organiza recetas, usuarios y comunidad en un solo lugar.</p>
+      </div>
+
+      <svg class="acceso-ilustracion" viewBox="0 0 520 300" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <g class="sarten" stroke="#F3D9DC" stroke-width="5">
+          <ellipse cx="190" cy="190" rx="150" ry="44"/>
+          <ellipse cx="190" cy="190" rx="128" ry="30" stroke-width="3" opacity=".55"/>
+          <path d="M40 192c4 52 70 88 150 88s146-36 150-88"/>
+          <path d="M328 170 470 100"/>
+          <path d="M338 200 482 128"/>
+          <path d="M470 100c10-6 22 0 18 12l-6 16"/>
+          <ellipse cx="466" cy="116" rx="7" ry="4" transform="rotate(-27 466 116)" stroke-width="3"/>
+        </g>
+        <g class="hoja" fill="#BEE3A5" stroke="none"><path d="M118 118c-6-34 14-60 52-70 6 34-10 62-52 70Z"/><path d="M122 114c14-18 26-30 44-46" stroke="#2B1220" stroke-opacity=".35" stroke-width="3" fill="none"/></g>
+        <g class="hoja dos" fill="#BEE3A5" stroke="none"><path d="M206 90c-18-26-8-56 22-76 18 28 8 58-22 76Z"/><path d="M210 84c6-18 12-34 18-58" stroke="#2B1220" stroke-opacity=".35" stroke-width="3" fill="none"/></g>
+        <g class="hoja tres" fill="#BEE3A5" stroke="none"><path d="M262 132c8-26 32-40 62-34-6 28-30 42-62 34Z"/></g>
+        <g stroke="#FFD866" stroke-width="5"><path class="chispa" d="M92 70l-20-10"/><path class="chispa b" d="M286 46l10-22"/><path class="chispa c" d="M336 70l22-8"/></g>
+        <circle class="chispa b" cx="150" cy="40" r="5" fill="#FF4D80" stroke="none"/>
+        <circle class="chispa d" cx="372" cy="60" r="4" fill="#FFD866" stroke="none"/>
+        <circle class="chispa" cx="60" cy="130" r="4" fill="#BEE3A5" stroke="none"/>
+        <g stroke="#F3D9DC" stroke-width="5" transform="rotate(-28 400 250)">
+          <ellipse cx="400" cy="250" rx="38" ry="19"/>
+          <path d="M436 250h82"/>
+        </g>
+        <g fill="#BEE3A5" stroke="none" transform="translate(60 205)"><path d="M10 80C14 40 24 18 36 0" stroke="#BEE3A5" stroke-width="4" fill="none"/><ellipse cx="22" cy="30" rx="9" ry="16" transform="rotate(-28 22 30)"/><ellipse cx="38" cy="14" rx="8" ry="14" transform="rotate(26 38 14)"/><ellipse cx="14" cy="54" rx="8" ry="14" transform="rotate(-32 14 54)"/></g>
+      </svg>
     </section>
+
     <section class="acceso-formulario">
       <form id="form-acceso" novalidate>
         <h1>Panel administrativo</h1>
         <p class="acceso-ayuda">Entra con la cuenta de administrador.</p>
 
         <label for="acceso-correo">Correo</label>
-        <input id="acceso-correo" type="email" autocomplete="username" required>
+        <div class="campo-icono">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 8 8 5.5L20 8"/></svg>
+          <input id="acceso-correo" type="email" autocomplete="username" placeholder="tucorreo@gmail.com" required>
+        </div>
 
         <label for="acceso-contrasena">Contraseña</label>
-        <div class="campo-clave">
-          <input id="acceso-contrasena" type="password" autocomplete="current-password" required>
+        <div class="campo-icono campo-clave">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="9.5" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>
+          <input id="acceso-contrasena" type="password" autocomplete="current-password" placeholder="Ingresa tu contraseña" required>
           <button type="button" id="ojo-acceso" class="ojo" aria-label="Mostrar contraseña">
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/><path class="ojo-tachado" d="M3 3l18 18"/></svg>
           </button>
@@ -41,7 +79,10 @@
         <p class="acceso-ayuda">Escribe el correo de la cuenta de administrador. Te enviaremos un enlace válido por 15 minutos.</p>
 
         <label for="olvide-correo">Correo</label>
-        <input id="olvide-correo" type="email" autocomplete="username" required>
+        <div class="campo-icono">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 8 8 5.5L20 8"/></svg>
+          <input id="olvide-correo" type="email" autocomplete="username" placeholder="tucorreo@gmail.com" required>
+        </div>
 
         <p id="olvide-mensaje" class="error-linea" role="alert" hidden></p>
         <button type="submit" id="olvide-boton" class="boton primario ancho">Enviar enlace</button>
@@ -53,9 +94,12 @@
   <!-- ============ Panel ============ -->
   <div id="vista-panel" class="panel" hidden>
     <aside class="lateral">
-      <div class="marca">
-        <span class="marca-nombre">Cookly</span>
-        <span class="marca-sub">Panel administrativo</span>
+            <div class="marca">
+        <img src="img/isotipo-claro.png" alt="">
+        <div class="marca-texto">
+          <span class="marca-nombre">ookly</span>
+          <span class="marca-sub">Panel administrativo</span>
+        </div>
       </div>
       <nav class="navegacion" aria-label="Secciones del panel">
         <a href="#resumen" data-nav="resumen">Resumen</a>
