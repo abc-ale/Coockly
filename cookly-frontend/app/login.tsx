@@ -1,10 +1,11 @@
-// app/login.tsx
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
-import { Link, router } from 'expo-router';
-import Button from '../components/Button';
-import PasswordInput from '../components/PasswordInput';
-import { colors, radius, spacing, typography } from '../constants/theme';
+// app/login.tsx  (bienvenida + login en un solo pager)
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, Animated, Easing, StyleSheet, Image, useWindowDimensions } from 'react-native';
+import { router, Redirect } from 'expo-router';
+import FondoBlobs from '../components/FondoBlobs';
+import PantallaLogin from '../components/PantallaLogin';
+import Logo from '../components/Logo';
+import { colors, fonts, spacing, typography } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 import { despertarServidor } from '../lib/api';
 import { mostrarAlerta } from '../components/Dialogo';
@@ -18,24 +19,54 @@ function mensajeDeError(error: any, porDefecto: string) {
   return porDefecto;
 }
 
+// Sartén de Cookly girando mientras se entra a la app.
+function CargandoCookly() {
+  const giro = useRef(new Animated.Value(0)).current;
+  const latido = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(giro, { toValue: 1, duration: 1400, easing: Easing.inOut(Easing.cubic), useNativeDriver: true })
+    ).start();
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(latido, { toValue: 1, duration: 700, useNativeDriver: true }),
+        Animated.timing(latido, { toValue: 0, duration: 700, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  const rotar = giro.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const escala = latido.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] });
+
+  return (
+    <View style={s.overlay}>
+      <Animated.Image
+        source={require('../assets/images/isotipo-rosa.png')}
+        style={{ width: 96, height: 96, resizeMode: 'contain', transform: [{ rotate: rotar }, { scale: escala }] }}
+      />
+      <Text style={s.overlayTexto}>Entrando a Cookly...</Text>
+    </View>
+  );
+}
+
 export default function LoginScreen() {
-  const { login, loginConGoogle, loginConFacebook } = useAuth();
-  const [correo, setCorreo] = useState('');
-  const [contrasena, setContrasena] = useState('');
+  const { token, login, loginConGoogle, loginConFacebook } = useAuth();
+  const { width } = useWindowDimensions();
+  const scrollX = useRef(new Animated.Value(0)).current;
+
   const [cargandoEmail, setCargandoEmail] = useState(false);
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
   const [cargandoFacebook, setCargandoFacebook] = useState(false);
-
-  // Mientras cualquiera de los dos flujos está en curso, deshabilitamos ambos
-  // botones para que no se puedan disparar dos inicios de sesión a la vez.
   const cargandoAlguno = cargandoEmail || cargandoGoogle || cargandoFacebook;
 
-  // Despierta el servidor apenas se abre la pantalla de login.
   useEffect(() => {
     despertarServidor();
   }, []);
 
-  async function manejarLogin() {
+  // Si el login sale bien NO apagamos el cargando: se queda hasta que la app
+  // cambia sola al inicio. Solo se apaga si hay error o si se cancela.
+  async function manejarLogin(correo: string, contrasena: string) {
     if (!correo || !contrasena) {
       mostrarAlerta('Faltan datos', 'Ingresa tu correo y contraseña.');
       return;
@@ -46,9 +77,8 @@ export default function LoginScreen() {
       await login(correo.trim(), contrasena);
       router.replace('/(tabs)/home');
     } catch (error: any) {
-      mostrarAlerta('Error', mensajeDeError(error, 'No se pudo iniciar sesión. Verifica tus datos.'));
-    } finally {
       setCargandoEmail(false);
+      mostrarAlerta('Error', mensajeDeError(error, 'No se pudo iniciar sesión. Verifica tus datos.'));
     }
   }
 
@@ -59,10 +89,9 @@ export default function LoginScreen() {
       await loginConFacebook();
       router.replace('/(tabs)/home');
     } catch (error: any) {
+      setCargandoFacebook(false);
       if (String(error?.message).includes('cancelado')) return;
       mostrarAlerta('Error', mensajeDeError(error, 'No se pudo iniciar sesión con Facebook.'));
-    } finally {
-      setCargandoFacebook(false);
     }
   }
 
@@ -73,84 +102,109 @@ export default function LoginScreen() {
       await loginConGoogle();
       router.replace('/(tabs)/home');
     } catch (error: any) {
+      setCargandoGoogle(false);
       if (String(error?.message).includes('cancelado')) return;
       mostrarAlerta('Error', mensajeDeError(error, 'No se pudo iniciar sesión con Google.'));
-    } finally {
-      setCargandoGoogle(false);
     }
   }
 
+  const dot = (i: number) => ({
+    width: scrollX.interpolate({
+      inputRange: [(i - 1) * width, i * width, (i + 1) * width],
+      outputRange: [8, 26, 8],
+      extrapolate: 'clamp',
+    }),
+    opacity: scrollX.interpolate({
+      inputRange: [(i - 1) * width, i * width, (i + 1) * width],
+      outputRange: [0.35, 1, 0.35],
+      extrapolate: 'clamp',
+    }),
+  });
+
+  // Los puntos solo se ven en la bienvenida; se desvanecen al llegar al login.
+  const opacidadPuntos = scrollX.interpolate({
+    inputRange: [0, width * 0.6],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  // Ya hay sesión: nunca mostramos la bienvenida, solo la sartén girando
+  // mientras la app pasa directo al inicio.
+  if (token) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <CargandoCookly />
+        <Redirect href="/(tabs)/home" />
+      </View>
+    );
+  }
+
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Text style={styles.title}>¡Hola, Chef! 👋</Text>
-      <Text style={styles.subtitle}>Inicia sesión para seguir cocinando</Text>
-
-      <TextInput
-        placeholder="Correo electrónico"
-        placeholderTextColor={colors.textMuted}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        style={styles.input}
-        value={correo}
-        onChangeText={setCorreo}
-        editable={!cargandoAlguno}
-      />
-      <PasswordInput
-        placeholder="Contraseña"
-        placeholderTextColor={colors.textMuted}
-        style={styles.input}
-        value={contrasena}
-        onChangeText={setContrasena}
-        editable={!cargandoAlguno}
-      />
-
-      <Button
-        label="Iniciar sesión"
-        onPress={manejarLogin}
-        loading={cargandoEmail}
-      />
-
-      <View style={styles.separadorContainer}>
-        <View style={styles.separador} />
-        <Text style={styles.separadorTexto}>o</Text>
-        <View style={styles.separador} />
-      </View>
-
-      <Button
-        label="Continuar con Google"
-        onPress={manejarLoginGoogle}
-        loading={cargandoGoogle}
-      />
-
-      <View style={{ height: spacing.sm }} />
-
-      <Button
-        label="Continuar con Facebook"
-        onPress={manejarLoginFacebook}
-        loading={cargandoFacebook}
-      />
-
-      <Link href="/olvide-contrasena" style={styles.olvide}>
-        ¿Olvidaste tu contraseña?
-      </Link>
-
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>¿No tienes cuenta? </Text>
-        <Link href="/register" style={styles.link}>Regístrate</Link>
-      </View>
-
-      {/* Pantalla de "Entrando..." mientras se valida la sesión: evita ver el login con todo opaco */}
-      {cargandoAlguno && (
-        <View style={styles.overlay}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.overlayTexto}>Entrando a Cookly...</Text>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <Animated.ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: false })}
+      >
+        {/* PANTALLA 1: BIENVENIDA */}
+        <View style={{ width, flex: 1 }}>
+          <FondoBlobs variante="bienvenida" />
+          <View style={s.centro}>
+            <Logo size={130} variante="rosa" conTexto colorTexto={colors.primary} />
+            <Text style={s.bien}>¡Bienvenido a</Text>
+            <Text style={s.bienRosa}>Cookly!</Text>
+            <Text style={s.slogan}>Calculamos por ti.{'\n'}Tú solo preocúpate de cocinar.</Text>
+            <Image
+              source={require('../assets/images/ilustracion-olla.png')}
+              style={{ width: width * 0.8, height: width * 0.8 * 0.89, marginTop: 14 }}
+              resizeMode="contain"
+            />
+          </View>
+          <Text style={s.desliza}>Desliza para continuar  →</Text>
         </View>
-      )}
-    </KeyboardAvoidingView>
+
+        {/* PANTALLA 2: LOGIN */}
+        <View style={{ width, flex: 1 }}>
+          <PantallaLogin
+            onLogin={manejarLogin}
+            onGoogle={manejarLoginGoogle}
+            onFacebook={manejarLoginFacebook}
+            onRegistro={() => router.push('/register')}
+            onOlvide={() => router.push('/olvide-contrasena')}
+            cargando={cargandoEmail}
+          />
+        </View>
+      </Animated.ScrollView>
+
+      <Animated.View style={[s.dots, { opacity: opacidadPuntos }]} pointerEvents="none">
+        {[0, 1].map((i) => (
+          <Animated.View key={i} style={[s.dot, dot(i)]} />
+        ))}
+      </Animated.View>
+
+      {cargandoAlguno && <CargandoCookly />}
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
+  centro: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 70, paddingHorizontal: 30 },
+  bien: { fontFamily: fonts.display, fontSize: 32, lineHeight: 38, color: colors.text, marginTop: 20, textAlign: 'center' },
+  bienRosa: { fontFamily: fonts.displayBold, fontSize: 38, lineHeight: 44, color: colors.primary, textAlign: 'center' },
+  slogan: { fontFamily: fonts.body, fontSize: 16, lineHeight: 23, textAlign: 'center', color: colors.textMuted, marginTop: 8 },
+  desliza: {
+    position: 'absolute',
+    bottom: 70,
+    alignSelf: 'center',
+    fontFamily: fonts.bodyMedium,
+    fontSize: 14,
+    color: colors.primary,
+  },
+  dots: { position: 'absolute', bottom: 34, alignSelf: 'center', flexDirection: 'row', gap: 6 },
+  dot: { height: 8, borderRadius: 4, backgroundColor: colors.primary },
   overlay: {
     ...StyleSheet.absoluteFill,
     backgroundColor: colors.background,
@@ -159,31 +213,4 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   overlayTexto: { ...typography.body, color: colors.textMuted },
-  screen: { flex: 1, backgroundColor: colors.background, padding: spacing.lg, justifyContent: 'center' },
-  title: { ...typography.h1, color: colors.text, textAlign: 'center' },
-  subtitle: { ...typography.body, color: colors.textMuted, textAlign: 'center', marginTop: spacing.xs, marginBottom: spacing.lg },
-  input: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    marginBottom: spacing.sm,
-    ...typography.body,
-    color: colors.text,
-  },
-  separadorContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.md },
-  separador: { flex: 1, height: 1, backgroundColor: colors.border },
-  separadorTexto: { ...typography.bodySmall, color: colors.textMuted, marginHorizontal: spacing.sm },
-  olvide: {
-    ...typography.bodySmall,
-    color: colors.primary,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginTop: spacing.md,
-  },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.lg },
-  footerText: { ...typography.bodySmall, color: colors.textMuted },
-  link: { ...typography.bodySmall, color: colors.primary, fontWeight: '700' },
 });
