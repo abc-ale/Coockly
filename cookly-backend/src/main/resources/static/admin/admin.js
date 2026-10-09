@@ -261,16 +261,32 @@
       data: {
         labels: dias.map(function (d) { return etiquetaDia(d.dia); }),
         datasets: [
-          { type: 'bar', label: 'Minutos de uso', data: dias.map(function (d) { return Number(d.minutos); }), backgroundColor: color('--rosa-marca'), borderRadius: 4, yAxisID: 'y' },
-          { type: 'line', label: 'Personas activas', data: dias.map(function (d) { return Number(d.activos); }), borderColor: color('--ciruela'), backgroundColor: color('--ciruela'), tension: 0.3, pointRadius: 2, yAxisID: 'y1' }
+          {
+            type: 'bar', label: 'Minutos de uso',
+            data: dias.map(function (d) { return Number(d.minutos); }),
+            backgroundColor: color('--rosa-marca'), hoverBackgroundColor: color('--ciruela'),
+            borderRadius: { topLeft: 8, topRight: 8, bottomLeft: 0, bottomRight: 0 }, borderSkipped: false,
+            maxBarThickness: 26
+          }
         ]
       },
       options: {
         scales: {
-          y: { beginAtZero: true, title: { display: true, text: 'Minutos' } },
-          y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { precision: 0 }, title: { display: true, text: 'Personas' } }
+          y: { beginAtZero: true, ticks: { precision: 0, maxTicksLimit: 5 }, title: { display: true, text: 'Minutos' } }
         },
-        plugins: { legend: { display: true, position: 'bottom' } }
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: function (items) { return 'Día ' + items[0].label; },
+              label: function (item) { return item.parsed.y + ' min de uso'; },
+              afterLabel: function (item) {
+                var activos = Number(dias[item.dataIndex].activos);
+                return activos + (activos === 1 ? ' persona activa' : ' personas activas');
+              }
+            }
+          }
+        }
       }
     });
 
@@ -295,22 +311,36 @@
 
   function crearGrafico(id, config) {
     if (graficos[id]) graficos[id].destroy();
+    var horizontal = config.options && config.options.indexAxis === 'y';
     var base = {
       responsive: true,
       maintainAspectRatio: false,
-      animation: movimientoReducido() ? false : { duration: 350 },
-      font: { family: '"DM Sans", system-ui, sans-serif' },
+      animation: movimientoReducido() ? false : { duration: 450, easing: 'easeOutQuart' },
+      font: { family: '"DM Sans", system-ui, sans-serif', size: 12 },
       color: color('--apagado'),
-      plugins: { legend: { display: false } },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: color('--ciruela'), titleColor: '#FFF8F6', bodyColor: '#F3D9DC',
+          titleFont: { weight: '700', size: 13 }, bodyFont: { size: 12.5 },
+          padding: 12, cornerRadius: 14, boxPadding: 6, usePointStyle: true, caretSize: 6
+        }
+      },
       scales: {}
     };
     var opciones = Object.assign({}, base, config.options || {});
     opciones.plugins = Object.assign({}, base.plugins, (config.options || {}).plugins || {});
+    opciones.plugins.tooltip = Object.assign({}, base.plugins.tooltip, ((config.options || {}).plugins || {}).tooltip || {});
     opciones.scales = Object.assign({}, (config.options || {}).scales || {});
+    var circular = config.type === 'doughnut' || config.type === 'pie' || config.type === 'polarArea';
+    if (!circular) { ['x', 'y'].forEach(function (k) { if (!opciones.scales[k]) opciones.scales[k] = {}; }); }
     Object.keys(opciones.scales).forEach(function (k) {
       var ejeConfig = opciones.scales[k];
-      ejeConfig.grid = Object.assign({ color: color('--borde') }, ejeConfig.grid || {});
+      var esCategoria = (k === 'x' && !horizontal) || (k === 'y' && horizontal);
+      ejeConfig.grid = Object.assign({ color: color('--borde'), display: !esCategoria, drawTicks: false }, ejeConfig.grid || {});
       ejeConfig.border = Object.assign({ display: false }, ejeConfig.border || {});
+      ejeConfig.ticks = Object.assign({ color: color('--apagado'), padding: 8 }, esCategoria ? { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } : {}, ejeConfig.ticks || {});
     });
     graficos[id] = new Chart($(id), { type: config.type, data: config.data, options: opciones });
   }
