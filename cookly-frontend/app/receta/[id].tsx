@@ -11,6 +11,8 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import Stars from '../../components/Stars';
 import Button from '../../components/Button';
+import EtiquetasReceta from '../../components/EtiquetasReceta';
+
 
 type Ingrediente = {
   ingrediente: { id: number; nombre: string };
@@ -190,6 +192,9 @@ export default function RecetaDetalleScreen() {
 
         <View style={styles.contenido}>
           <Text style={styles.titulo}>{receta.nombre}</Text>
+          
+          {/* Componente de Etiquetas agregado aquí debajo del título */}
+          <EtiquetasReceta recetaId={Number(id)} />
 
           <View style={styles.metaRow}>
             <Stars value={promedio} size={16} />
@@ -322,4 +327,39 @@ const styles = StyleSheet.create({
   descripcion: { ...typography.body, color: colors.text, marginTop: spacing.sm },
   seccionTitulo: { ...typography.h3, color: colors.text, marginTop: spacing.lg, marginBottom: spacing.sm },
   subTitulo: { ...typography.h3, color: colors.text, marginTop: spacing.md, marginBottom: spacing.sm, fontSize: 15 },
-  vacioTexto: { ...typography.bodySmall, color:
+  vacioTexto: { ...typography.bodySmall, color: colors.textMuted },
+  ingredienteRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xs },
+  puntoIngrediente: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary, marginRight: spacing.sm },
+  ingredienteTexto: { ...typography.body, color: colors.text },
+  pasoRow: { flexDirection: 'row', marginTop: spacing.md },
+  pasoNumero: {
+    width: 24, height: 24, borderRadius: 12, backgroundColor: colors.primaryLight,
+    alignItems: 'center', justifyContent: 'center', marginRight: spacing.md,
+  },
+  pasoNumeroTexto: { ...typography.bodySmall, color: colors.primary, fontWeight: 'bold' },
+  pasoTexto: { ...typography.body, color: colors.text, flex: 1 },
+  tarjeta: {
+    backgroundColor: colors.surface, 
+    borderRadius: radius.md, 
+    padding: spacing.md,
+    marginTop: spacing.md, 
+    ...shadow.card,
+  },
+  filaAutor: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xs },
+  autorNombre: { ...typography.body, fontWeight: 'bold', color: colors.text },
+  comentarioTexto: { ...typography.body, color: colors.text },
+  filaInputComentario: { flexDirection: 'row', marginTop: spacing.sm, gap: spacing.sm },
+  inputComentario: {
+    flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+    borderRadius: radius.md, paddingHorizontal: spacing.md, height: 44, color: colors.text,
+  },
+  botonEnviar: {
+    backgroundColor: colors.primary, width: 44, height: 44, borderRadius: radius.md,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  inputResena: {
+    backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border,
+    borderRadius: radius.md, padding: spacing.md, height: 80, color: colors.text,
+    textAlignVertical: 'top', marginVertical: spacing.sm,
+  },
+});

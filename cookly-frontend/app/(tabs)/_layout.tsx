@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../constants/theme';
+import { colors, fonts } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 
 // Pantallas que solo ve cada tipo de cuenta. "profile" la ven las dos.
@@ -33,9 +33,14 @@ export default function TabsLayout() {
         freezeOnBlur: true, // las pestañas que no se ven dejan de re-renderizar
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
+        tabBarLabelStyle: { fontFamily: fonts.bodyMedium, fontSize: 11 },
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
+          borderTopWidth: 1,
+          height: 64,
+          paddingTop: 6,
+          paddingBottom: 8,
         },
       }}
     >
@@ -56,7 +61,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="search-outline" size={size} color={color} />,
         }}
       />
-      {/* El archivo se llama comunity.tsx: el nombre aquí debe ser idéntico (antes decía "community" y la pestaña salía sin ícono) */}
+      {/* El archivo se llama comunity.tsx: el nombre aquí debe ser idéntico */}
       <Tabs.Screen
         name="comunity"
         options={{

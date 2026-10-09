@@ -1,5 +1,16 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { colors, radius, spacing, typography } from '../../constants/theme';
@@ -21,27 +32,34 @@ export default function CommentsScreen() {
   const [texto, setTexto] = useState('');
   const [cargando, setCargando] = useState(true);
   const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [respondiendoA, setRespondiendoA] = useState<{ id: string; nombre: string } | null>(null);
 
-  const cargarComentarios = async () => {
+  const cargarComentarios = useCallback(async () => {
     const { data: sesion } = await supabase.auth.getSession();
     const userId = sesion.session?.user.id;
 
-    const { data, error } = await supabase
+    const { data, error: errorCarga } = await supabase
       .from('comments')
-      .select('*, profiles(username, nombre_completo), comment_likes(user_id)')
+      .select(
+        '*, profiles!comments_user_id_fkey(username, nombre_completo), comment_likes(user_id)'
+      )
       .eq('post_id', postId)
       .order('created_at', { ascending: true });
 
-    if (error) {
+    if (errorCarga) {
+      console.log('ERROR AL CARGAR COMENTARIOS:', errorCarga.message);
+      setError('No se pudieron cargar los comentarios.');
       setCargando(false);
       return;
     }
 
+    setError(null);
+
     const procesados: Comentario[] = (data || []).map((c: any) => ({
       ...c,
       likesCount: c.comment_likes?.length || 0,
-      yaLeDiLike: userId ? c.comment_likes?.some((l: any) => l.user_id === userId) : false,
+      yaLeDiLike: userId ? !!c.comment_likes?.some((l: any) => l.user_id === userId) : false,
       respuestas: [],
     }));
 
@@ -53,16 +71,16 @@ export default function CommentsScreen() {
 
     setComentarios(principales);
     setCargando(false);
-  };
+  }, [postId]);
 
   useFocusEffect(
     useCallback(() => {
       cargarComentarios();
-    }, [postId])
+    }, [cargarComentarios])
   );
 
   const enviarComentario = async () => {
-    if (!texto.trim()) return;
+    if (!texto.trim() || enviando) return;
     const { data: sesion } = await supabase.auth.getSession();
     const userId = sesion.session?.user.id;
     if (!userId) {
@@ -71,7 +89,7 @@ export default function CommentsScreen() {
     }
 
     setEnviando(true);
-    const { error } = await supabase.from('comments').insert({
+    const { error: errorEnvio } = await supabase.from('comments').insert({
       post_id: postId,
       user_id: userId,
       contenido: texto.trim(),
@@ -79,11 +97,15 @@ export default function CommentsScreen() {
     });
     setEnviando(false);
 
-    if (!error) {
-      setTexto('');
-      setRespondiendoA(null);
-      cargarComentarios();
+    if (errorEnvio) {
+      console.log('ERROR AL COMENTAR:', errorEnvio.message);
+      Alert.alert('No se pudo comentar', 'Inténtalo de nuevo en unos segundos.');
+      return;
     }
+
+    setTexto('');
+    setRespondiendoA(null);
+    cargarComentarios();
   };
 
   const alternarLikeComentario = async (comentario: Comentario) => {
@@ -94,10 +116,18 @@ export default function CommentsScreen() {
       return;
     }
 
-    if (comentario.yaLeDiLike) {
-      await supabase.from('comment_likes').delete().match({ comment_id: comentario.id, user_id: userId });
-    } else {
-      await supabase.from('comment_likes').insert({ comment_id: comentario.id, user_id: userId });
+    const { error: errorLike } = comentario.yaLeDiLike
+      ? await supabase
+          .from('comment_likes')
+          .delete()
+          .match({ comment_id: comentario.id, user_id: userId })
+      : await supabase
+          .from('comment_likes')
+          .insert({ comment_id: comentario.id, user_id: userId });
+
+    if (errorLike) {
+      console.log('ERROR EN LIKE DE COMENTARIO:', errorLike.message);
+      return;
     }
     cargarComentarios();
   };
@@ -108,17 +138,26 @@ export default function CommentsScreen() {
       router.push('/login');
       return;
     }
-    setRespondiendoA({ id: comentario.id, nombre: comentario.profiles?.nombre_completo || comentario.profiles?.username || 'Usuario' });
+    setRespondiendoA({
+      id: comentario.id,
+      nombre: comentario.profiles?.nombre_completo || comentario.profiles?.username || 'Usuario',
+    });
   };
 
   const renderComentario = (item: Comentario, esRespuesta: boolean = false) => (
     <View style={[styles.comentarioCard, esRespuesta && styles.respuestaCard]} key={item.id}>
-      <Text style={styles.autorNombre}>{item.profiles?.nombre_completo || item.profiles?.username || 'Usuario'}</Text>
+      <Text style={styles.autorNombre}>
+        {item.profiles?.nombre_completo || item.profiles?.username || 'Usuario'}
+      </Text>
       <Text style={styles.comentarioTexto}>{item.contenido}</Text>
 
       <View style={styles.accionesRow}>
         <TouchableOpacity style={styles.accionBoton} onPress={() => alternarLikeComentario(item)}>
-          <Ionicons name={item.yaLeDiLike ? 'heart' : 'heart-outline'} size={16} color={item.yaLeDiLike ? colors.primary : colors.textMuted} />
+          <Ionicons
+            name={item.yaLeDiLike ? 'heart' : 'heart-outline'}
+            size={16}
+            color={item.yaLeDiLike ? colors.primary : colors.textMuted}
+          />
           <Text style={styles.accionTexto}>{item.likesCount}</Text>
         </TouchableOpacity>
         {!esRespuesta && (
@@ -133,7 +172,10 @@ export default function CommentsScreen() {
   );
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
@@ -150,7 +192,24 @@ export default function CommentsScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
           renderItem={({ item }) => renderComentario(item)}
-          ListEmptyComponent={<Text style={styles.vacioTexto}>Sé la primera en comentar 💬</Text>}
+          ListEmptyComponent={
+            error ? (
+              <View style={{ alignItems: 'center' }}>
+                <Text style={styles.vacioTexto}>{error}</Text>
+                <TouchableOpacity
+                  style={styles.botonReintentar}
+                  onPress={() => {
+                    setCargando(true);
+                    cargarComentarios();
+                  }}
+                >
+                  <Text style={styles.botonReintentarTexto}>Reintentar</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <Text style={styles.vacioTexto}>Sé la primera en comentar 💬</Text>
+            )
+          }
         />
       )}
 
@@ -170,8 +229,13 @@ export default function CommentsScreen() {
           placeholderTextColor={colors.textMuted}
           value={texto}
           onChangeText={setTexto}
+          maxLength={500}
         />
-        <TouchableOpacity style={styles.enviarBoton} onPress={enviarComentario} disabled={enviando}>
+        <TouchableOpacity
+          style={[styles.enviarBoton, enviando && { opacity: 0.5 }]}
+          onPress={enviarComentario}
+          disabled={enviando}
+        >
           <Ionicons name="send" size={18} color={colors.white} />
         </TouchableOpacity>
       </View>
@@ -181,10 +245,28 @@ export default function CommentsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
   headerTitulo: { ...typography.h3, color: colors.text },
-  comentarioCard: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.sm + 4, gap: spacing.xs },
-  respuestaCard: { marginLeft: 20, marginTop: spacing.xs, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border },
+  comentarioCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.sm + 4,
+    gap: spacing.xs,
+  },
+  respuestaCard: {
+    marginLeft: 20,
+    marginTop: spacing.xs,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   autorNombre: { ...typography.bodySmall, fontWeight: '600', color: colors.text },
   comentarioTexto: { ...typography.body, color: colors.text },
   accionesRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
@@ -192,9 +274,46 @@ const styles = StyleSheet.create({
   accionTexto: { ...typography.caption, color: colors.textMuted },
   responderTexto: { ...typography.caption, color: colors.primary, fontWeight: '600' },
   vacioTexto: { textAlign: 'center', color: colors.textMuted, marginTop: 30, ...typography.body },
-  respondiendoBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.sm, backgroundColor: colors.surface },
+  botonReintentar: {
+    marginTop: spacing.md,
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.lg,
+  },
+  botonReintentarTexto: { ...typography.body, color: colors.white, fontWeight: '600' },
+  respondiendoBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
+  },
   respondiendoTexto: { ...typography.caption, color: colors.textMuted, fontStyle: 'italic' },
-  inputRow: { flexDirection: 'row', alignItems: 'center', padding: spacing.sm + 4, borderTopWidth: 1, borderTopColor: colors.border, gap: spacing.sm },
-  input: { flex: 1, backgroundColor: colors.surface, borderRadius: radius.pill, paddingHorizontal: spacing.md, height: 44, ...typography.bodySmall, color: colors.text },
-  enviarBoton: { backgroundColor: colors.primary, width: 44, height: 44, borderRadius: radius.pill, justifyContent: 'center', alignItems: 'center' },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.sm + 4,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    gap: spacing.sm,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    height: 44,
+    ...typography.bodySmall,
+    color: colors.text,
+  },
+  enviarBoton: {
+    backgroundColor: colors.primary,
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });

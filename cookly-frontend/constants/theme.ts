@@ -1,50 +1,53 @@
-// constants/theme.ts
+// Identidad visual Cookly
 export const colors = {
-  primary: '#E8879A',
-  primaryDark: '#C25B70',
-  primaryLight: '#FBE4EA',
-  accent: '#FFB4C6',
-  background: '#FFF8F9',
+  primary: '#FF4D80',      // Bubblegum Pink
+  primaryDark: '#D93A68',  // estado presionado
+  primaryLight: '#F3D9DC', // Soft Blush
+  accent: '#FFD866',       // Butter (acento cálido)
+  magic: '#BEE3A5',        // Pistachio (acento mágico)
+  background: '#FFF8F6',   // Cream White
   surface: '#FFFFFF',
-  text: '#2E2024',
-  textMuted: '#8C7378',
-  border: '#F3D6DD',
-  success: '#7BC67E',
-  warning: '#F2C14E',
-  danger: '#E45B5B',
+  text: '#2B1220',         // Plum Ink
+  textMuted: '#7A6670',
+  border: '#F3D9DC',
+  success: '#6FBF73',
+  warning: '#FFD866',
+  danger: '#E5484D',
+  onPrimary: '#FFF8F6',
   white: '#FFFFFF',
-} as const;
+};
+
+export const fonts = {
+  display: 'Fredoka_600SemiBold',
+  displayBold: 'Fredoka_700Bold',
+  heading: 'Nunito_700Bold',
+  body: 'DMSans_400Regular',
+  bodyMedium: 'DMSans_500Medium',
+  bodyBold: 'DMSans_700Bold',
+};
 
 export const typography = {
-  h1: { fontSize: 28, fontWeight: '700' as const },
-  h2: { fontSize: 22, fontWeight: '700' as const },
-  h3: { fontSize: 18, fontWeight: '600' as const },
-  body: { fontSize: 15, fontWeight: '400' as const },
-  bodySmall: { fontSize: 13, fontWeight: '400' as const },
-  caption: { fontSize: 11, fontWeight: '500' as const },
+  h1: { fontFamily: fonts.display, fontSize: 28, lineHeight: 34, color: colors.text },
+  h2: { fontFamily: fonts.display, fontSize: 22, lineHeight: 28, color: colors.text },
+  h3: { fontFamily: fonts.heading, fontSize: 18, lineHeight: 24, color: colors.text },
+  body: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22, color: colors.text },
+  bodySmall: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.textMuted },
+  caption: { fontFamily: fonts.bodyMedium, fontSize: 11, lineHeight: 14, color: colors.textMuted },
+  button: { fontFamily: fonts.bodyBold, fontSize: 15, lineHeight: 20 },
 };
 
-export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-};
-
-export const radius = {
-  sm: 8,
-  md: 14,
-  lg: 20,
-  pill: 999,
-};
+export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
+export const radius = { sm: 10, md: 16, lg: 24, pill: 999 };
 
 export const shadow = {
   card: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowColor: '#2B1220',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 3,
   },
 };
+
+const theme = { colors, fonts, typography, spacing, radius, shadow };
+export default theme;

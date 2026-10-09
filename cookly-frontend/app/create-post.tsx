@@ -1,14 +1,35 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, radius, spacing, typography } from '../constants/theme';
 import { supabase } from '../lib/supabase';
 
+// Tipos que acepta el bucket "posts-images" de Supabase.
+const EXTENSION_POR_TIPO: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/heic': 'heic',
+  'image/heif': 'heif',
+};
+
 export default function CreatePostScreen() {
   const [contenido, setContenido] = useState('');
-  const [imagenLocal, setImagenLocal] = useState<string | null>(null);
+  const [imagen, setImagen] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [publicando, setPublicando] = useState(false);
 
   const elegirImagen = async () => {
@@ -19,19 +40,21 @@ export default function CreatePostScreen() {
     }
 
     const resultado = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       quality: 0.6,
       allowsEditing: true,
       aspect: [4, 3],
     });
 
     if (!resultado.canceled) {
-      setImagenLocal(resultado.assets[0].uri);
+      setImagen(resultado.assets[0]);
     }
   };
 
   const publicar = async () => {
-    if (!contenido.trim() && !imagenLocal) {
+    if (publicando) return;
+
+    if (!contenido.trim() && !imagen) {
       Alert.alert('Publicación vacía', 'Escribe algo o agrega una foto.');
       return;
     }
@@ -47,19 +70,28 @@ export default function CreatePostScreen() {
     let imagenUrl: string | null = null;
 
     try {
-      if (imagenLocal) {
-        const respuesta = await fetch(imagenLocal);
-        const blob = await respuesta.blob();
-        const extension = imagenLocal.split('.').pop() || 'jpg';
+      if (imagen) {
+        // Tipo real de la imagen; si no viene, se usa JPEG (el selector comprime a JPEG).
+        const tipoSolicitado = (imagen.mimeType || 'image/jpeg').toLowerCase();
+        const contentType = EXTENSION_POR_TIPO[tipoSolicitado] ? tipoSolicitado : 'image/jpeg';
+        const extension = EXTENSION_POR_TIPO[contentType];
+
+        // arrayBuffer (no blob): el blob de React Native llega a Supabase como "text/plain".
+        const respuesta = await fetch(imagen.uri);
+        const archivo = await respuesta.arrayBuffer();
+
+        // La carpeta DEBE empezar con el id del usuario (lo exigen las reglas de seguridad).
         const nombreArchivo = `${userId}/${Date.now()}.${extension}`;
 
         const { error: errorSubida } = await supabase.storage
           .from('posts-images')
-          .upload(nombreArchivo, blob, { contentType: `image/${extension}` });
+          .upload(nombreArchivo, archivo, { contentType, upsert: false });
 
         if (errorSubida) throw errorSubida;
 
-        const { data: urlPublica } = supabase.storage.from('posts-images').getPublicUrl(nombreArchivo);
+        const { data: urlPublica } = supabase.storage
+          .from('posts-images')
+          .getPublicUrl(nombreArchivo);
         imagenUrl = urlPublica.publicUrl;
       }
 
@@ -74,14 +106,17 @@ export default function CreatePostScreen() {
       router.back();
     } catch (error: any) {
       console.log('ERROR AL PUBLICAR:', error);
-      Alert.alert('Error al publicar', error.message || 'Intenta de nuevo.');
+      Alert.alert('Error al publicar', error?.message || 'Intenta de nuevo.');
     } finally {
       setPublicando(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="close" size={26} color={colors.text} />
@@ -99,12 +134,13 @@ export default function CreatePostScreen() {
           onChangeText={setContenido}
           multiline
           textAlignVertical="top"
+          maxLength={1000}
         />
 
-        {imagenLocal ? (
+        {imagen ? (
           <View>
-            <Image source={{ uri: imagenLocal }} style={styles.previewImagen} />
-            <TouchableOpacity style={styles.quitarImagen} onPress={() => setImagenLocal(null)}>
+            <Image source={{ uri: imagen.uri }} style={styles.previewImagen} />
+            <TouchableOpacity style={styles.quitarImagen} onPress={() => setImagen(null)}>
               <Ionicons name="close-circle" size={26} color={colors.white} />
             </TouchableOpacity>
           </View>
@@ -117,8 +153,16 @@ export default function CreatePostScreen() {
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.botonPublicar} onPress={publicar} disabled={publicando}>
-          {publicando ? <ActivityIndicator color={colors.white} /> : <Text style={styles.botonPublicarTexto}>Publicar</Text>}
+        <TouchableOpacity
+          style={[styles.botonPublicar, publicando && { opacity: 0.6 }]}
+          onPress={publicar}
+          disabled={publicando}
+        >
+          {publicando ? (
+            <ActivityIndicator color={colors.white} />
+          ) : (
+            <Text style={styles.botonPublicarTexto}>Publicar</Text>
+          )}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -127,15 +171,48 @@ export default function CreatePostScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
   headerTitulo: { ...typography.h3, color: colors.text },
   content: { flex: 1, padding: spacing.md, gap: spacing.md },
   input: { minHeight: 100, ...typography.body, color: colors.text },
-  botonImagen: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderColor: colors.primary, borderRadius: radius.md, padding: spacing.md, justifyContent: 'center' },
+  botonImagen: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    justifyContent: 'center',
+  },
   botonImagenTexto: { color: colors.primary, fontWeight: '600', fontSize: 14 },
-  previewImagen: { width: '100%', height: 240, borderRadius: radius.md, backgroundColor: colors.border },
-  quitarImagen: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 13 },
+  previewImagen: {
+    width: '100%',
+    height: 240,
+    borderRadius: radius.md,
+    backgroundColor: colors.border,
+  },
+  quitarImagen: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 13,
+  },
   footer: { padding: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
-  botonPublicar: { backgroundColor: colors.primary, borderRadius: radius.md, height: 50, justifyContent: 'center', alignItems: 'center' },
+  botonPublicar: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   botonPublicarTexto: { color: colors.white, fontWeight: '700', fontSize: 16 },
 });
