@@ -1,39 +1,16 @@
 package com.cookly.controladores;
 
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-
+import com.cookly.dto.*;
+import com.cookly.modelos.*;
+import com.cookly.repositorios.*;
+import com.cookly.servicios.ServicioReceta;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.cookly.dto.RecomendacionReceta;
-import com.cookly.dto.SolicitudCrearReceta;
-import com.cookly.dto.SolicitudMenuExpress;
-import com.cookly.modelos.ClaveFavorito;
-import com.cookly.modelos.Etiqueta;
-import com.cookly.modelos.Favorito;
-import com.cookly.modelos.Receta;
-import com.cookly.modelos.RecetaEtiqueta;
-import com.cookly.modelos.Usuario;
-import com.cookly.repositorios.RepositorioFavorito;
-import com.cookly.repositorios.RepositorioReceta;
-import com.cookly.repositorios.RepositorioRecetaEtiqueta;
-import com.cookly.repositorios.RepositorioUsuario;
-import com.cookly.servicios.ServicioReceta;
-
-import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.*;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/recetas")
@@ -42,16 +19,13 @@ public class ControladorReceta {
     private final RepositorioReceta recetas;
     private final RepositorioUsuario usuarios;
     private final RepositorioFavorito favoritos;
-    private final RepositorioRecetaEtiqueta recetaEtiquetas;
 
     public ControladorReceta(ServicioReceta servicio, RepositorioReceta recetas,
-                             RepositorioUsuario usuarios, RepositorioFavorito favoritos,
-                             RepositorioRecetaEtiqueta recetaEtiquetas) {
+                             RepositorioUsuario usuarios, RepositorioFavorito favoritos) {
         this.servicio = servicio;
         this.recetas = recetas;
         this.usuarios = usuarios;
         this.favoritos = favoritos;
-        this.recetaEtiquetas = recetaEtiquetas;
     }
 
     @PostMapping("/menu-express")
@@ -69,28 +43,14 @@ public class ControladorReceta {
     /** Búsqueda por nombre, insensible a mayúsculas, paginada. texto puede ser parcial ("past" encuentra "Pasta cremosa"). */
     @GetMapping("/buscar")
     public Page<Receta> buscar(@RequestParam String texto,
-                               @RequestParam(defaultValue = "0") int pagina,
-                               @RequestParam(defaultValue = "20") int tamano) {
+                                @RequestParam(defaultValue = "0") int pagina,
+                                @RequestParam(defaultValue = "20") int tamano) {
         return recetas.findByNombreContainingIgnoreCase(texto, PageRequest.of(pagina, tamano));
     }
 
     @GetMapping("/{id}")
     public Receta detalle(@PathVariable Long id) {
         return recetas.findById(id).orElseThrow(() -> new NoSuchElementException("Receta no encontrada"));
-    }
-
-    @GetMapping("/{id}/etiquetas")
-    public List<Etiqueta> etiquetasDeReceta(@PathVariable Long id) {
-        return recetaEtiquetas.findByRecetaId(id).stream()
-                .map(RecetaEtiqueta::getEtiqueta)
-                .toList();
-    }
-
-    @GetMapping("/por-etiqueta/{etiquetaId}")
-    public Page<Receta> porEtiqueta(@PathVariable Long etiquetaId,
-                                    @RequestParam(defaultValue = "0") int pagina,
-                                    @RequestParam(defaultValue = "20") int tamano) {
-        return recetas.buscarPorEtiqueta(etiquetaId, PageRequest.of(pagina, tamano));
     }
 
     @GetMapping("/favoritos")

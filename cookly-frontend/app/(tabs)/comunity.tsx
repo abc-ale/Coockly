@@ -1,19 +1,9 @@
 import React, { memo, useCallback, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  RefreshControl,
-  ActivityIndicator,
-  Image,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { colors, radius, spacing, typography, shadow } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
-import BotonReportarContenido from '../../components/BotonReportarContenido';
 
 const POR_PAGINA = 10;
 
@@ -80,12 +70,8 @@ const PostCard = memo(function PostCard({
       <View style={styles.postHeader}>
         <View style={styles.avatarChico} />
         <View>
-          <Text style={styles.autorNombre}>
-            {item.profiles?.nombre_completo || item.profiles?.username || 'Usuario'}
-          </Text>
-          <Text style={styles.fecha}>
-            {new Date(item.created_at).toLocaleDateString('es-PE')}
-          </Text>
+          <Text style={styles.autorNombre}>{item.profiles?.nombre_completo || item.profiles?.username || 'Usuario'}</Text>
+          <Text style={styles.fecha}>{new Date(item.created_at).toLocaleDateString('es-PE')}</Text>
         </View>
       </View>
 
@@ -107,15 +93,10 @@ const PostCard = memo(function PostCard({
           />
           <Text style={styles.accionTexto}>{item.likesCount}</Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.accionBoton} onPress={() => onComentarios(item.id)}>
           <Ionicons name="chatbubble-outline" size={19} color={colors.textMuted} />
           <Text style={styles.accionTexto}>{item.commentsCount}</Text>
         </TouchableOpacity>
-
-        <View style={{ marginLeft: 'auto' }}>
-        <BotonReportarContenido tipo="POST" contenidoId={item.id} />
-        </View>
       </View>
     </View>
   );
@@ -127,10 +108,7 @@ export default function CommunityScreen() {
   const [refrescando, setRefrescando] = useState(false);
   const [cargandoMas, setCargandoMas] = useState(false);
   const [hayMas, setHayMas] = useState(true);
-
   const ocupado = useRef(false);
-  const totalPostsRef = useRef(0);
-  totalPostsRef.current = posts.length;
 
   /** Primera página. Si ya hay posts en pantalla se actualiza en silencio (sin spinner ni saltos). */
   const refrescar = useCallback(async (reemplazar: boolean) => {
@@ -161,7 +139,7 @@ export default function CommunityScreen() {
     ocupado.current = true;
     setCargandoMas(true);
     try {
-      const siguiente = await traerPagina(totalPostsRef.current);
+      const siguiente = await traerPagina(posts.length);
       setHayMas(siguiente.length === POR_PAGINA);
       setPosts((prev) => {
         const ids = new Set(prev.map((p) => p.id));
@@ -173,7 +151,7 @@ export default function CommunityScreen() {
       ocupado.current = false;
       setCargandoMas(false);
     }
-  }, [hayMas, cargando]);
+  }, [hayMas, cargando, posts.length]);
 
   // Like "optimista": la UI cambia al instante y la red trabaja detrás. Si falla, se revierte.
   const alternarLike = useCallback(async (post: Post) => {
@@ -189,9 +167,7 @@ export default function CommunityScreen() {
     const aplicar = (like: boolean) =>
       setPosts((prev) =>
         prev.map((p) =>
-          p.id === post.id
-            ? { ...p, yaLeDiLike: like, likesCount: Math.max(0, p.likesCount + (like ? 1 : -1)) }
-            : p
+          p.id === post.id ? { ...p, yaLeDiLike: like, likesCount: Math.max(0, p.likesCount + (like ? 1 : -1)) } : p
         )
       );
 
@@ -216,9 +192,7 @@ export default function CommunityScreen() {
   }, []);
 
   const renderPost = useCallback(
-    ({ item }: { item: Post }) => (
-      <PostCard item={item} onLike={alternarLike} onComentarios={irAComentarios} />
-    ),
+    ({ item }: { item: Post }) => <PostCard item={item} onLike={alternarLike} onComentarios={irAComentarios} />,
     [alternarLike, irAComentarios]
   );
 
@@ -245,11 +219,7 @@ export default function CommunityScreen() {
         removeClippedSubviews
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          cargandoMas ? (
-            <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
-          ) : null
-        }
+        ListFooterComponent={cargandoMas ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null}
         refreshControl={
           <RefreshControl
             refreshing={refrescando}
@@ -261,9 +231,7 @@ export default function CommunityScreen() {
         }
         ListEmptyComponent={
           <View style={styles.centrado}>
-            <Text style={styles.vacioTexto}>
-              Aún no hay publicaciones. ¡Sé la primera en compartir algo! 🍳
-            </Text>
+            <Text style={styles.vacioTexto}>Aún no hay publicaciones. ¡Sé la primera en compartir algo! 🍳</Text>
           </View>
         }
       />
@@ -276,20 +244,8 @@ export default function CommunityScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerTitulo: {
-    ...typography.h1,
-    color: colors.text,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.lg,
-    marginBottom: spacing.sm,
-  },
-  centrado: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 30,
-  },
+  headerTitulo: { ...typography.h1, color: colors.text, paddingHorizontal: spacing.md, paddingTop: spacing.lg, marginBottom: spacing.sm },
+  centrado: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60, paddingHorizontal: 30 },
   vacioTexto: { ...typography.body, color: colors.textMuted, textAlign: 'center' },
   postCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md },
   postHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
@@ -297,26 +253,9 @@ const styles = StyleSheet.create({
   autorNombre: { ...typography.h3, color: colors.text },
   fecha: { ...typography.caption, color: colors.textMuted },
   contenido: { ...typography.body, color: colors.text, marginBottom: spacing.sm },
-  imagenPost: {
-    width: '100%',
-    height: 220,
-    borderRadius: radius.md,
-    marginBottom: spacing.xs,
-    backgroundColor: colors.border,
-  },
-  accionesRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, marginTop: spacing.xs },
+  imagenPost: { width: '100%', height: 220, borderRadius: radius.md, marginBottom: spacing.xs, backgroundColor: colors.border },
+  accionesRow: { flexDirection: 'row', gap: spacing.lg, marginTop: spacing.xs },
   accionBoton: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   accionTexto: { ...typography.bodySmall, color: colors.textMuted },
-  fab: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 4,
-  },
+  fab: { position: 'absolute', bottom: 20, right: 20, width: 56, height: 56, borderRadius: radius.pill, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', elevation: 4 },
 });
