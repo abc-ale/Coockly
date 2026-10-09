@@ -121,7 +121,13 @@ input::placeholder { color: #B09AA2; }
 input:hover, select:hover { border-color: var(--borde-fuerte); }
 input:focus, select:focus { outline: none; border-color: var(--rosa); box-shadow: 0 0 0 4px rgba(255, 77, 128, 0.15); }
 input:-webkit-autofill { -webkit-box-shadow: 0 0 0 40px #fff inset; }
-input[type="file"] { padding: 10px; background: var(--crema); }
+input[type="file"] { padding: 8px; background: var(--crema); border-radius: 999px; cursor: pointer; color: var(--apagado); font-size: 14px; }
+input[type="file"]::file-selector-button {
+  font: inherit; font-weight: 700; font-size: 14px; color: var(--tinta); background: var(--blush);
+  border: 0; border-radius: 999px; padding: 9px 18px; margin-right: 12px; cursor: pointer;
+  transition: background .2s, transform .2s;
+}
+input[type="file"]::file-selector-button:hover { background: #EBC6CB; transform: translateY(-1px); }
 
 .campo-icono { position: relative; margin-bottom: 18px; }
 .campo-icono > svg.ico { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; fill: none; stroke: var(--rosa); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
@@ -165,11 +171,11 @@ input[type="file"] { padding: 10px; background: var(--crema); }
   background: var(--tinta); color: var(--crema);
   display: flex; flex-direction: column; padding: 26px 16px 18px; gap: 22px;
 }
-.marca { display: flex; align-items: center; gap: 12px; padding: 0 10px; }
-.marca img { height: 44px; width: auto; flex: none; }
-.marca-texto { display: flex; flex-direction: column; line-height: 1.1; }
-.marca-nombre { font-family: var(--fuente-titulo); font-weight: 700; font-size: 28px; color: var(--blush); letter-spacing: -.3px; }
-.marca-sub { font-size: 12px; color: rgba(255, 248, 246, 0.6); margin-top: 4px; }
+.marca { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 10px; row-gap: 6px; padding: 0 10px; }
+.marca img { grid-row: 1; grid-column: 1; height: 46px; width: auto; flex: none; display: block; }
+.marca-texto { display: contents; }
+.marca-nombre { grid-row: 1; grid-column: 2; font-family: var(--fuente-titulo); font-weight: 700; font-size: 30px; line-height: 1; color: var(--blush); letter-spacing: -.3px; margin-left: -2px; }
+.marca-sub { grid-row: 2; grid-column: 1 / -1; font-size: 12px; color: rgba(255, 248, 246, 0.6); padding-left: 2px; }
 
 .navegacion { display: flex; flex-direction: column; gap: 4px; flex: 1; }
 .navegacion a {
@@ -220,7 +226,7 @@ input[type="file"] { padding: 10px; background: var(--crema); }
 .cifra-etiqueta { font-size: 13px; font-weight: 700; color: var(--apagado); text-transform: uppercase; letter-spacing: .04em; }
 .cifra-valor { font-family: var(--fuente-titulo); font-weight: 700; font-size: 36px; line-height: 1.1; }
 .cifra-valor small { font-size: 16px; font-weight: 600; color: var(--apagado); margin-left: 4px; }
-.cifra-nota { align-self: flex-start; font-size: 12.5px; font-weight: 700; color: var(--exito); background: #EDF7E6; border-radius: 12px; padding: 3px 10px; margin-top: 4px; }
+.cifra-nota { align-self: flex-start; font-size: 12.5px; font-weight: 700; color: var(--exito); background: #EDF7E6; border-radius: 999px; padding: 2px 10px; margin-top: 4px; }
 .cifra-nota.neutra { color: var(--apagado); background: var(--crema); }
 .cifra-nota a { color: var(--rosa-oscuro); }
 
@@ -331,4 +337,25 @@ td .acciones { flex-direction: column; align-items: stretch; min-width: 112px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+
+/* ---- Desplegables redondeados ---- */
+@supports (appearance: base-select) {
+  select, select::picker(select) { appearance: base-select; }
+  select { cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+  select::picker-icon { color: var(--rosa); transition: transform .2s; }
+  select:open::picker-icon { transform: rotate(180deg); }
+  select::picker(select) {
+    margin-top: 8px; padding: 8px; border: 1.5px solid var(--borde); border-radius: 22px;
+    background: #fff; box-shadow: 0 18px 40px rgba(43, 18, 32, 0.16);
+    opacity: 0; transform: translateY(-6px) scale(.98); transform-origin: top;
+    transition: opacity .18s, transform .18s, overlay .18s allow-discrete, display .18s allow-discrete;
+  }
+  select::picker(select):popover-open { opacity: 1; transform: none; }
+  @starting-style { select::picker(select):popover-open { opacity: 0; transform: translateY(-6px) scale(.98); } }
+  select option { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 14px; font-size: 15px; cursor: pointer; transition: background .15s; }
+  select option:hover, select option:focus { background: var(--blush); outline: none; }
+  select option:checked { background: var(--rosa); color: #fff; font-weight: 700; }
+  select option::checkmark { display: none; }
 }
