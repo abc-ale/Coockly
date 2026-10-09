@@ -26,7 +26,9 @@ public class ConfiguracionSeguridad {
                 .csrf(c -> c.disable())
                 .cors(c -> c.configurationSource(cors()))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .headers(h -> h.contentSecurityPolicy(c -> c.policyDirectives("default-src 'self'")))
+                // Solo el propio sitio, más imágenes del Supabase de Cookly (fotos de Comunidad en el panel).
+                .headers(h -> h.contentSecurityPolicy(c -> c.policyDirectives(
+                        "default-src 'self'; img-src 'self' data: https://torfbgyqvvyajmtbyuvb.supabase.co")))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(
                                 "/api/v1/autenticacion/**",

@@ -26,6 +26,7 @@
     usuarios: { titulo: 'Usuarios',              sub: 'Personas registradas, su tiempo de uso y su rol.' },
     uso:      { titulo: 'Uso de la app',         sub: 'Cuánto, cuándo y quién usa Cookly.' },
     reportes: { titulo: 'Reportes de recetas',   sub: 'Recetas señaladas por la comunidad.' },
+    'reportes-comunidad': { titulo: 'Reportes de comunidad', sub: 'Publicaciones y comentarios señalados desde Comunidad.' },
     comentarios: { titulo: 'Comentarios',          sub: 'Lo que escribe la comunidad. Elimina lo que no corresponda.' },
     recetas:  { titulo: 'Recetas',               sub: 'Todas las recetas publicadas, con su autor.' },
     historial: { titulo: 'Historial de acciones', sub: 'Qué hicieron los administradores y cuándo (últimas 200).' },
@@ -183,10 +184,12 @@
     else if (s === 'uso') tarea = Promise.all([cargarResumen(), cargarGraficas()]).then(pintarUso);
     else if (s === 'usuarios') tarea = cargarUsuarios();
     else if (s === 'reportes') tarea = cargarReportes();
+    else if (s === 'reportes-comunidad') tarea = cargarReportesComunidad();
     else if (s === 'respaldo') tarea = cargarRespaldo();
     else if (LISTAS[s]) tarea = cargarLista(s);
     if (tarea) tarea.catch(function (e) { if (e.message !== 'sesion') aviso(e.message, true); });
     if (s !== 'reportes') actualizarInsignia();
+    if (s !== 'reportes-comunidad') actualizarInsigniaComunidad();
   }
 
   function cargarResumen() { return json('/administracion/resumen').then(function (r) { estado.resumen = r; }); }
@@ -505,6 +508,85 @@
       .catch(function (e) { if (e.message !== 'sesion') { aviso(e.message, true); boton.disabled = false; } });
   }
 
+  // ------------------------------------------------------------------ reportes de comunidad
+
+  function pintarInsigniaComunidad(cantidad) {
+    var b = $('insignia-reportes-comunidad');
+    b.hidden = cantidad === 0;
+    b.textContent = cantidad;
+  }
+
+  function actualizarInsigniaComunidad() {
+    json('/administracion/reportes-comunidad').then(function (lista) {
+      pintarInsigniaComunidad(lista.length);
+    }).catch(function () { /* la insignia es opcional */ });
+  }
+
+  function cargarReportesComunidad() {
+    return json('/administracion/reportes-comunidad').then(function (lista) {
+      var cont = $('lista-reportes-comunidad');
+      vaciar(cont);
+      pintarInsigniaComunidad(lista.length);
+
+      if (lista.length === 0) {
+        cont.appendChild(el('div', { clase: 'estado-vacio' }, [el('strong', { texto: 'No hay reportes pendientes' }), 'Cuando alguien reporte una publicación o un comentario, aparecerá aquí.']));
+        return;
+      }
+
+      lista.forEach(function (r) {
+        var esPost = r.tipo === 'POST';
+        var que = esPost ? 'publicación' : 'comentario';
+        var existe = r.contenidoExiste !== false;
+
+        var detalle = [
+          el('h2', { texto: (esPost ? 'Publicación' : 'Comentario') + ' de ' + (r.autor || 'una persona desconocida') }),
+          el('p', { texto: 'Reportado por ' + (r.reportadoPor || 'un usuario') + ' · ' + (r.creadoEn || '') }),
+          el('p', { clase: 'motivo', texto: 'Motivo: ' + r.motivo })
+        ];
+
+        if (!existe) {
+          detalle.push(el('p', { texto: '(Este contenido ya fue eliminado.)' }));
+        } else {
+          if (r.contenido) detalle.push(el('p', { texto: '“' + r.contenido + '”' }));
+          if (r.imagenUrl && /^https:\/\//.test(r.imagenUrl)) {
+            var foto = document.createElement('img');
+            foto.src = r.imagenUrl;
+            foto.alt = 'Foto de la publicación reportada';
+            foto.loading = 'lazy';
+            foto.style.maxWidth = '260px';
+            foto.style.width = '100%';
+            foto.style.borderRadius = '10px';
+            foto.style.display = 'block';
+            foto.style.marginTop = '8px';
+            detalle.push(foto);
+          }
+        }
+
+        var botones = el('div', { clase: 'acciones' }, [
+          el('button', { type: 'button', clase: 'boton secundario chico', 'data-resolver-com': 'DESCARTADO', 'data-id': r.id, texto: 'Descartar' }),
+          el('button', { type: 'button', clase: 'boton secundario chico', 'data-resolver-com': 'REVISADO', 'data-id': r.id, texto: 'Marcar revisado' }),
+          el('button', { type: 'button', clase: 'boton peligro chico', 'data-resolver-com': 'ELIMINAR', 'data-id': r.id, 'data-que': que, disabled: !existe, texto: 'Eliminar ' + que })
+        ]);
+
+        cont.appendChild(el('article', { clase: 'reporte' }, [el('div', null, detalle), botones]));
+      });
+    });
+  }
+
+  function resolverReporteComunidad(boton) {
+    var id = boton.getAttribute('data-id');
+    var modo = boton.getAttribute('data-resolver-com');
+    var eliminar = modo === 'ELIMINAR';
+    if (eliminar && !window.confirm('¿Eliminar este ' + boton.getAttribute('data-que') + '? No se puede deshacer.')) return;
+    boton.disabled = true;
+    json('/administracion/reportes-comunidad/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estado: modo === 'DESCARTADO' ? 'DESCARTADO' : 'REVISADO', eliminarContenido: eliminar })
+    }).then(function () { aviso(eliminar ? 'Contenido eliminado.' : 'Reporte actualizado.'); return cargarReportesComunidad(); })
+      .catch(function (e) { if (e.message !== 'sesion') { aviso(e.message, true); boton.disabled = false; } });
+  }
+
   // ------------------------------------------------------------------ respaldo
 
   function cargarRespaldo() {
@@ -741,6 +823,12 @@
     $('lista-reportes').addEventListener('click', function (e) {
       var b = e.target.closest('button[data-resolver]');
       if (b && !b.disabled) resolverReporte(b);
+    });
+
+    // reportes de comunidad
+    $('lista-reportes-comunidad').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-resolver-com]');
+      if (b && !b.disabled) resolverReporteComunidad(b);
     });
 
     // respaldo
