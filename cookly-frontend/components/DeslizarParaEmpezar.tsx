@@ -1,7 +1,7 @@
 // components/DeslizarParaEmpezar.tsx
 // Botón "desliza para empezar": se arrastra el círculo blanco hacia la derecha y, al llegar
 // casi al final, se ejecuta onCompletar. Si se suelta antes, regresa con un rebote.
-// Mientras se arrastra, una barra de color va creciendo detrás del círculo: mantequilla → pistacho.
+// Mientras se arrastra, una barra de color va creciendo detrás del círculo: rosado fuerte → ciruela.
 // Mientras nadie lo toca, el círculo hace un pequeño gesto hacia la derecha para enseñar qué hacer.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, StyleSheet, Text, View, LayoutChangeEvent } from 'react-native';
@@ -105,7 +105,7 @@ export default function DeslizarParaEmpezar({ texto = 'Desliza para empezar', on
   // La barra de color mide lo mismo que la pista, pero se desplaza para que su borde derecho siga a la perilla.
   const avance = Animated.add(x, pista);
   const barraX = Animated.add(avance, -recorrido);
-  const capaPistacho = x.interpolate({ inputRange: [0, recorrido], outputRange: [0, 1], extrapolate: 'clamp' });
+  const capaCiruela = x.interpolate({ inputRange: [0, recorrido], outputRange: [0, 0.9], extrapolate: 'clamp' });
   const opacidadTexto = x.interpolate({ inputRange: [0, recorrido * 0.6], outputRange: [1, 0], extrapolate: 'clamp' });
   const desplazarTexto = x.interpolate({ inputRange: [0, recorrido], outputRange: [0, 24], extrapolate: 'clamp' });
   const escalaPerilla = x.interpolate({ inputRange: [0, recorrido], outputRange: [1, 1.08], extrapolate: 'clamp' });
@@ -113,9 +113,9 @@ export default function DeslizarParaEmpezar({ texto = 'Desliza para empezar', on
   return (
     <View style={st.sombra} onLayout={(e: LayoutChangeEvent) => setAncho(e.nativeEvent.layout.width)}>
       <View style={st.pista}>
-        {/* Barra que se va ensanchando detrás de la perilla: mantequilla → pistacho */}
-        <Animated.View style={[st.barra, { backgroundColor: colors.accent, transform: [{ translateX: barraX }] }]} pointerEvents="none" />
-        <Animated.View style={[st.barra, { backgroundColor: colors.magic, opacity: capaPistacho, transform: [{ translateX: barraX }] }]} pointerEvents="none" />
+        {/* Barra que se va ensanchando detrás de la flecha: rosado fuerte → ciruela */}
+        <Animated.View style={[st.barra, { backgroundColor: colors.primaryDark, transform: [{ translateX: barraX }] }]} pointerEvents="none" />
+        <Animated.View style={[st.barra, { backgroundColor: colors.text, opacity: capaCiruela, transform: [{ translateX: barraX }] }]} pointerEvents="none" />
 
         {/* Texto central que se va apagando mientras se arrastra */}
         <Animated.View style={[st.textoWrap, { opacity: opacidadTexto, transform: [{ translateX: desplazarTexto }] }]} pointerEvents="none">
@@ -129,7 +129,7 @@ export default function DeslizarParaEmpezar({ texto = 'Desliza para empezar', on
           {...responder.panHandlers}
           style={[st.perilla, { transform: [{ translateX: Animated.add(x, pista) }, { scale: escalaPerilla }] }]}
         >
-          <Ionicons name="arrow-forward" size={22} color={colors.primary} />
+          <Ionicons name="arrow-forward" size={26} color={colors.white} />
         </Animated.View>
       </View>
     </View>
@@ -170,7 +170,6 @@ const st = StyleSheet.create({
     width: PERILLA,
     height: PERILLA,
     borderRadius: PERILLA / 2,
-    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
