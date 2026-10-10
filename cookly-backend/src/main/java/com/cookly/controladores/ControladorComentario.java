@@ -1,7 +1,7 @@
 package com.cookly.controladores;
 
 import com.cookly.dto.SolicitudComentario;
-import com.cookly.modelos.Comentario;
+import com.cookly.dto.RespuestaComentario;
 import com.cookly.servicios.ServicioComentario;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -16,11 +16,11 @@ public class ControladorComentario {
     public ControladorComentario(ServicioComentario servicio) { this.servicio = servicio; }
 
     @GetMapping
-    public List<Comentario> listar(@PathVariable Long recetaId) { return servicio.listar(recetaId); }
+    public List<RespuestaComentario> listar(@PathVariable Long recetaId) { return servicio.listar(recetaId); }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Comentario crear(@PathVariable Long recetaId, @Valid @RequestBody SolicitudComentario s, Authentication autenticacion) {
+    public RespuestaComentario crear(@PathVariable Long recetaId, @Valid @RequestBody SolicitudComentario s, Authentication autenticacion) {
         return servicio.crear(recetaId, autenticacion.getName(), s.contenido());
     }
 

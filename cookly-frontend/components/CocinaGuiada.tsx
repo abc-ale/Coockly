@@ -78,7 +78,6 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos }: Props)
   const lista = useMemo(() => [...pasos].sort((a, b) => a.orden - b.orden), [pasos]);
   const [indice, setIndice] = useState(0);
   const [crono, setCrono] = useState<Record<number, Cronometro>>({});
-  const [ajuste, setAjuste] = useState<Record<number, number>>({}); // minutos elegidos si no hay tiempo en el texto
   const [ahora, setAhora] = useState(Date.now());
   const [leyendo, setLeyendo] = useState(false);
 
@@ -126,8 +125,11 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos }: Props)
 
   const paso = lista[indice];
   const esUltimo = indice === lista.length - 1;
+  // Tiempo predeterminado: el que dice el paso o, si no dice, el típico de esa técnica.
+  // El usuario no lo modifica: solo lo inicia.
   const segundosTexto = tiempoDelTexto(paso.instruccion);
   const sugerencia = segundosTexto === 0 ? sugerenciaSinTiempo(paso.instruccion) : null;
+  const segundosPaso = segundosTexto > 0 ? segundosTexto : (sugerencia ? sugerencia.minutos * 60 : 0);
   const c = crono[paso.id];
 
   function restanteDe(cr: Cronometro): number {
@@ -197,7 +199,6 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos }: Props)
   const otrosActivos = lista.filter(
     (p) => p.id !== paso.id && crono[p.id] && crono[p.id].estado !== 'listo',
   );
-  const minutosAjuste = ajuste[paso.id] ?? sugerencia?.minutos ?? 10;
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={cerrar}>
@@ -272,30 +273,13 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos }: Props)
                 </Pressable>
               </View>
             </View>
-          ) : segundosTexto > 0 ? (
-            <Pressable style={styles.botonIniciar} onPress={() => iniciar(segundosTexto)}>
+          ) : segundosPaso > 0 ? (
+            <Pressable style={styles.botonIniciar} onPress={() => iniciar(segundosPaso)}>
               <Ionicons name="timer-outline" size={22} color={colors.white} />
-              <Text style={styles.botonIniciarTexto}>Poner cronómetro · {formato(segundosTexto)}</Text>
+              <Text style={styles.botonIniciarTexto}>
+                {sugerencia ? `${sugerencia.etiqueta} · ` : ''}Poner cronómetro · {formato(segundosPaso)}
+              </Text>
             </Pressable>
-          ) : sugerencia ? (
-            <View style={styles.tarjetaAjuste}>
-              <Text style={styles.ajusteTitulo}>{sugerencia.etiqueta}: ¿cuántos minutos?</Text>
-              <View style={styles.ajusteFila}>
-                <Pressable style={styles.ajusteBoton}
-                  onPress={() => setAjuste((p) => ({ ...p, [paso.id]: Math.max(1, minutosAjuste - 1) }))}>
-                  <Ionicons name="remove" size={20} color={colors.text} />
-                </Pressable>
-                <Text style={styles.ajusteValor}>{minutosAjuste} min</Text>
-                <Pressable style={styles.ajusteBoton}
-                  onPress={() => setAjuste((p) => ({ ...p, [paso.id]: minutosAjuste + 1 }))}>
-                  <Ionicons name="add" size={20} color={colors.text} />
-                </Pressable>
-              </View>
-              <Pressable style={styles.botonIniciar} onPress={() => iniciar(minutosAjuste * 60)}>
-                <Ionicons name="timer-outline" size={22} color={colors.white} />
-                <Text style={styles.botonIniciarTexto}>Poner cronómetro</Text>
-              </Pressable>
-            </View>
           ) : null}
         </ScrollView>
 
@@ -366,16 +350,6 @@ const styles = StyleSheet.create({
   },
   botonIniciarTexto: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.white },
 
-  tarjetaAjuste: {
-    backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md, gap: spacing.md, ...shadow.card,
-  },
-  ajusteTitulo: { ...typography.body, fontFamily: fonts.bodyBold, textAlign: 'center' },
-  ajusteFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.lg },
-  ajusteBoton: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primaryLight,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  ajusteValor: { fontFamily: fonts.displayBold, fontSize: 28, color: colors.text, minWidth: 100, textAlign: 'center' },
 
   tarjetaCrono: {
     backgroundColor: colors.accent, borderRadius: radius.lg, padding: spacing.lg, alignItems: 'center', gap: spacing.sm,

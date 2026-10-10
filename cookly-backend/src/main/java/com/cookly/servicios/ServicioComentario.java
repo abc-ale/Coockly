@@ -1,5 +1,6 @@
 package com.cookly.servicios;
 
+import com.cookly.dto.RespuestaComentario;
 import com.cookly.modelos.Comentario;
 import com.cookly.repositorios.RepositorioComentario;
 import com.cookly.repositorios.RepositorioReceta;
@@ -18,14 +19,23 @@ public class ServicioComentario {
         this.comentarios = comentarios; this.recetas = recetas; this.usuarios = usuarios;
     }
 
+    /** Se convierte a DTO dentro de la transacción: así el autor (carga diferida) ya está disponible. */
+    private RespuestaComentario aRespuesta(Comentario c) {
+        var u = c.getUsuario();
+        return new RespuestaComentario(c.getId(), c.getContenido(), c.getCreadoEn(),
+                new RespuestaComentario.Autor(u.getNombre(), u.getCorreo()));
+    }
+
     @Transactional(readOnly = true)
-    public List<Comentario> listar(Long recetaId) { return comentarios.findByRecetaIdOrderByCreadoEnDesc(recetaId); }
+    public List<RespuestaComentario> listar(Long recetaId) {
+        return comentarios.findByRecetaIdOrderByCreadoEnDesc(recetaId).stream().map(this::aRespuesta).toList();
+    }
 
     @Transactional
-    public Comentario crear(Long recetaId, String correoAutor, String contenido) {
+    public RespuestaComentario crear(Long recetaId, String correoAutor, String contenido) {
         var receta = recetas.findById(recetaId).orElseThrow(() -> new IllegalArgumentException("Receta no encontrada"));
         var usuario = usuarios.findByCorreo(correoAutor).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-        return comentarios.save(new Comentario(receta, usuario, contenido));
+        return aRespuesta(comentarios.save(new Comentario(receta, usuario, contenido)));
     }
 
     @Transactional
