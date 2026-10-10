@@ -4,7 +4,7 @@
 // (sin ir a otra pantalla): el indicador rosado se desliza y los campos entran con una transición.
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, TextInput, StyleSheet, ScrollView, Image, Animated, Easing, LayoutChangeEvent,
+  View, Text, TextInput, StyleSheet, ScrollView, Image, Animated, Easing, LayoutChangeEvent, useWindowDimensions,
   KeyboardAvoidingView, Platform, TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,6 +50,10 @@ export default function PantallaLogin({
   onLogin, onRegistrar, onGoogle, onFacebook, onOlvide, cargando, cargandoRegistro,
 }: Props) {
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+  // La tarjeta empieza al 31 % de la altura: el formulario se reparte por toda la pantalla.
+  const topTarjeta = Math.round(height * 0.31);
+  const foto = Math.min(Math.round(width * 0.48), 190);
   const [modo, setModo] = useState<Modo>('login');
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
@@ -87,9 +91,9 @@ export default function PantallaLogin({
     <View style={s.fondo}>
       {/* Franja rosada y figuras de la marca */}
       <View style={s.franja} />
-      <View style={[s.figura, { width: 90, height: 90, borderRadius: 45, top: 80, left: -34, backgroundColor: colors.accent }]} />
-      <View style={[s.figura, { width: 26, height: 26, borderRadius: 13, top: 62, right: 150, backgroundColor: colors.magic }]} />
-      <View style={[s.figura, { width: 60, height: 60, borderRadius: 30, top: 160, right: 14, backgroundColor: colors.primary, opacity: 0.18 }]} />
+      <View style={[s.figura, { width: 90, height: 90, borderRadius: 45, top: topTarjeta - 150, left: -34, backgroundColor: colors.accent }]} />
+      <View style={[s.figura, { width: 26, height: 26, borderRadius: 13, top: topTarjeta - 178, right: foto + 30, backgroundColor: colors.magic }]} />
+      <View style={[s.figura, { width: 60, height: 60, borderRadius: 30, top: topTarjeta - 80, right: 14, backgroundColor: colors.primary, opacity: 0.18 }]} />
 
       <Animated.Image
         source={{ uri: URL_PLATO }}
@@ -97,6 +101,7 @@ export default function PantallaLogin({
         style={[
           s.plato,
           {
+            width: foto, height: foto, borderRadius: foto / 2, top: Math.round(height * 0.07),
             transform: [
               { translateY: flota.interpolate({ inputRange: [0, 1], outputRange: [0, -8] }) },
               { rotate: flota.interpolate({ inputRange: [0, 1], outputRange: ['-4deg', '4deg'] }) },
@@ -106,13 +111,13 @@ export default function PantallaLogin({
       />
 
       <View style={s.logo}>
-        <Logo size={42} variante="rosa" conTexto colorTexto={colors.primary} />
+        <Logo size={48} variante="rosa" conTexto colorTexto={colors.primary} />
       </View>
-      <Text style={s.titular}>Cocina fácil,{'\n'}a tu medida</Text>
+      <Text style={[s.titular, { top: topTarjeta - 104 }]}>Cocina fácil,{'\n'}a tu medida</Text>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          contentContainerStyle={{ paddingTop: 200, flexGrow: 1 }}
+          contentContainerStyle={{ paddingTop: topTarjeta, flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
           bounces={false}
           overScrollMode="never"
@@ -140,7 +145,7 @@ export default function PantallaLogin({
             </View>
 
             {/* Formulario: cada vez que cambia el modo entra con una pequeña animación */}
-            <Aparecer key={modo} distancia={14}>
+            <Aparecer key={modo} distancia={14} style={{ flex: 1 }}>
               {esRegistro && (
                 <Campo icono="person-outline" enfocado={foco === 'nombre'}>
                   <TextInput
@@ -233,6 +238,7 @@ export default function PantallaLogin({
                 </View>
               </View>
 
+              <View style={{ flex: 1, minHeight: 14 }} />
               <View style={s.pie}>
                 <Text style={s.pieTexto}>{esRegistro ? '¿Ya tienes cuenta? ' : '¿Aún no tienes cuenta? '}</Text>
                 <TouchableOpacity onPress={() => cambiarModo(esRegistro ? 'login' : 'registro')} hitSlop={8}>
@@ -267,7 +273,7 @@ const s = StyleSheet.create({
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
     paddingHorizontal: 28,
-    paddingTop: 20,
+    paddingTop: 24,
     paddingBottom: 28,
     shadowColor: colors.text,
     shadowOpacity: 0.08,
@@ -276,11 +282,11 @@ const s = StyleSheet.create({
     elevation: 10,
   },
   pestanas: {
-    height: 48, borderRadius: 24, backgroundColor: colors.primaryLight,
-    flexDirection: 'row', padding: 4, marginBottom: 14,
+    height: 52, borderRadius: 26, backgroundColor: colors.primaryLight,
+    flexDirection: 'row', padding: 4, marginBottom: 18,
   },
   indicador: {
-    position: 'absolute', top: 4, left: 4, bottom: 4, borderRadius: 20, backgroundColor: colors.primary,
+    position: 'absolute', top: 4, left: 4, bottom: 4, borderRadius: 22, backgroundColor: colors.primary,
     shadowColor: colors.primary, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4,
   },
   pestana: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -288,27 +294,27 @@ const s = StyleSheet.create({
   campo: {
     flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.white,
     borderRadius: 999, borderWidth: 1.5, borderColor: colors.primaryLight,
-    paddingHorizontal: 20, height: 50, marginBottom: 9,
+    paddingHorizontal: 20, height: 54, marginBottom: 12,
     shadowColor: colors.text, shadowOpacity: 0.05, shadowRadius: 9, shadowOffset: { width: 0, height: 4 }, elevation: 1,
   },
   campoEnfocado: { borderColor: colors.primary },
   input: { flex: 1, fontFamily: fonts.body, fontSize: 15, color: colors.text, paddingVertical: 0 },
-  olvideWrap: { alignSelf: 'flex-end', marginTop: 0, marginBottom: 14, marginRight: 6 },
+  olvideWrap: { alignSelf: 'flex-end', marginTop: 0, marginBottom: 18, marginRight: 6 },
   olvide: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.primary },
-  ayudaWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 0, marginBottom: 14, marginLeft: 8 },
+  ayudaWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 0, marginBottom: 18, marginLeft: 8 },
   ayuda: { fontFamily: fonts.body, fontSize: 12.5, color: colors.textMuted },
-  separador: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 14, marginBottom: 12 },
+  separador: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 20, marginBottom: 16 },
   linea: { flex: 1, height: 1.5, backgroundColor: colors.primaryLight },
   sepTexto: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   redes: { flexDirection: 'row', gap: 12 },
   red: {
-    height: 50, borderRadius: 25, backgroundColor: colors.white,
+    height: 54, borderRadius: 27, backgroundColor: colors.white,
     borderWidth: 1.5, borderColor: colors.primaryLight,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
     shadowColor: colors.text, shadowOpacity: 0.05, shadowRadius: 7, shadowOffset: { width: 0, height: 3 }, elevation: 1,
   },
   redTexto: { fontFamily: fonts.heading, fontSize: 15, color: colors.text },
-  pie: { flexDirection: 'row', justifyContent: 'center', marginTop: 14 },
+  pie: { flexDirection: 'row', justifyContent: 'center', marginTop: 8 },
   pieTexto: { fontFamily: fonts.body, color: colors.textMuted, fontSize: 14 },
   registrate: { fontFamily: fonts.heading, color: colors.primary, fontSize: 14 },
 });
