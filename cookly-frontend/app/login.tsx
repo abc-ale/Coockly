@@ -232,7 +232,7 @@ export default function LoginScreen() {
 const s = StyleSheet.create({
   circulo: { position: 'absolute' },
   cabecera: { position: 'absolute', top: 58, left: 26 },
-  pie: { position: 'absolute', left: 28, right: 28, bottom: 56 },
+  pie: { position: 'absolute', left: 28, right: 28, bottom: 76 },
   titular: { fontFamily: fonts.display, fontSize: 40, lineHeight: 42, color: colors.text, letterSpacing: -0.5 },
   slogan: { fontFamily: fonts.body, fontSize: 16, lineHeight: 24, color: colors.textMuted, marginTop: 12, maxWidth: 310 },
   dots: { position: 'absolute', top: 70, right: 28, flexDirection: 'row', gap: 6 },
