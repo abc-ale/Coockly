@@ -1,7 +1,7 @@
 // components/DeslizarParaEmpezar.tsx
 // Botón "desliza para empezar": se arrastra el círculo blanco hacia la derecha y, al llegar
 // casi al final, se ejecuta onCompletar. Si se suelta antes, regresa con un rebote.
-// Mientras se arrastra, el fondo pasa por distintos tonos de rosado (claro → intenso → profundo).
+// Mientras se arrastra, el fondo recorre la paleta de Cookly: rosado → mantequilla → pistacho.
 // Mientras nadie lo toca, el círculo hace un pequeño gesto hacia la derecha para enseñar qué hacer.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, StyleSheet, Text, View, LayoutChangeEvent } from 'react-native';
@@ -102,8 +102,8 @@ export default function DeslizarParaEmpezar({ texto = 'Desliza para empezar', on
     [onCompletar, onArrastrando, x, pista]
   );
 
-  const capaClara = x.interpolate({ inputRange: [0, recorrido * 0.5, recorrido], outputRange: [0, 1, 0], extrapolate: 'clamp' });
-  const capaProfunda = x.interpolate({ inputRange: [0, recorrido * 0.45, recorrido], outputRange: [0, 0, 1], extrapolate: 'clamp' });
+  const capaMantequilla = x.interpolate({ inputRange: [0, recorrido * 0.5, recorrido], outputRange: [0, 1, 0], extrapolate: 'clamp' });
+  const capaPistacho = x.interpolate({ inputRange: [0, recorrido * 0.5, recorrido], outputRange: [0, 0, 1], extrapolate: 'clamp' });
   const opacidadTexto = x.interpolate({ inputRange: [0, recorrido * 0.6], outputRange: [1, 0], extrapolate: 'clamp' });
   const desplazarTexto = x.interpolate({ inputRange: [0, recorrido], outputRange: [0, 24], extrapolate: 'clamp' });
   const escalaPerilla = x.interpolate({ inputRange: [0, recorrido], outputRange: [1, 1.08], extrapolate: 'clamp' });
@@ -111,9 +111,9 @@ export default function DeslizarParaEmpezar({ texto = 'Desliza para empezar', on
   return (
     <View style={st.sombra} onLayout={(e: LayoutChangeEvent) => setAncho(e.nativeEvent.layout.width)}>
       <View style={st.pista}>
-        {/* Capas de tono: se mezclan según qué tan lejos está la perilla */}
-        <Animated.View style={[st.capa, { backgroundColor: '#FF9DBB', opacity: capaClara }]} pointerEvents="none" />
-        <Animated.View style={[st.capa, { backgroundColor: '#C42E5A', opacity: capaProfunda }]} pointerEvents="none" />
+        {/* Capas de color de la paleta: se mezclan según qué tan lejos está la perilla */}
+        <Animated.View style={[st.capa, { backgroundColor: colors.accent, opacity: capaMantequilla }]} pointerEvents="none" />
+        <Animated.View style={[st.capa, { backgroundColor: colors.magic, opacity: capaPistacho }]} pointerEvents="none" />
 
         {/* Texto central que se va apagando mientras se arrastra */}
         <Animated.View style={[st.textoWrap, { opacity: opacidadTexto, transform: [{ translateX: desplazarTexto }] }]} pointerEvents="none">

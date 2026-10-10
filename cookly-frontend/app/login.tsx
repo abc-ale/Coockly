@@ -191,8 +191,8 @@ export default function LoginScreen() {
           </View>
 
           {/* Plato grande que se sale del marco */}
-          <Animated.View style={{ position: 'absolute', top: height * 0.15, left: -width * 0.02, transform: [{ translateY: flotar }] }}>
-            <PortadaBienvenida ancho={width * 1.02} />
+          <Animated.View style={{ position: 'absolute', top: height * 0.16, left: width * 0.04, transform: [{ translateY: flotar }] }}>
+            <PortadaBienvenida ancho={width * 0.92} />
           </Animated.View>
 
           {/* Titular + botón */}
