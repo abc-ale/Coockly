@@ -57,12 +57,17 @@ api.interceptors.request.use(async (config) => {
 const esperar = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Administrador: el servidor entrega un token renovado en cada petición (la sesión vence por inactividad).
+    const renovado = response.headers?.['x-token-nuevo'];
+    if (renovado) AsyncStorage.setItem('cookly_token', String(renovado)).catch(() => {});
+    return response;
+  },
   async (error) => {
     const config = error.config;
     const estado: number | undefined = error.response?.status;
 
-    // Sesión vencida (el JWT dura 60 min): limpiar y avisar a la app.
+    // Sesión vencida (usuario: 30 días; administrador: 30 min sin actividad): limpiar y avisar a la app.
     if (estado === 401 && config?.headers?.Authorization && !config.url?.includes('/autenticacion/')) {
       await AsyncStorage.multiRemove(['cookly_token', 'cookly_user']);
       alNoAutorizado?.();
