@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView, Platform, TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Logo from './Logo';
 import Button from './Button';
 import { Aparecer, Presionable } from './Animaciones';
@@ -44,6 +45,7 @@ function Campo({
 export default function PantallaLogin({
   onLogin, onRegistrar, onGoogle, onFacebook, onOlvide, cargando, cargandoRegistro,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const [modo, setModo] = useState<Modo>('login');
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
@@ -110,7 +112,7 @@ export default function PantallaLogin({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Aparecer distancia={26} style={s.tarjeta}>
+          <Aparecer distancia={26} style={[s.tarjeta, { paddingBottom: 40 + insets.bottom }]}>
             {/* Pestañas */}
             <View style={s.pestanas} onLayout={(e: LayoutChangeEvent) => setAnchoPestanas(e.nativeEvent.layout.width)}>
               <Animated.View
@@ -164,7 +166,7 @@ export default function PantallaLogin({
               <Campo icono="lock-closed-outline" enfocado={foco === 'password'}>
                 <TextInput
                   style={s.input}
-                  placeholder={esRegistro ? 'Contraseña (mín. 10 caracteres)' : 'Contraseña'}
+                  placeholder={esRegistro ? 'Crea una contraseña' : 'Contraseña'}
                   placeholderTextColor={colors.textMuted}
                   secureTextEntry={!ver}
                   value={password}
@@ -180,7 +182,7 @@ export default function PantallaLogin({
               {esRegistro ? (
                 <View style={s.ayudaWrap}>
                   <Ionicons name="shield-checkmark-outline" size={14} color={colors.textMuted} />
-                  <Text style={s.ayuda}>Usa al menos 10 caracteres para proteger tu cuenta.</Text>
+                  <Text style={s.ayuda}>Mínimo 10 caracteres para proteger tu cuenta.</Text>
                 </View>
               ) : (
                 <TouchableOpacity onPress={onOlvide} style={s.olvideWrap} hitSlop={8}>
@@ -259,8 +261,8 @@ const s = StyleSheet.create({
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
     paddingHorizontal: 28,
-    paddingTop: 26,
-    paddingBottom: 36,
+    paddingTop: 22,
+    paddingBottom: 40,
     shadowColor: colors.text,
     shadowOpacity: 0.08,
     shadowRadius: 30,
@@ -269,7 +271,7 @@ const s = StyleSheet.create({
   },
   pestanas: {
     height: 52, borderRadius: 26, backgroundColor: colors.primaryLight,
-    flexDirection: 'row', padding: 4, marginBottom: 20,
+    flexDirection: 'row', padding: 4, marginBottom: 16,
   },
   indicador: {
     position: 'absolute', top: 4, left: 4, bottom: 4, borderRadius: 22, backgroundColor: colors.primary,
@@ -280,27 +282,27 @@ const s = StyleSheet.create({
   campo: {
     flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.white,
     borderRadius: 999, borderWidth: 1.5, borderColor: colors.primaryLight,
-    paddingHorizontal: 20, height: 54, marginBottom: 12,
+    paddingHorizontal: 20, height: 52, marginBottom: 10,
     shadowColor: colors.text, shadowOpacity: 0.05, shadowRadius: 9, shadowOffset: { width: 0, height: 4 }, elevation: 1,
   },
   campoEnfocado: { borderColor: colors.primary },
   input: { flex: 1, fontFamily: fonts.body, fontSize: 15, color: colors.text, paddingVertical: 0 },
-  olvideWrap: { alignSelf: 'flex-end', marginTop: 2, marginBottom: 18, marginRight: 6 },
+  olvideWrap: { alignSelf: 'flex-end', marginTop: 0, marginBottom: 14, marginRight: 6 },
   olvide: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.primary },
-  ayudaWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2, marginBottom: 18, marginLeft: 8 },
+  ayudaWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 0, marginBottom: 14, marginLeft: 8 },
   ayuda: { fontFamily: fonts.body, fontSize: 12.5, color: colors.textMuted },
-  separador: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 20, marginBottom: 16 },
+  separador: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 16, marginBottom: 14 },
   linea: { flex: 1, height: 1.5, backgroundColor: colors.primaryLight },
   sepTexto: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   redes: { flexDirection: 'row', gap: 12 },
   red: {
-    height: 54, borderRadius: 27, backgroundColor: colors.white,
+    height: 52, borderRadius: 26, backgroundColor: colors.white,
     borderWidth: 1.5, borderColor: colors.primaryLight,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
     shadowColor: colors.text, shadowOpacity: 0.05, shadowRadius: 7, shadowOffset: { width: 0, height: 3 }, elevation: 1,
   },
   redTexto: { fontFamily: fonts.heading, fontSize: 15, color: colors.text },
-  pie: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
+  pie: { flexDirection: 'row', justifyContent: 'center', marginTop: 18 },
   pieTexto: { fontFamily: fonts.body, color: colors.textMuted, fontSize: 14 },
   registrate: { fontFamily: fonts.heading, color: colors.primary, fontSize: 14 },
 });
