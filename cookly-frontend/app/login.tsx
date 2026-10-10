@@ -5,8 +5,7 @@ import { router, Redirect } from 'expo-router';
 import PantallaLogin from '../components/PantallaLogin';
 import Logo from '../components/Logo';
 import PortadaBienvenida from '../components/PortadaBienvenida';
-import Button from '../components/Button';
-import { Pulso } from '../components/Animaciones';
+import DeslizarParaEmpezar from '../components/DeslizarParaEmpezar';
 import { colors, fonts, spacing, typography } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 import { despertarServidor } from '../lib/api';
@@ -74,6 +73,7 @@ export default function LoginScreen() {
     return () => bucle.stop();
   }, [flotacion]);
 
+  const [arrastrando, setArrastrando] = useState(false);
   const [cargandoEmail, setCargandoEmail] = useState(false);
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
   const [cargandoFacebook, setCargandoFacebook] = useState(false);
@@ -164,6 +164,7 @@ export default function LoginScreen() {
         ref={pager}
         horizontal
         pagingEnabled
+        scrollEnabled={!arrastrando}
         showsHorizontalScrollIndicator={false}
         scrollEventThrottle={16}
         keyboardShouldPersistTaps="handled"
@@ -191,9 +192,9 @@ export default function LoginScreen() {
           <View style={s.pie}>
             <Text style={s.titular}>Calculamos{'\n'}por ti.</Text>
             <Text style={s.slogan}>Tú solo preocúpate de cocinar. Cantidades, tiempos y pasos, siempre a tu medida.</Text>
-            <Pulso style={{ marginTop: 26 }}>
-              <Button label="Empezar" variant="flecha" onPress={irAlLogin} />
-            </Pulso>
+            <View style={{ marginTop: 26 }}>
+              <DeslizarParaEmpezar texto="Desliza para empezar" onCompletar={irAlLogin} onArrastrando={setArrastrando} />
+            </View>
           </View>
         </Pressable>
 

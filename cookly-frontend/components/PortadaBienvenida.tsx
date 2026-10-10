@@ -8,14 +8,14 @@ import { colors } from '../constants/theme';
 
 // 👉 PEGA AQUÍ el enlace de tu PNG en Cloudinary (déjalo entre comillas).
 // La imagen viene solo de Cloudinary (no hace falta ningún archivo local).
-const URL_PLATO = 'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791665358/Imagen-bienvenida.png';
+const URL_PLATO = 'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791666314/Imagen-bienvenida.png';
 
 type Insig = { icono: keyof typeof Ionicons.glyphMap; fondo: string; color: string; x: number; y: number; fase: number };
 
 const INSIGNIAS: Insig[] = [
-  { icono: 'heart', fondo: colors.primary, color: colors.white, x: 0.76, y: 0.06, fase: 0 },
-  { icono: 'timer-outline', fondo: colors.accent, color: colors.text, x: 0.8, y: 0.7, fase: 350 },
-  { icono: 'leaf-outline', fondo: colors.magic, color: '#2F7A3C', x: 0.03, y: 0.86, fase: 700 },
+  { icono: 'heart', fondo: colors.primary, color: colors.white, x: 0.77, y: 0.07, fase: 0 },
+  { icono: 'timer-outline', fondo: colors.accent, color: colors.text, x: 0.8, y: 0.74, fase: 350 },
+  { icono: 'leaf-outline', fondo: colors.magic, color: '#2F7A3C', x: 0.085, y: 0.77, fase: 700 },
 ];
 
 function Insignia({ i, lado }: { i: Insig; lado: number }) {
