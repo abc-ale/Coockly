@@ -1,7 +1,7 @@
 // components/ImagenReceta.tsx
 // Foto de receta que no "salta": mientras llega se ve un fondo rosado con el cubierto,
 // y al cargar aparece con un fundido suave. Si falla, se queda el fondo (nunca un cuadro blanco).
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Image, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/theme';
@@ -13,6 +13,9 @@ export function optimizarImagen(url?: string | null, ancho = 600): string | unde
   if (!url.includes('res.cloudinary.com') || !/\/upload\/v\d+\//.test(url)) return url;
   return url.replace('/upload/', `/upload/w_${ancho},q_80/`);
 }
+
+// Fotos que ya se mostraron: al volver a verlas aparecen de golpe, sin fundido ni parpadeo.
+const yaCargadas = new Set<string>();
 
 // Descarga las fotos por adelantado para que al mostrarse ya estén en memoria.
 export function precargarImagenes(urls: (string | null | undefined)[], ancho = 500) {
@@ -32,9 +35,15 @@ type Props = {
 };
 
 export default function ImagenReceta({ uri, style, ancho = 600, tamanoIcono = 34, children }: Props) {
-  const aparece = useRef(new Animated.Value(0)).current;
-  const [fallo, setFallo] = useState(false);
   const url = optimizarImagen(uri, ancho);
+  const aparece = useRef(new Animated.Value(url && yaCargadas.has(url) ? 1 : 0)).current;
+  const [fallo, setFallo] = useState(false);
+
+  // Si la misma tarjeta recibe otra foto, se parte de cero (o ya visible si esa foto ya se vio).
+  useEffect(() => {
+    setFallo(false);
+    aparece.setValue(url && yaCargadas.has(url) ? 1 : 0);
+  }, [url, aparece]);
 
   return (
     <View style={[st.caja, style]}>
@@ -49,7 +58,10 @@ export default function ImagenReceta({ uri, style, ancho = 600, tamanoIcono = 34
           source={{ uri: url }}
           style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, { opacity: aparece }]}
           resizeMode="cover"
-          onLoad={() => Animated.timing(aparece, { toValue: 1, duration: 160, useNativeDriver: true }).start()}
+          onLoad={() => {
+            yaCargadas.add(url);
+            Animated.timing(aparece, { toValue: 1, duration: 160, useNativeDriver: true }).start();
+          }}
           onError={() => setFallo(true)}
         />
       ) : null}

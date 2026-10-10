@@ -101,12 +101,6 @@ function RecipeCard({ recipe, onPress, onToggleFavorite, indice = 0 }: Props) {
         {/* Foto liviana (Cloudinary) con fundido: nunca queda un cuadro blanco mientras carga */}
         <ImagenReceta uri={imagen} ancho={500} style={styles.image} />
 
-        {/* Estrellitas arriba a la izquierda (siempre se ven, vacías si aún no hay reseñas) */}
-        <View style={styles.ratingBadge}>
-          <Estrellas valor={puntuacion} tamano={12} />
-          {puntuacion > 0 && <Text style={styles.ratingText}>{puntuacion.toFixed(1)}</Text>}
-        </View>
-
         <Pressable
           style={styles.favoriteBadge}
           onPress={() => {
@@ -139,7 +133,10 @@ function RecipeCard({ recipe, onPress, onToggleFavorite, indice = 0 }: Props) {
 
         <View style={styles.pieFila}>
           <View style={styles.metaRow}>
-            {minutos ? <Meta icon="time-outline" text={`${minutos} min`} /> : null}
+            <View style={styles.minEstrellas}>
+              {minutos ? <Meta icon="time-outline" text={`${minutos} min`} /> : null}
+              <Estrellas valor={puntuacion} tamano={10} gap={0} />
+            </View>
             {personas ? <Meta icon="people-outline" text={`${personas}`} /> : null}
             {kcal ? <Meta icon="flame-outline" text={`${kcal} kcal`} /> : null}
           </View>
@@ -233,6 +230,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   pieFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.sm },
+  minEstrellas: { gap: 3 },
   metaRow: { flexDirection: 'row', gap: spacing.sm, flexShrink: 1 },
   flecha: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 3 },

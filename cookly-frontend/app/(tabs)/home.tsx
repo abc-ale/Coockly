@@ -8,6 +8,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RecipeCard, { TarjetaReceta, EntradaSuave } from '../../components/RecipeCard';
 import FiltroEtiquetas from '../../components/FiltroEtiquetas';
+import Estrellas from '../../components/Estrellas';
 import ImagenReceta, { precargarImagenes } from '../../components/ImagenReceta';
 import { Aparecer, Presionable, Rebote } from '../../components/Animaciones';
 import { EsqueletoTarjetas } from '../../components/Esqueleto';
@@ -57,25 +58,43 @@ export default function HomeScreen() {
   const scroll = useRef<ScrollView>(null);
   const yTodas = useRef(0);
 
+  // Memoria de lo ya cargado por categoría/búsqueda: al volver a una categoría se ve al instante.
+  const memoria = useRef<Map<string, TarjetaReceta[]>>(new Map());
+  const favoritosCargados = useRef(false);
+
   // `silencioso`: al deslizar para refrescar no se muestran los esqueletos.
   const buscarRecetas = useCallback(async (busqueda: string, etiquetaId: number | null, silencioso = false) => {
+    const clave = `${etiquetaId ?? 'todas'}|${busqueda}`;
+    const guardada = memoria.current.get(clave);
+    if (guardada && !silencioso) {
+      // Ya la teníamos: se muestra de inmediato y se actualiza por detrás sin esqueletos.
+      setRecetas(guardada);
+      setCargando(false);
+      silencioso = true;
+    }
     if (!silencioso) setCargando(true);
     try {
-      // Favoritos y recetas se piden al mismo tiempo: así carga casi la mitad de rápido.
       const pedidoRecetas =
         etiquetaId !== null
           ? api.get(`/recetas/por-etiqueta/${etiquetaId}`, { params: { pagina: 0, tamano: 20 } })
           : api.get('/recetas/buscar', { params: { texto: busqueda, pagina: 0, tamano: 20 } });
-      const [resFavoritos, resRecetas] = await Promise.all([api.get('/recetas/favoritos'), pedidoRecetas]);
-      setFavoritosIds(new Set<number>(resFavoritos.data.map((r: any) => r.id)));
+      // Los favoritos solo se piden la primera vez (después se actualizan al volver a Inicio).
+      const pedidoFavoritos = favoritosCargados.current ? Promise.resolve(null) : api.get('/recetas/favoritos');
+      const [resFavoritos, resRecetas] = await Promise.all([pedidoFavoritos, pedidoRecetas]);
+      if (resFavoritos) {
+        favoritosCargados.current = true;
+        setFavoritosIds(new Set<number>(resFavoritos.data.map((r: any) => r.id)));
+      }
 
       const lista: TarjetaReceta[] = resRecetas.data.content ?? [];
+      memoria.current.set(clave, lista);
       setRecetas(lista);
       precargarImagenes(lista.map((x: any) => x.portada), 500);
     } catch (error: any) {
-      // Muestra la causa real en la terminal de Expo (estado HTTP y mensaje del servidor).
-      console.log('ERROR RECETAS', error?.response?.status, JSON.stringify(error?.response?.data), error?.message);
-      Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudieron cargar las recetas.');
+      if (!guardada) {
+        console.log('ERROR RECETAS', error?.response?.status, JSON.stringify(error?.response?.data), error?.message);
+        Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudieron cargar las recetas.');
+      }
     } finally {
       setCargando(false);
     }
@@ -289,9 +308,15 @@ export default function HomeScreen() {
                   <ImagenReceta uri={r.portada} ancho={420} style={styles.popularFoto} />
                   <Text style={styles.popularNombre} numberOfLines={2}>{r.nombre}</Text>
                   <View style={styles.popularPie}>
-                    <Text style={styles.popularMin}>
-                      {r.minutosPreparacion ? `${r.minutosPreparacion} min` : 'Ver receta'}
-                    </Text>
+                    <View style={styles.popularInfo}>
+                      <View style={styles.popularMinFila}>
+                        <Ionicons name="time-outline" size={13} color={colors.textMuted} />
+                        <Text style={styles.popularMin}>
+                          {r.minutosPreparacion ? `${r.minutosPreparacion} min` : 'Ver receta'}
+                        </Text>
+                      </View>
+                      <Estrellas valor={Number(r.promedio ?? 0)} tamano={10} gap={0} />
+                    </View>
                     <View style={styles.popularFlecha}>
                       <Ionicons name="arrow-forward" size={16} color={colors.white} />
                     </View>
@@ -465,6 +490,8 @@ const styles = StyleSheet.create({
   popularFoto: { height: 108, borderRadius: 22 },
   popularNombre: { fontFamily: fonts.heading, fontSize: 15, lineHeight: 19, color: colors.text, marginTop: 10, marginHorizontal: 4, minHeight: 38 },
   popularPie: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, marginHorizontal: 4, marginBottom: 2 },
+  popularInfo: { flexShrink: 1, gap: 3 },
+  popularMinFila: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   popularMin: { ...typography.caption, color: colors.textMuted, fontSize: 12 },
   popularFlecha: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   grid: {
