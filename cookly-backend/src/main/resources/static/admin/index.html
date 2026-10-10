@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Cookly · Panel administrativo</title>
   <link rel="icon" type="image/png" href="img/favicon.png">
-  <link rel="stylesheet" href="admin.css?v=8">
+  <link rel="stylesheet" href="admin.css?v=9">
 </head>
 <body>
 
@@ -93,7 +93,14 @@
 
   <!-- ============ Panel ============ -->
   <div id="vista-panel" class="panel" hidden>
-    <aside class="lateral">
+    <header class="barra-movil">
+      <button type="button" id="btn-menu" class="hamburguesa" aria-label="Abrir menú" aria-expanded="false" aria-controls="lateral">
+        <span></span><span></span><span></span>
+      </button>
+      <p class="barra-movil-marca"><img src="img/isotipo-claro.png" alt=""><span>ookly</span></p>
+    </header>
+    <div id="velo" class="velo" hidden></div>
+    <aside class="lateral" id="lateral">
       <div class="marca">
         <img src="img/isotipo-claro.png" alt="">
         <div class="marca-texto">
@@ -309,5 +316,6 @@
 
   <script src="vendor/chart.umd.js"></script>
   <script src="admin.js?v=8"></script>
+  <script src="menu-movil.js?v=1"></script>
 </body>
 </html>

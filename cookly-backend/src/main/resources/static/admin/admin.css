@@ -321,19 +321,79 @@ td .acciones { flex-direction: column; align-items: stretch; min-width: 112px; }
 .aviso.error { border-left-color: var(--rosa); background: #4A1B31; }
 
 /* ============================================================ ADAPTABLE */
+/* Barra superior y botón hamburguesa: solo se ven en pantallas pequeñas */
+.barra-movil, .velo { display: none; }
+
 @media (max-width: 960px) {
   .acceso { grid-template-columns: 1fr; }
   .acceso-historia { padding: 28px 24px 24px; gap: 14px; }
   .acceso-historia .acceso-ilustracion, .acceso-detalle { display: none; }
   .acceso-lema { font-size: 26px; margin: 0; }
   .acceso-marca img { height: 42px; } .acceso-marca span { font-size: 36px; }
-  .panel { grid-template-columns: 1fr; }
-  .lateral { position: static; height: auto; flex-direction: column; padding: 16px; gap: 12px; }
-  .navegacion { flex-direction: row; overflow-x: auto; flex: none; padding-bottom: 4px; }
-  .navegacion a { white-space: nowrap; }
-  .lateral-pie { flex-direction: row; align-items: center; justify-content: space-between; }
+
+  .panel { grid-template-columns: minmax(0, 1fr); }
+
+  /* Barra superior con hamburguesa */
+  .barra-movil {
+    display: flex; align-items: center; gap: 14px;
+    position: sticky; top: 0; z-index: 30;
+    padding: 10px 16px; background: var(--tinta); color: var(--crema);
+    box-shadow: 0 4px 16px rgba(43, 18, 32, 0.18);
+  }
+  .barra-movil-marca { display: flex; align-items: center; gap: 8px; margin: 0; }
+  .barra-movil-marca img { height: 32px; width: auto; display: block; }
+  .barra-movil-marca span { font-family: var(--fuente-titulo); font-weight: 700; font-size: 24px; line-height: 1; color: var(--blush); margin-left: -2px; }
+
+  .hamburguesa {
+    width: 44px; height: 44px; border: 0; border-radius: 14px; cursor: pointer;
+    background: rgba(255, 255, 255, 0.08); display: grid; place-content: center; gap: 5px;
+    transition: background .2s;
+  }
+  .hamburguesa:hover { background: rgba(255, 255, 255, 0.16); }
+  .hamburguesa span {
+    display: block; width: 22px; height: 2.5px; border-radius: 2px; background: var(--crema);
+    transition: transform .3s, opacity .2s;
+  }
+  .menu-abierto .hamburguesa span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .menu-abierto .hamburguesa span:nth-child(2) { opacity: 0; }
+  .menu-abierto .hamburguesa span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+  /* El menú lateral se vuelve un cajón que entra desde la izquierda */
+  .lateral {
+    position: fixed; top: 0; left: 0; bottom: 0; height: 100dvh; width: min(290px, 84vw);
+    z-index: 40; padding: 26px 16px 18px; gap: 22px;
+    transform: translateX(-105%); transition: transform .3s cubic-bezier(.2, .8, .2, 1);
+    box-shadow: none;
+  }
+  .menu-abierto .lateral { transform: none; box-shadow: 12px 0 40px rgba(43, 18, 32, 0.35); }
+  .navegacion { flex-direction: column; overflow: visible; flex: 1; padding-bottom: 0; }
+  .navegacion a { white-space: normal; }
+  .lateral-pie { flex-direction: column; align-items: stretch; justify-content: flex-start; }
+
+  .velo {
+    display: block; position: fixed; inset: 0; z-index: 35;
+    background: rgba(43, 18, 32, 0.5); backdrop-filter: blur(2px);
+    animation: aparecer .25s both;
+  }
+  .velo[hidden] { display: none !important; }
+  body.sin-scroll { overflow: hidden; }
+
+  .contenido { padding: 18px 16px 28px; overflow-x: clip; }
+  .cabecera { margin-bottom: 18px; }
   .reporte { grid-template-columns: 1fr; }
   .acciones { justify-content: flex-start; }
+}
+
+@media (max-width: 600px) {
+  .contenido { padding: 16px 12px 24px; }
+  .cabecera h1 { font-size: 24px; }
+  .segmentos { width: 100%; }
+  .segmentos button { flex: 1; }
+  .avisos { right: 12px; left: 12px; bottom: 12px; max-width: none; }
+  /* Las tablas anchas se deslizan hacia los lados en vez de romper la página */
+  .tabla-envoltura { -webkit-overflow-scrolling: touch; }
+  .rejilla { grid-template-columns: minmax(0, 1fr); }
+  .cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
