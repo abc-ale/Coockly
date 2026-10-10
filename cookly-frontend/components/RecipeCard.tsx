@@ -2,9 +2,37 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography, shadow } from '../constants/theme';
-import { Aparecer, Presionable } from './Animaciones';
+import { Presionable } from './Animaciones';
 import ImagenReceta from './ImagenReceta';
 import { toque } from '../lib/vibracion';
+
+/**
+ * Entrada suave: la tarjeta sube un poco y se asienta, SIN cambiar la transparencia.
+ * (En Android, una sombra dentro de algo semitransparente se ve como un rectángulo gris: por eso no se usa fundido.)
+ */
+export function EntradaSuave({
+  children, delay = 0, distancia = 16, style,
+}: { children: React.ReactNode; delay?: number; distancia?: number; style?: any }) {
+  const progreso = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(progreso, { toValue: 1, duration: 380, delay, useNativeDriver: true }).start();
+  }, [progreso, delay]);
+  return (
+    <Animated.View
+      style={[
+        style,
+        {
+          transform: [
+            { translateY: progreso.interpolate({ inputRange: [0, 1], outputRange: [distancia, 0] }) },
+            { scale: progreso.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) },
+          ],
+        },
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
+}
 
 /** Forma de los datos de ejemplo que usa la pantalla Buscar. */
 export type Recipe = {
@@ -66,7 +94,7 @@ function RecipeCard({ recipe, onPress, onToggleFavorite, indice = 0 }: Props) {
   }, [r.isFavorite, escalaCorazon]);
 
   return (
-    <Aparecer delay={Math.min(indice, 8) * 70} distancia={14} style={styles.envoltura}>
+    <EntradaSuave delay={Math.min(indice, 8) * 60} distancia={14} style={styles.envoltura}>
     <Presionable onPress={onPress} escalaAlPresionar={0.97} style={[styles.card, shadow.card]}>
       <View style={styles.fotoCaja}>
         {/* Foto liviana (Cloudinary) con fundido: nunca queda un cuadro blanco mientras carga */}
@@ -121,7 +149,7 @@ function RecipeCard({ recipe, onPress, onToggleFavorite, indice = 0 }: Props) {
         </View>
       </View>
     </Presionable>
-    </Aparecer>
+    </EntradaSuave>
   );
 }
 

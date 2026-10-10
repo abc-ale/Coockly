@@ -6,7 +6,7 @@ import { View, Text, TextInput, ScrollView, StyleSheet, Alert, Pressable, Refres
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import RecipeCard, { TarjetaReceta } from '../../components/RecipeCard';
+import RecipeCard, { TarjetaReceta, EntradaSuave } from '../../components/RecipeCard';
 import FiltroEtiquetas from '../../components/FiltroEtiquetas';
 import ImagenReceta from '../../components/ImagenReceta';
 import { Aparecer, Presionable, Rebote } from '../../components/Animaciones';
@@ -61,20 +61,13 @@ export default function HomeScreen() {
   const buscarRecetas = useCallback(async (busqueda: string, etiquetaId: number | null, silencioso = false) => {
     if (!silencioso) setCargando(true);
     try {
-      let resRecetas;
-      const resFavoritos = await api.get('/recetas/favoritos');
-      const idsFavoritos = new Set<number>(resFavoritos.data.map((r: any) => r.id));
-      setFavoritosIds(idsFavoritos);
-
-      if (etiquetaId !== null) {
-        resRecetas = await api.get(`/recetas/por-etiqueta/${etiquetaId}`, {
-          params: { pagina: 0, tamano: 20 },
-        });
-      } else {
-        resRecetas = await api.get('/recetas/buscar', {
-          params: { texto: busqueda, pagina: 0, tamano: 20 },
-        });
-      }
+      // Favoritos y recetas se piden al mismo tiempo: así carga casi la mitad de rápido.
+      const pedidoRecetas =
+        etiquetaId !== null
+          ? api.get(`/recetas/por-etiqueta/${etiquetaId}`, { params: { pagina: 0, tamano: 20 } })
+          : api.get('/recetas/buscar', { params: { texto: busqueda, pagina: 0, tamano: 20 } });
+      const [resFavoritos, resRecetas] = await Promise.all([api.get('/recetas/favoritos'), pedidoRecetas]);
+      setFavoritosIds(new Set<number>(resFavoritos.data.map((r: any) => r.id)));
 
       const lista: TarjetaReceta[] = resRecetas.data.content ?? [];
       setRecetas(lista);
@@ -133,15 +126,16 @@ export default function HomeScreen() {
   }
 
   const filtrando = texto.length > 0 || etiquetaSeleccionada !== null;
+  const buscando = texto.length > 0;
   const titulo = texto
     ? `Resultados para "${texto}"`
     : etiquetaSeleccionada !== null
-    ? 'Filtrado por etiqueta'
+    ? 'Recetas de esta categoría'
     : 'Todas las recetas';
 
-  // Receta del día y populares (solo cuando no se está buscando ni filtrando).
-  const recetaDelDia = !filtrando && recetas.length > 0 ? recetas[diaDelAnio() % recetas.length] : null;
-  const populares = !filtrando
+  // Receta del día y populares: se ven siempre (también al elegir una categoría) y solo se ocultan al buscar por texto.
+  const recetaDelDia = !buscando && recetas.length > 0 ? recetas[diaDelAnio() % recetas.length] : null;
+  const populares = !buscando
     ? [...recetas].sort((a, b) => Number(b.promedio ?? 0) - Number(a.promedio ?? 0)).slice(0, 6)
     : [];
 
@@ -149,7 +143,7 @@ export default function HomeScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Parte fija: saludo, buscador y categorías. No se mueve al hacer scroll. */}
       <View style={styles.encabezadoFijo}>
-        <Aparecer distancia={-12}>
+        <EntradaSuave distancia={-12}>
           <View style={[styles.saludoFila, { paddingTop: insets.top + MARGEN_SUPERIOR }]}>
             <View style={{ flex: 1 }}>
               <Text style={styles.greeting}>¡Hola, Chef!</Text>
@@ -168,10 +162,10 @@ export default function HomeScreen() {
               <View style={styles.campanaPunto} />
             </Presionable>
           </View>
-        </Aparecer>
+        </EntradaSuave>
 
         {/* Buscador con botón de filtros */}
-        <Aparecer delay={100}>
+        <EntradaSuave delay={100} distancia={10}>
           <View style={styles.searchBar}>
             <Ionicons name="search" size={20} color={colors.primary} />
             <TextInput
@@ -190,19 +184,8 @@ export default function HomeScreen() {
                 <Ionicons name="close-circle" size={18} color={colors.textMuted} />
               </Pressable>
             )}
-            <Presionable
-              style={styles.botonFiltros}
-              escalaAlPresionar={0.88}
-              onPress={() => {
-                toque();
-                router.push('/(tabs)/search');
-              }}
-              accessibilityLabel="Búsqueda avanzada"
-            >
-              <Ionicons name="options-outline" size={20} color={colors.white} />
-            </Presionable>
           </View>
-        </Aparecer>
+        </EntradaSuave>
 
         <Aparecer delay={180}>
           <FiltroEtiquetas
@@ -233,7 +216,7 @@ export default function HomeScreen() {
       >
         {/* Continuar cocinando */}
         {progreso && !filtrando && (
-          <Aparecer>
+          <EntradaSuave distancia={12}>
             <Presionable
               onPress={() => router.push(`/receta/${progreso.recetaId}?continuar=1`)}
               escalaAlPresionar={0.98}
@@ -250,12 +233,12 @@ export default function HomeScreen() {
                 <Ionicons name="chevron-forward" size={20} color={colors.white} />
               </Degradado>
             </Presionable>
-          </Aparecer>
+          </EntradaSuave>
         )}
 
         {/* Receta del día */}
         {recetaDelDia && (
-          <Aparecer delay={120}>
+          <EntradaSuave delay={120} distancia={14}>
             <Presionable style={styles.heroSombra} escalaAlPresionar={0.98} onPress={() => abrirReceta(recetaDelDia)}>
               <ImagenReceta uri={recetaDelDia.portada} ancho={900} tamanoIcono={44} style={styles.hero}>
                 <View style={styles.heroVelo} />
@@ -271,7 +254,7 @@ export default function HomeScreen() {
                 </View>
               </ImagenReceta>
             </Presionable>
-          </Aparecer>
+          </EntradaSuave>
         )}
 
         {/* Populares */}
@@ -352,10 +335,10 @@ export default function HomeScreen() {
           />
         ) : (
           // Al cambiar de categoría la lista se vuelve a armar y las tarjetas entran una tras otra.
-          // Mientras llegan los datos nuevos, la lista anterior se atenúa en vez de desaparecer.
+          // Mientras llegan los datos nuevos se sigue viendo la lista anterior, sin atenuarla.
           <View
             key={`${texto}-${etiquetaSeleccionada}`}
-            style={[styles.grid, cargando && { opacity: 0.45 }]}
+            style={styles.grid}
           >
             {recetas.map((receta, i) => (
               <RecipeCard
@@ -426,22 +409,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     marginHorizontal: spacing.md,
     borderRadius: radius.pill,
-    paddingLeft: spacing.md,
-    paddingRight: 6,
+    paddingHorizontal: spacing.md,
     height: 56,
     borderWidth: 1.5,
     borderColor: colors.border,
     ...shadow.card,
   },
   searchInput: { flex: 1, ...typography.body, color: colors.text, padding: 0 },
-  botonFiltros: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+
   heroSombra: {
     marginHorizontal: spacing.md,
     marginTop: spacing.sm,

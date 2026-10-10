@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Text, View } from 'react-native';
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,16 +37,39 @@ export default function TabsLayout() {
         // Mismo margen de arriba en todas las pantallas (debajo de la hora / wifi / batería).
         // Home ya aplica este mismo margen por su cuenta, por eso allí va en 0.
         sceneStyle: { backgroundColor: colors.background, paddingTop: insets.top + spacing.sm },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: { fontFamily: fonts.bodyMedium, fontSize: 11 },
+        tabBarActiveTintColor: colors.white,
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.62)',
+        // Etiqueta en una sola línea (que no se corte "Comunidad") y en negrita la pestaña activa.
+        tabBarLabel: ({ focused, color, children }) => (
+          <Text
+            numberOfLines={1}
+            allowFontScaling={false}
+            style={{ color, fontSize: 11, fontFamily: focused ? fonts.bodyBold : fonts.bodyMedium }}
+          >
+            {children}
+          </Text>
+        ),
+        tabBarItemStyle: { paddingHorizontal: 0 },
+        // Barra rosa; la pantalla crema parece "caer" sobre ella con las esquinas de abajo curvas.
+        tabBarBackground: () => (
+          <View style={{ flex: 1, backgroundColor: colors.primary }}>
+            <View
+              style={{
+                height: 26,
+                backgroundColor: colors.background,
+                borderBottomLeftRadius: 28,
+                borderBottomRightRadius: 28,
+              }}
+            />
+          </View>
+        ),
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
+          backgroundColor: colors.primary,
+          borderTopWidth: 0,
+          elevation: 0,
           // Deja sitio a los botones de Android (atrás / inicio / recientes)
-          height: 58 + insets.bottom,
-          paddingTop: 6,
+          height: 74 + insets.bottom,
+          paddingTop: 26,
           paddingBottom: insets.bottom + 6,
         },
       }}
@@ -57,7 +81,7 @@ export default function TabsLayout() {
           title: 'Inicio',
           sceneStyle: { backgroundColor: colors.background, paddingTop: 0 },
           ...ocultarSi(esAdmin),
-          tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "home" : "home-outline"} size={26} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -65,7 +89,7 @@ export default function TabsLayout() {
         options={{
           title: 'Buscar',
           ...ocultarSi(esAdmin),
-          tabBarIcon: ({ color, size }) => <Ionicons name="search-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "search" : "search-outline"} size={26} color={color} />,
         }}
       />
       {/* El archivo se llama comunity.tsx: el nombre aquí debe ser idéntico */}
@@ -74,7 +98,7 @@ export default function TabsLayout() {
         options={{
           title: 'Comunidad',
           ...ocultarSi(esAdmin),
-          tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "people" : "people-outline"} size={26} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -82,7 +106,7 @@ export default function TabsLayout() {
         options={{
           title: 'Favoritos',
           ...ocultarSi(esAdmin),
-          tabBarIcon: ({ color, size }) => <Ionicons name="heart-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "heart" : "heart-outline"} size={26} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -90,7 +114,7 @@ export default function TabsLayout() {
         options={{
           title: 'Lista',
           ...ocultarSi(esAdmin),
-          tabBarIcon: ({ color, size }) => <Ionicons name="cart-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "cart" : "cart-outline"} size={26} color={color} />,
         }}
       />
 
@@ -100,7 +124,7 @@ export default function TabsLayout() {
         options={{
           title: 'Panel',
           ...ocultarSi(!esAdmin),
-          tabBarIcon: ({ color, size }) => <Ionicons name="stats-chart-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "stats-chart" : "stats-chart-outline"} size={26} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -108,7 +132,7 @@ export default function TabsLayout() {
         options={{
           title: 'Usuarios',
           ...ocultarSi(!esAdmin),
-          tabBarIcon: ({ color, size }) => <Ionicons name="people-circle-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "people-circle" : "people-circle-outline"} size={26} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -116,7 +140,7 @@ export default function TabsLayout() {
         options={{
           title: 'Reportes',
           ...ocultarSi(!esAdmin),
-          tabBarIcon: ({ color, size }) => <Ionicons name="flag-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "flag" : "flag-outline"} size={26} color={color} />,
         }}
       />
 
@@ -125,7 +149,7 @@ export default function TabsLayout() {
         name="profile"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "person" : "person-outline"} size={26} color={color} />,
         }}
       />
     </Tabs>
