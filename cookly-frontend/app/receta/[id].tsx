@@ -1,17 +1,19 @@
 // app/receta/[id].tsx
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View, Text, Image, ScrollView, StyleSheet, Pressable, TextInput,
-  ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
+  View, Text, ScrollView, StyleSheet, Pressable, TextInput,
+  Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Aparecer, Presionable, Pulso } from '../../components/Animaciones';
 import Degradado from '../../components/Degradado';
+import ImagenReceta from '../../components/ImagenReceta';
+import CargandoReceta from '../../components/CargandoReceta';
 import { mostrarAviso } from '../../components/Aviso';
 import { toque } from '../../lib/vibracion';
 import { leerProgreso } from '../../lib/progresoCocina';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
-import { colors, radius, spacing, typography, shadow } from '../../constants/theme';
+import { colors, fonts, radius, spacing, typography, shadow } from '../../constants/theme';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import Stars from '../../components/Stars';
@@ -19,6 +21,7 @@ import Button from '../../components/Button';
 import EtiquetasReceta from '../../components/EtiquetasReceta';
 import CocinaGuiada from '../../components/CocinaGuiada';
 import Porciones from '../../components/Porciones';
+import { FormularioResena, ResumenResenas, TarjetaResena } from '../../components/Resenas';
 import { Modo, PORCIONES_BASE, textoIngrediente } from '../../lib/cantidades';
 
 
@@ -55,7 +58,9 @@ type Resena = {
 };
 
 export default function RecetaDetalleScreen() {
-  const { id, continuar } = useLocalSearchParams<{ id: string; continuar?: string }>();
+  // nombre, portada y minutos llegan desde la tarjeta que se tocó: así la pantalla ya muestra algo mientras carga el resto.
+  const { id, continuar, nombre: nombreParam, portada: portadaParam, minutos: minutosParam } =
+    useLocalSearchParams<{ id: string; continuar?: string; nombre?: string; portada?: string; minutos?: string }>();
   const { usuario } = useAuth();
 
   const [receta, setReceta] = useState<RecetaDetalle | null>(null);
@@ -68,6 +73,7 @@ export default function RecetaDetalleScreen() {
   const [miPuntuacion, setMiPuntuacion] = useState(0);
   const [miComentarioResena, setMiComentarioResena] = useState('');
   const [cargando, setCargando] = useState(true);
+  const [fallo, setFallo] = useState(false);
   const [enviandoComentario, setEnviandoComentario] = useState(false);
   const [enviandoResena, setEnviandoResena] = useState(false);
   const [cocinando, setCocinando] = useState(false);
@@ -77,6 +83,8 @@ export default function RecetaDetalleScreen() {
   const [pasoGuardado, setPasoGuardado] = useState<number | null>(null);
 
   const cargarTodo = useCallback(async () => {
+    setFallo(false);
+    setCargando(true);
     try {
       api.post(`/historial/${id}`).catch(() => {}); // registra la vista, sin bloquear si falla
 
@@ -101,7 +109,7 @@ export default function RecetaDetalleScreen() {
         setMiComentarioResena(miResena.comentario ?? '');
       }
     } catch (error: any) {
-      Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudo cargar la receta.');
+      setFallo(true);
     } finally {
       setCargando(false);
     }
@@ -187,11 +195,16 @@ export default function RecetaDetalleScreen() {
     }
   }
 
+  // Mientras llegan los datos: foto y nombre al instante + bloques que laten (sin pantalla en blanco ni saltos).
   if (cargando || !receta) {
     return (
-      <View style={styles.centrado}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <CargandoReceta
+        portada={portadaParam || undefined}
+        nombre={nombreParam || undefined}
+        minutos={minutosParam ? Number(minutosParam) : undefined}
+        fallo={fallo && !cargando}
+        onReintentar={cargarTodo}
+      />
     );
   }
 
@@ -199,13 +212,7 @@ export default function RecetaDetalleScreen() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: spacing.xl }}>
         <View style={styles.imagenContainer}>
-          {imagenUrl ? (
-            <Image source={{ uri: imagenUrl }} style={styles.imagen} />
-          ) : (
-            <View style={[styles.imagen, styles.imagenPlaceholder]}>
-              <Ionicons name="restaurant-outline" size={48} color={colors.primary} />
-            </View>
-          )}
+          <ImagenReceta uri={imagenUrl ?? (portadaParam || null)} ancho={900} tamanoIcono={48} style={styles.imagen} />
 
           <Pressable style={styles.botonAtras} onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={22} color={colors.text} />
@@ -220,20 +227,28 @@ export default function RecetaDetalleScreen() {
           </Pressable>
         </View>
 
-        <View style={styles.contenido}>
+        <Aparecer distancia={18} style={styles.contenido}>
           <Text style={styles.titulo}>{receta.nombre}</Text>
           
           {/* Componente de Etiquetas agregado aquí debajo del título */}
           <EtiquetasReceta recetaId={Number(id)} />
 
           <View style={styles.metaRow}>
-            <Stars value={promedio} size={16} />
-            <Text style={styles.metaTexto}>{promedio.toFixed(1)} ({resenas.length})</Text>
+            <View style={styles.pastilla}>
+              <Ionicons name="star" size={14} color={colors.warning} />
+              <Text style={styles.pastillaTexto}>{promedio.toFixed(1)} ({resenas.length})</Text>
+            </View>
             {receta.minutosPreparacion ? (
-              <>
-                <Ionicons name="time-outline" size={15} color={colors.textMuted} style={{ marginLeft: spacing.md }} />
-                <Text style={styles.metaTexto}>{receta.minutosPreparacion} min</Text>
-              </>
+              <View style={styles.pastilla}>
+                <Ionicons name="time-outline" size={14} color={colors.primary} />
+                <Text style={styles.pastillaTexto}>{receta.minutosPreparacion} min</Text>
+              </View>
+            ) : null}
+            {receta.pasos.length > 0 ? (
+              <View style={styles.pastilla}>
+                <Ionicons name="list-outline" size={14} color={colors.primary} />
+                <Text style={styles.pastillaTexto}>{receta.pasos.length} pasos</Text>
+              </View>
             ) : null}
           </View>
 
@@ -274,7 +289,8 @@ export default function RecetaDetalleScreen() {
           {receta.detallesIngredientes.length === 0 ? (
             <Text style={styles.vacioTexto}>Sin ingredientes registrados.</Text>
           ) : (
-            receta.detallesIngredientes.map((item, idx) => (
+            <View style={styles.panelIngredientes}>
+            {receta.detallesIngredientes.map((item, idx) => (
               <Aparecer key={idx} delay={Math.min(idx, 10) * 60} distancia={12}>
                 <View style={styles.ingredienteRow}>
                   <View style={styles.puntoIngrediente} />
@@ -283,7 +299,8 @@ export default function RecetaDetalleScreen() {
                   </Text>
                 </View>
               </Aparecer>
-            ))
+            ))}
+            </View>
           )}
 
           <Text style={styles.seccionTitulo}>Preparación</Text>
@@ -293,7 +310,7 @@ export default function RecetaDetalleScreen() {
             [...receta.pasos]
               .sort((a, b) => a.orden - b.orden)
               .map((paso) => (
-                <View key={paso.id} style={styles.pasoRow}>
+                <View key={paso.id} style={styles.pasoTarjeta}>
                   <View style={styles.pasoNumero}>
                     <Text style={styles.pasoNumeroTexto}>{paso.orden}</Text>
                   </View>
@@ -302,33 +319,25 @@ export default function RecetaDetalleScreen() {
               ))
           )}
 
-          <Text style={styles.seccionTitulo}>Tu reseña</Text>
-          <View style={styles.tarjeta}>
-            <Stars value={miPuntuacion} size={26} onChange={setMiPuntuacion} />
-            <TextInput
-              placeholder="Cuéntanos qué te pareció (opcional)"
-              placeholderTextColor={colors.textMuted}
-              value={miComentarioResena}
-              onChangeText={setMiComentarioResena}
-              style={styles.inputResena}
-              multiline
-            />
-            <Button label="Guardar reseña" onPress={enviarResena} loading={enviandoResena} />
-          </View>
+          <Text style={styles.seccionTitulo}>Reseñas</Text>
+          <ResumenResenas resenas={resenas} promedio={promedio} />
+          <FormularioResena
+            puntuacion={miPuntuacion}
+            comentario={miComentarioResena}
+            onPuntuacion={setMiPuntuacion}
+            onComentario={setMiComentarioResena}
+            onEnviar={enviarResena}
+            enviando={enviandoResena}
+            yaTieneResena={resenas.some((r) => r.usuario.correo === usuario?.correo)}
+          />
 
           {resenas.filter((r) => r.usuario.correo !== usuario?.correo).length > 0 && (
             <>
               <Text style={styles.subTitulo}>Otras reseñas</Text>
               {resenas
                 .filter((r) => r.usuario.correo !== usuario?.correo)
-                .map((r) => (
-                  <View key={r.id} style={styles.tarjeta}>
-                    <View style={styles.filaAutor}>
-                      <Text style={styles.autorNombre}>{r.usuario.nombre}</Text>
-                      <Stars value={r.puntuacion} size={14} />
-                    </View>
-                    {r.comentario ? <Text style={styles.comentarioTexto}>{r.comentario}</Text> : null}
-                  </View>
+                .map((r, i) => (
+                  <TarjetaResena key={r.id} resena={r} indice={i} />
                 ))}
             </>
           )}
@@ -361,7 +370,7 @@ export default function RecetaDetalleScreen() {
               <Text style={styles.comentarioTexto}>{c.contenido}</Text>
             </View>
           ))}
-        </View>
+        </Aparecer>
       </ScrollView>
 
       <CocinaGuiada
@@ -379,22 +388,26 @@ export default function RecetaDetalleScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   centrado: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
-  imagenContainer: { width: '100%', height: 240 },
-  imagen: { width: '100%', height: '100%' },
-  imagenPlaceholder: { backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  imagenContainer: { width: '100%', height: 300, padding: 12, backgroundColor: colors.primaryLight, borderBottomLeftRadius: 40, borderBottomRightRadius: 40 },
+  imagen: { width: '100%', height: '100%', borderRadius: 30 },
+  imagenPlaceholder: { backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   botonAtras: {
-    position: 'absolute', top: spacing.lg, left: spacing.md,
-    width: 36, height: 36, borderRadius: radius.pill, backgroundColor: colors.white,
+    position: 'absolute', top: spacing.lg + 12, left: spacing.md + 12,
+    width: 42, height: 42, borderRadius: radius.pill, backgroundColor: colors.white,
     alignItems: 'center', justifyContent: 'center',
   },
   botonFavorito: {
-    position: 'absolute', top: spacing.lg, right: spacing.md,
-    width: 36, height: 36, borderRadius: radius.pill, backgroundColor: colors.white,
+    position: 'absolute', top: spacing.lg + 12, right: spacing.md + 12,
+    width: 42, height: 42, borderRadius: radius.pill, backgroundColor: colors.white,
     alignItems: 'center', justifyContent: 'center',
   },
   contenido: { padding: spacing.md },
   titulo: { ...typography.h1, color: colors.text },
-  metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.sm, gap: 4 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: spacing.sm, gap: 8 },
+  pastilla: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.surface, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: colors.border },
+  pastillaTexto: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.text },
+  panelIngredientes: { backgroundColor: colors.primaryLight, borderRadius: radius.lg, padding: spacing.md, gap: 4 },
+  pasoTarjeta: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: colors.surface, borderRadius: radius.md, padding: 14, marginTop: spacing.sm, ...shadow.card },
   metaTexto: { ...typography.bodySmall, color: colors.textMuted },
   descripcion: { ...typography.body, color: colors.text, marginTop: spacing.sm },
   cocinaGuiadaSombra: { marginTop: spacing.md, borderRadius: radius.lg, ...shadow.card },
@@ -404,7 +417,7 @@ const styles = StyleSheet.create({
   },
   cocinaGuiadaTitulo: { ...typography.button, color: colors.white, fontSize: 16 },
   cocinaGuiadaSub: { ...typography.bodySmall, color: colors.onPrimary },
-  seccionTitulo: { ...typography.h3, color: colors.text, marginTop: spacing.lg, marginBottom: spacing.sm },
+  seccionTitulo: { ...typography.h2, color: colors.text, marginTop: spacing.lg, marginBottom: spacing.sm },
   subTitulo: { ...typography.h3, color: colors.text, marginTop: spacing.md, marginBottom: spacing.sm, fontSize: 15 },
   vacioTexto: { ...typography.bodySmall, color: colors.textMuted },
   ingredienteRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xs },
@@ -412,7 +425,7 @@ const styles = StyleSheet.create({
   ingredienteTexto: { ...typography.body, color: colors.text },
   pasoRow: { flexDirection: 'row', marginTop: spacing.md },
   pasoNumero: {
-    width: 24, height: 24, borderRadius: 12, backgroundColor: colors.primaryLight,
+    width: 30, height: 30, borderRadius: 15, backgroundColor: colors.primaryLight,
     alignItems: 'center', justifyContent: 'center', marginRight: spacing.md,
   },
   pasoNumeroTexto: { ...typography.bodySmall, color: colors.primary, fontWeight: 'bold' },

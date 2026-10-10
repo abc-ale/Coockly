@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, Pressable, StyleSheet, Animated } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography, shadow } from '../constants/theme';
 import { Aparecer, Presionable } from './Animaciones';
+import ImagenReceta from './ImagenReceta';
 import { toque } from '../lib/vibracion';
 
 /** Forma de los datos de ejemplo que usa la pantalla Buscar. */
@@ -67,14 +68,9 @@ function RecipeCard({ recipe, onPress, onToggleFavorite, indice = 0 }: Props) {
   return (
     <Aparecer delay={Math.min(indice, 8) * 70} distancia={14} style={styles.envoltura}>
     <Presionable onPress={onPress} escalaAlPresionar={0.97} style={[styles.card, shadow.card]}>
-      <View>
-        {imagen ? (
-          <Image source={{ uri: imagen }} style={styles.image} resizeMode="cover" />
-        ) : (
-          <View style={[styles.image, styles.sinFoto]}>
-            <Ionicons name="restaurant-outline" size={34} color={colors.primary} />
-          </View>
-        )}
+      <View style={styles.fotoCaja}>
+        {/* Foto liviana (Cloudinary) con fundido: nunca queda un cuadro blanco mientras carga */}
+        <ImagenReceta uri={imagen} ancho={500} style={styles.image} />
 
         {puntuacion > 0 && (
           <View style={styles.ratingBadge}>
@@ -113,10 +109,15 @@ function RecipeCard({ recipe, onPress, onToggleFavorite, indice = 0 }: Props) {
 
         {descripcion ? <Text style={styles.description} numberOfLines={2}>{descripcion}</Text> : null}
 
-        <View style={styles.metaRow}>
-          {minutos ? <Meta icon="time-outline" text={`${minutos} min`} /> : null}
-          {personas ? <Meta icon="people-outline" text={`${personas} personas`} /> : null}
-          {kcal ? <Meta icon="flame-outline" text={`${kcal} kcal`} /> : null}
+        <View style={styles.pieFila}>
+          <View style={styles.metaRow}>
+            {minutos ? <Meta icon="time-outline" text={`${minutos} min`} /> : null}
+            {personas ? <Meta icon="people-outline" text={`${personas}`} /> : null}
+            {kcal ? <Meta icon="flame-outline" text={`${kcal} kcal`} /> : null}
+          </View>
+          <View style={styles.flecha}>
+            <Ionicons name="arrow-forward" size={16} color={colors.white} />
+          </View>
         </View>
       </View>
     </Presionable>
@@ -141,14 +142,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.primaryLight,
     borderRadius: radius.lg,
-    overflow: 'hidden',
     width: '100%',
+    padding: 8,
   },
+  fotoCaja: { borderRadius: 22, overflow: 'hidden' },
   image: {
     width: '100%',
-    height: 110,
+    height: 124,
   },
   sinFoto: {
     backgroundColor: colors.primaryLight,
@@ -174,13 +176,15 @@ const styles = StyleSheet.create({
     top: spacing.sm,
     backgroundColor: colors.white,
     borderRadius: radius.pill,
-    width: 28,
-    height: 28,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
   body: {
-    padding: spacing.sm,
+    paddingHorizontal: 6,
+    paddingTop: 10,
+    paddingBottom: 6,
   },
   titleRow: {
     flexDirection: 'row',
@@ -189,7 +193,7 @@ const styles = StyleSheet.create({
   },
   title: { ...typography.h3, color: colors.text, flexShrink: 1 },
   difficultyChip: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.surface,
     borderRadius: radius.pill,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -200,11 +204,9 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 2,
   },
-  metaRow: {
-    flexDirection: 'row',
-    marginTop: spacing.sm,
-    gap: spacing.sm,
-  },
+  pieFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.sm },
+  metaRow: { flexDirection: 'row', gap: spacing.sm, flexShrink: 1 },
+  flecha: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   metaText: { ...typography.caption, color: colors.textMuted },
 });
