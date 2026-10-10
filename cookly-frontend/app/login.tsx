@@ -1,10 +1,12 @@
 // app/login.tsx  (bienvenida + login en un solo pager)
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Animated, Easing, StyleSheet, Image, useWindowDimensions } from 'react-native';
+import { View, Text, Animated, Easing, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
 import { router, Redirect } from 'expo-router';
-import FondoBlobs from '../components/FondoBlobs';
 import PantallaLogin from '../components/PantallaLogin';
 import Logo from '../components/Logo';
+import PortadaBienvenida from '../components/PortadaBienvenida';
+import Button from '../components/Button';
+import { Pulso } from '../components/Animaciones';
 import { colors, fonts, spacing, typography } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 import { despertarServidor } from '../lib/api';
@@ -52,8 +54,11 @@ function CargandoCookly() {
 
 export default function LoginScreen() {
   const { token, login, loginConGoogle, loginConFacebook } = useAuth();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const scrollX = useRef(new Animated.Value(0)).current;
+  const pager = useRef<any>(null);
+  // Tocar en cualquier parte de la bienvenida lleva al login.
+  const irAlLogin = () => pager.current?.scrollTo({ x: width, animated: true });
   const flotacion = useRef(new Animated.Value(0)).current;
   const flotar = flotacion.interpolate({ inputRange: [0, 1], outputRange: [0, -10] });
 
@@ -156,6 +161,7 @@ export default function LoginScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Animated.ScrollView
+        ref={pager}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -163,27 +169,33 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: false })}
       >
-        {/* PANTALLA 1: BIENVENIDA */}
-        <View style={{ width, flex: 1 }}>
-          <FondoBlobs variante="bienvenida" />
-          <View style={s.centro}>
-            <Logo size={76} variante="rosa" conTexto colorTexto={colors.primary} />
-            <Text style={s.bien}>¡Bienvenido a</Text>
-            <Text style={s.bienRosa}>Cookly!</Text>
-            <Text style={s.slogan}>Calculamos por ti.{'\n'}Tú solo preocúpate de cocinar.</Text>
-            <Animated.Image
-              source={require('../assets/images/ilustracion-olla.png')}
-              style={{
-                width: width * 0.7,
-                height: width * 0.7 * (700 / 780),
-                marginTop: 26,
-                transform: [{ translateY: flotar }],
-              }}
-              resizeMode="contain"
-            />
+        {/* PANTALLA 1: BIENVENIDA (tocar en cualquier parte lleva al login) */}
+        <Pressable style={{ width, flex: 1, overflow: 'hidden' }} onPress={irAlLogin} accessibilityLabel="Toca para continuar">
+          {/* Círculos de fondo */}
+          <View style={[s.circulo, { width: 520, height: 520, borderRadius: 260, top: -170, right: -190, backgroundColor: colors.primaryLight }]} />
+          <View style={[s.circulo, { width: 300, height: 300, borderRadius: 150, bottom: -120, left: -130, backgroundColor: colors.primaryLight, opacity: 0.6 }]} />
+          <View style={[s.circulo, { width: 56, height: 56, borderRadius: 28, top: height * 0.39, left: 26, backgroundColor: colors.accent }]} />
+          <View style={[s.circulo, { width: 22, height: 22, borderRadius: 11, top: height * 0.18, left: 40, backgroundColor: colors.magic }]} />
+
+          {/* Logo arriba a la izquierda */}
+          <View style={s.cabecera}>
+            <Logo size={54} variante="rosa" conTexto colorTexto={colors.primary} />
           </View>
-          <Text style={s.desliza}>Desliza para continuar  →</Text>
-        </View>
+
+          {/* Plato grande que se sale del marco */}
+          <Animated.View style={{ position: 'absolute', top: height * 0.15, left: -width * 0.02, transform: [{ translateY: flotar }] }}>
+            <PortadaBienvenida ancho={width * 1.02} />
+          </Animated.View>
+
+          {/* Titular + botón */}
+          <View style={s.pie}>
+            <Text style={s.titular}>Calculamos{'\n'}por ti.</Text>
+            <Text style={s.slogan}>Tú solo preocúpate de cocinar. Cantidades, tiempos y pasos, siempre a tu medida.</Text>
+            <Pulso style={{ marginTop: 26 }}>
+              <Button label="Empezar" variant="flecha" onPress={irAlLogin} />
+            </Pulso>
+          </View>
+        </Pressable>
 
         {/* PANTALLA 2: LOGIN */}
         <View style={{ width, flex: 1 }}>
@@ -210,19 +222,12 @@ export default function LoginScreen() {
 }
 
 const s = StyleSheet.create({
-  centro: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 90, paddingHorizontal: 30 },
-  bien: { fontFamily: fonts.display, fontSize: 32, lineHeight: 38, color: colors.text, marginTop: 26, textAlign: 'center' },
-  bienRosa: { fontFamily: fonts.displayBold, fontSize: 38, lineHeight: 44, color: colors.primary, textAlign: 'center' },
-  slogan: { fontFamily: fonts.body, fontSize: 16, lineHeight: 23, textAlign: 'center', color: colors.textMuted, marginTop: 8 },
-  desliza: {
-    position: 'absolute',
-    bottom: 70,
-    alignSelf: 'center',
-    fontFamily: fonts.bodyMedium,
-    fontSize: 14,
-    color: colors.primary,
-  },
-  dots: { position: 'absolute', bottom: 34, alignSelf: 'center', flexDirection: 'row', gap: 6 },
+  circulo: { position: 'absolute' },
+  cabecera: { position: 'absolute', top: 58, left: 26 },
+  pie: { position: 'absolute', left: 28, right: 28, bottom: 56 },
+  titular: { fontFamily: fonts.display, fontSize: 40, lineHeight: 42, color: colors.text, letterSpacing: -0.5 },
+  slogan: { fontFamily: fonts.body, fontSize: 16, lineHeight: 24, color: colors.textMuted, marginTop: 12, maxWidth: 310 },
+  dots: { position: 'absolute', top: 70, right: 28, flexDirection: 'row', gap: 6 },
   dot: { height: 8, borderRadius: 4, backgroundColor: colors.primary },
   overlay: {
     ...StyleSheet.absoluteFill,
