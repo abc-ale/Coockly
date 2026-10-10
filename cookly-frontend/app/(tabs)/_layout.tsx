@@ -72,9 +72,9 @@ export default function TabsLayout() {
           borderTopWidth: 0,
           elevation: 0,
           // Deja sitio a los botones de Android (atrás / inicio / recientes)
-          height: 66 + insets.bottom,
-          paddingTop: 8,
-          paddingBottom: insets.bottom + 8,
+          height: 56 + insets.bottom,
+          paddingTop: 6,
+          paddingBottom: insets.bottom + 5,
         },
       }}
     >

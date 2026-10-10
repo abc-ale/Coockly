@@ -8,7 +8,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RecipeCard, { TarjetaReceta, EntradaSuave } from '../../components/RecipeCard';
 import FiltroEtiquetas from '../../components/FiltroEtiquetas';
-import ImagenReceta from '../../components/ImagenReceta';
+import ImagenReceta, { precargarImagenes } from '../../components/ImagenReceta';
 import { Aparecer, Presionable, Rebote } from '../../components/Animaciones';
 import { EsqueletoTarjetas } from '../../components/Esqueleto';
 import EstadoVacio from '../../components/EstadoVacio';
@@ -71,6 +71,7 @@ export default function HomeScreen() {
 
       const lista: TarjetaReceta[] = resRecetas.data.content ?? [];
       setRecetas(lista);
+      precargarImagenes(lista.map((x: any) => x.portada), 500);
     } catch (error: any) {
       // Muestra la causa real en la terminal de Expo (estado HTTP y mensaje del servidor).
       console.log('ERROR RECETAS', error?.response?.status, JSON.stringify(error?.response?.data), error?.message);
