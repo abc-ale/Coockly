@@ -81,12 +81,8 @@ export default function HomeScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView
-        style={styles.screen}
-        contentContainerStyle={{ paddingBottom: 96 }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
+      {/* Parte fija: logo, saludo, buscador y categorías. No se mueve al hacer scroll. */}
+      <View style={styles.encabezadoFijo}>
         {/* Encabezado con logo */}
         <Aparecer distancia={-12}>
           <View style={[styles.topBar, { paddingTop: insets.top + MARGEN_SUPERIOR }]}>
@@ -134,7 +130,14 @@ export default function HomeScreen() {
             }}
           />
         </Aparecer>
+      </View>
 
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={{ paddingBottom: 96 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{titulo}</Text>
           {!cargando && recetas.length > 0 && (
@@ -194,6 +197,11 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+  encabezadoFijo: {
+    backgroundColor: colors.background,
+    paddingBottom: spacing.xs,
+    zIndex: 1,
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -202,8 +210,8 @@ const styles = StyleSheet.create({
   },
   hero: {
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
   greeting: { ...typography.h1 },
   subtitle: { ...typography.body, color: colors.textMuted, marginTop: 2 },

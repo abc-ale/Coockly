@@ -55,7 +55,8 @@ export default function FiltroEtiquetas({ seleccionada, onCambiar }: Props) {
 }
 
 const styles = StyleSheet.create({
-  fila: { gap: 8, paddingVertical: 8 },
+  // paddingHorizontal: separa 'Todas' del borde del teléfono.
+  fila: { gap: 8, paddingVertical: 8, paddingHorizontal: 16 },
   chip: {
     backgroundColor: colors.primaryLight,
     borderRadius: 999,
