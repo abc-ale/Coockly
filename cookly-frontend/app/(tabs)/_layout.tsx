@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts, spacing } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
+import { pintarBarraNavegacion } from '../../lib/barraNavegacion';
 
 // Pantallas que solo ve cada tipo de cuenta. "profile" la ven las dos.
 const RUTAS_USUARIO = ['home', 'search', 'comunity', 'favorites', 'list'];
@@ -15,6 +16,11 @@ export default function TabsLayout() {
   const router = useRouter();
   const segmentos = useSegments();
   const insets = useSafeAreaInsets();
+  // La barra de botones de Android toma el rosa de Cookly para que combine con la barra de pestañas.
+  useEffect(() => {
+    pintarBarraNavegacion(colors.primary);
+  }, []);
+
   const esAdmin = usuario?.rol === 'ADMINISTRADOR';
   const rutaActual = String(segmentos[segmentos.length - 1] ?? '');
 
@@ -50,27 +56,25 @@ export default function TabsLayout() {
           </Text>
         ),
         tabBarItemStyle: { paddingHorizontal: 0 },
-        // Barra rosa; la pantalla crema parece "caer" sobre ella con las esquinas de abajo curvas.
+        // Barra rosa lisa, con las esquinas de arriba redondeadas (sin franja crema encima).
         tabBarBackground: () => (
-          <View style={{ flex: 1, backgroundColor: colors.primary }}>
-            <View
-              style={{
-                height: 26,
-                backgroundColor: colors.background,
-                borderBottomLeftRadius: 28,
-                borderBottomRightRadius: 28,
-              }}
-            />
-          </View>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colors.primary,
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
+            }}
+          />
         ),
         tabBarStyle: {
-          backgroundColor: colors.primary,
+          backgroundColor: 'transparent',
           borderTopWidth: 0,
           elevation: 0,
           // Deja sitio a los botones de Android (atrás / inicio / recientes)
-          height: 74 + insets.bottom,
-          paddingTop: 26,
-          paddingBottom: insets.bottom + 6,
+          height: 86 + insets.bottom,
+          paddingTop: 14,
+          paddingBottom: insets.bottom + 12,
         },
       }}
     >
