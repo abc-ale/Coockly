@@ -21,13 +21,16 @@ public class ServicioReceta {
     private final RepositorioEtiqueta etiquetas;
     private final RepositorioRecetaEtiqueta recetasEtiquetas;
     private final RepositorioImagen imagenes;
+    private final RepositorioResena resenas;
 
     public ServicioReceta(RepositorioReceta recetas, RepositorioUsuario usuarios, RepositorioIngrediente ingredientes,
                            RepositorioIngredienteReceta ingredientesReceta, RepositorioPasoReceta pasosReceta,
-                           RepositorioEtiqueta etiquetas, RepositorioRecetaEtiqueta recetasEtiquetas, RepositorioImagen imagenes) {
+                           RepositorioEtiqueta etiquetas, RepositorioRecetaEtiqueta recetasEtiquetas, RepositorioImagen imagenes,
+                           RepositorioResena resenas) {
         this.recetas = recetas; this.usuarios = usuarios; this.ingredientes = ingredientes;
         this.ingredientesReceta = ingredientesReceta; this.pasosReceta = pasosReceta;
         this.etiquetas = etiquetas; this.recetasEtiquetas = recetasEtiquetas; this.imagenes = imagenes;
+        this.resenas = resenas;
     }
 
     @Transactional(readOnly = true)
@@ -59,17 +62,32 @@ public class ServicioReceta {
 
     @Transactional(readOnly = true)
     public List<TarjetaReceta> tarjetas(List<Receta> lista) {
-        Map<Long, String> portadas = portadas(lista.stream().map(Receta::getId).toList());
-        return lista.stream().map(r -> tarjeta(r, portadas)).toList();
+        List<Long> ids = lista.stream().map(Receta::getId).toList();
+        Map<Long, String> portadas = portadas(ids);
+        Map<Long, Double> promedios = promedios(ids);
+        return lista.stream().map(r -> tarjeta(r, portadas, promedios)).toList();
     }
 
     private Page<TarjetaReceta> aTarjetas(Page<Receta> pagina) {
-        Map<Long, String> portadas = portadas(pagina.getContent().stream().map(Receta::getId).toList());
-        return pagina.map(r -> tarjeta(r, portadas));
+        List<Long> ids = pagina.getContent().stream().map(Receta::getId).toList();
+        Map<Long, String> portadas = portadas(ids);
+        Map<Long, Double> promedios = promedios(ids);
+        return pagina.map(r -> tarjeta(r, portadas, promedios));
     }
 
-    private static TarjetaReceta tarjeta(Receta r, Map<Long, String> portadas) {
-        return new TarjetaReceta(r.getId(), r.getNombre(), r.getDescripcion(), r.getMinutosPreparacion(), portadas.get(r.getId()));
+    private static TarjetaReceta tarjeta(Receta r, Map<Long, String> portadas, Map<Long, Double> promedios) {
+        return new TarjetaReceta(r.getId(), r.getNombre(), r.getDescripcion(), r.getMinutosPreparacion(),
+                portadas.get(r.getId()), promedios.getOrDefault(r.getId(), 0.0));
+    }
+
+    /** Promedio de estrellas de varias recetas en una sola consulta (0 si aún no tienen reseñas). */
+    private Map<Long, Double> promedios(List<Long> ids) {
+        Map<Long, Double> mapa = new HashMap<>();
+        if (ids.isEmpty()) return mapa;
+        for (Object[] fila : resenas.promediosPorRecetas(ids)) {
+            mapa.put((Long) fila[0], ((Number) fila[1]).doubleValue());
+        }
+        return mapa;
     }
 
     private Map<Long, String> portadas(List<Long> ids) {

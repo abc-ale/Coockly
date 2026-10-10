@@ -54,6 +54,9 @@ export default function HomeScreen() {
   // La lista del servidor no trae el promedio de estrellas: se pide aparte por receta y se mezcla aquí.
   const [promedios, setPromedios] = useState<Record<number, number>>({});
   const idsActuales = useRef<number[]>([]);
+  const primeraVez = useRef(true);
+  const textoActual = useRef('');
+  const etiquetaActual = useRef<number | null>(null);
   const recetas = useMemo(
     () => recetasBase.map((r) => ({ ...r, promedio: promedios[r.id] ?? r.promedio })),
     [recetasBase, promedios]
@@ -73,6 +76,8 @@ export default function HomeScreen() {
   const [favoritosIds, setFavoritosIds] = useState<Set<number>>(new Set());
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
+  // Cantidad de notificaciones sin leer: el puntito rosado de la campana solo se ve si es mayor que 0.
+  const [notificacionesSinLeer, setNotificacionesSinLeer] = useState(0);
   const [progreso, setProgreso] = useState<ProgresoCocina | null>(null);
   const scroll = useRef<ScrollView>(null);
   const yTodas = useRef(0);
@@ -110,7 +115,8 @@ export default function HomeScreen() {
       memoria.current.set(clave, lista);
       setRecetas(lista);
       idsActuales.current = lista.map((x) => x.id);
-      cargarPromedios(idsActuales.current);
+      // Si el servidor ya manda el promedio no hace falta pedirlo aparte (servidores antiguos sí lo necesitan).
+      cargarPromedios(lista.filter((x) => x.promedio === undefined || x.promedio === null).map((x) => x.id));
       precargarImagenes(lista.map((x: any) => x.portada), 500);
     } catch (error: any) {
       if (!guardada) {
@@ -123,6 +129,8 @@ export default function HomeScreen() {
   }, [cargarPromedios]);
 
   useEffect(() => {
+    textoActual.current = texto;
+    etiquetaActual.current = etiquetaSeleccionada;
     buscarRecetas(texto, etiquetaSeleccionada);
   }, [texto, etiquetaSeleccionada, buscarRecetas]);
 
@@ -141,9 +149,15 @@ export default function HomeScreen() {
         .catch(() => {});
       // Receta que el usuario dejó a medias en Cocina guiada.
       leerProgreso().then(setProgreso);
-      // Si el usuario acaba de calificar una receta, las estrellitas se actualizan al volver.
-      cargarPromedios(idsActuales.current);
-    }, [cargarPromedios])
+      // Puntito de la campana: solo si hay notificaciones sin leer.
+      api
+        .get('/notificaciones/sin-leer')
+        .then((r) => setNotificacionesSinLeer(Number(r.data?.cantidad ?? 0)))
+        .catch(() => setNotificacionesSinLeer(0));
+      // Si el usuario acaba de calificar una receta, las estrellitas se actualizan al volver (sin esqueletos).
+      if (primeraVez.current) primeraVez.current = false;
+      else buscarRecetas(textoActual.current, etiquetaActual.current, true);
+    }, [buscarRecetas])
   );
 
   // El corazón cambia al instante; si el servidor falla, vuelve a como estaba.
@@ -198,12 +212,12 @@ export default function HomeScreen() {
               escalaAlPresionar={0.9}
               onPress={() => {
                 toque();
-                mostrarAlerta('Notificaciones', 'Por ahora no tienes notificaciones nuevas.');
+                router.push('/notificaciones');
               }}
               accessibilityLabel="Notificaciones"
             >
               <Ionicons name="notifications-outline" size={24} color={colors.text} />
-              <View style={styles.campanaPunto} />
+              {notificacionesSinLeer > 0 && <View style={styles.campanaPunto} />}
             </Presionable>
           </View>
         </EntradaSuave>
