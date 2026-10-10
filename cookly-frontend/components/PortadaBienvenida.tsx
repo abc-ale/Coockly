@@ -6,9 +6,17 @@ import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/theme';
 
-// 👉 PEGA AQUÍ el enlace de tu PNG en Cloudinary (déjalo entre comillas).
-// La imagen viene solo de Cloudinary (no hace falta ningún archivo local).
-const URL_PLATO = 'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791666314/Imagen-bienvenida.png';
+// Imagen del plato en Cloudinary. Se pide ya reducida y optimizada (w_800, f_auto, q_auto) para que cargue rápido.
+// Si esa versión falla, se prueba con el enlace original.
+const BASE = 'https://res.cloudinary.com/pjbmwoxn/image/upload';
+const ID = 'v1791666314/Imagen-bienvenida.png';
+const URL_OPTIMIZADA = `${BASE}/f_auto,q_auto,w_800/${ID}`;
+const URL_ORIGINAL = `${BASE}/${ID}`;
+
+/** Llámala lo antes posible (por ejemplo al abrir la app) para que el plato ya esté descargado al llegar a la bienvenida. */
+export function precargarPlato() {
+  Image.prefetch(URL_OPTIMIZADA).catch(() => {});
+}
 
 type Insig = { icono: keyof typeof Ionicons.glyphMap; fondo: string; color: string; x: number; y: number; fase: number };
 
@@ -52,11 +60,14 @@ function Insignia({ i, lado }: { i: Insig; lado: number }) {
 }
 
 export default function PortadaBienvenida({ ancho }: { ancho: number }) {
+  const [uri, setUri] = useState(URL_OPTIMIZADA);
   const [fallo, setFallo] = useState(false);
-  useEffect(() => {
-    // Descarga la imagen por adelantado para que aparezca al instante.
-    Image.prefetch(URL_PLATO).catch(() => setFallo(true));
-  }, []);
+  const aparece = useRef(new Animated.Value(0)).current;
+  const alCargar = () => Animated.timing(aparece, { toValue: 1, duration: 350, useNativeDriver: true }).start();
+  const alFallar = () => {
+    if (uri === URL_OPTIMIZADA) setUri(URL_ORIGINAL);
+    else setFallo(true);
+  };
   const balanceo = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     // El plato se mece unos grados, como si respirara.
@@ -72,20 +83,23 @@ export default function PortadaBienvenida({ ancho }: { ancho: number }) {
 
   return (
     <View style={{ width: ancho, height: ancho }}>
-      {fallo ? (
-        // Sin internet o enlace roto: un círculo suave en lugar del plato.
-        <View style={{ position: 'absolute', left: ancho * 0.12, top: ancho * 0.12, width: ancho * 0.76, height: ancho * 0.76, borderRadius: ancho * 0.38, backgroundColor: colors.primaryLight }} />
-      ) : (
-      <Animated.Image
-        source={{ uri: URL_PLATO }}
-        onError={() => setFallo(true)}
-        style={{
-          width: ancho,
-          height: ancho,
-          transform: [{ rotate: balanceo.interpolate({ inputRange: [0, 1], outputRange: ['-12deg', '-6deg'] }) }],
-        }}
-        resizeMode="contain"
+      {/* Mientras carga (o si falla) se ve un círculo suave en lugar de un espacio vacío */}
+      <View
+        style={{ position: 'absolute', left: ancho * 0.1, top: ancho * 0.1, width: ancho * 0.8, height: ancho * 0.8, borderRadius: ancho * 0.4, backgroundColor: colors.primaryLight, opacity: 0.55 }}
       />
+      {!fallo && (
+        <Animated.Image
+          source={{ uri }}
+          onLoad={alCargar}
+          onError={alFallar}
+          style={{
+            width: ancho,
+            height: ancho,
+            opacity: aparece,
+            transform: [{ rotate: balanceo.interpolate({ inputRange: [0, 1], outputRange: ['-12deg', '-6deg'] }) }],
+          }}
+          resizeMode="contain"
+        />
       )}
       {INSIGNIAS.map((i) => (
         <Insignia key={i.icono} i={i} lado={ancho} />

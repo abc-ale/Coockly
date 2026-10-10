@@ -1,15 +1,18 @@
 // app/login.tsx  (bienvenida + login en un solo pager)
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Animated, Easing, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
+import { View, Text, Animated, Easing, StyleSheet, useWindowDimensions } from 'react-native';
 import { router, Redirect } from 'expo-router';
 import PantallaLogin from '../components/PantallaLogin';
 import Logo from '../components/Logo';
-import PortadaBienvenida from '../components/PortadaBienvenida';
+import PortadaBienvenida, { precargarPlato } from '../components/PortadaBienvenida';
 import DeslizarParaEmpezar from '../components/DeslizarParaEmpezar';
 import { colors, fonts, spacing, typography } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 import { despertarServidor } from '../lib/api';
 import { mostrarAlerta } from '../components/Dialogo';
+
+// Empieza a descargar el plato apenas se abre la app.
+precargarPlato();
 
 // Mensaje claro según qué falló (servidor dormido, red caída, error del backend...).
 function mensajeDeError(error: any, porDefecto: string) {
@@ -74,6 +77,7 @@ export default function LoginScreen() {
   }, [flotacion]);
 
   const [arrastrando, setArrastrando] = useState(false);
+  const [enLogin, setEnLogin] = useState(false);
   const [cargandoEmail, setCargandoEmail] = useState(false);
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
   const [cargandoFacebook, setCargandoFacebook] = useState(false);
@@ -164,14 +168,17 @@ export default function LoginScreen() {
         ref={pager}
         horizontal
         pagingEnabled
-        scrollEnabled={!arrastrando}
+        scrollEnabled={enLogin && !arrastrando}
         showsHorizontalScrollIndicator={false}
         scrollEventThrottle={16}
         keyboardShouldPersistTaps="handled"
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: false })}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+          useNativeDriver: false,
+          listener: (e: any) => setEnLogin(e.nativeEvent.contentOffset.x > width * 0.5),
+        })}
       >
-        {/* PANTALLA 1: BIENVENIDA (tocar en cualquier parte lleva al login) */}
-        <Pressable style={{ width, flex: 1, overflow: 'hidden' }} onPress={irAlLogin} accessibilityLabel="Toca para continuar">
+        {/* PANTALLA 1: BIENVENIDA (solo se avanza deslizando el botón) */}
+        <View style={{ width, flex: 1, overflow: 'hidden' }}>
           {/* Círculos de fondo */}
           <View style={[s.circulo, { width: 520, height: 520, borderRadius: 260, top: -170, right: -190, backgroundColor: colors.primaryLight }]} />
           <View style={[s.circulo, { width: 300, height: 300, borderRadius: 150, bottom: -120, left: -130, backgroundColor: colors.primaryLight, opacity: 0.6 }]} />
@@ -196,7 +203,7 @@ export default function LoginScreen() {
               <DeslizarParaEmpezar texto="Desliza para empezar" onCompletar={irAlLogin} onArrastrando={setArrastrando} />
             </View>
           </View>
-        </Pressable>
+        </View>
 
         {/* PANTALLA 2: LOGIN */}
         <View style={{ width, flex: 1 }}>

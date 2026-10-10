@@ -1,12 +1,13 @@
 // components/DeslizarParaEmpezar.tsx
 // Botón "desliza para empezar": se arrastra el círculo blanco hacia la derecha y, al llegar
 // casi al final, se ejecuta onCompletar. Si se suelta antes, regresa con un rebote.
+// Mientras se arrastra, el fondo pasa por distintos tonos de rosado (claro → intenso → profundo).
 // Mientras nadie lo toca, el círculo hace un pequeño gesto hacia la derecha para enseñar qué hacer.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, StyleSheet, Text, View, LayoutChangeEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, fonts } from '../constants/theme';
-import { exito, toque } from '../lib/vibracion';
+import { exito, seleccion, toque } from '../lib/vibracion';
 
 const ALTO = 62;
 const PERILLA = 46;
@@ -25,9 +26,21 @@ export default function DeslizarParaEmpezar({ texto = 'Desliza para empezar', on
   const x = useRef(new Animated.Value(0)).current;
   const pista = useRef(new Animated.Value(0)).current;
   const completado = useRef(false);
+  const tramo = useRef(0); // para vibrar suave al cruzar cada tercio del recorrido
   const tocado = useRef(false);
   const recorridoRef = useRef(recorrido);
   recorridoRef.current = recorrido;
+
+  useEffect(() => {
+    const id = x.addListener(({ value }) => {
+      const nuevo = Math.min(3, Math.floor((value / recorridoRef.current) * 3));
+      if (nuevo !== tramo.current) {
+        if (nuevo > tramo.current && nuevo < 3) seleccion();
+        tramo.current = nuevo;
+      }
+    });
+    return () => x.removeListener(id);
+  }, [x]);
 
   // Gesto de ayuda: la perilla se mueve un poquito hacia la derecha y vuelve.
   useEffect(() => {
@@ -89,36 +102,51 @@ export default function DeslizarParaEmpezar({ texto = 'Desliza para empezar', on
     [onCompletar, onArrastrando, x, pista]
   );
 
+  const capaClara = x.interpolate({ inputRange: [0, recorrido * 0.5, recorrido], outputRange: [0, 1, 0], extrapolate: 'clamp' });
+  const capaProfunda = x.interpolate({ inputRange: [0, recorrido * 0.45, recorrido], outputRange: [0, 0, 1], extrapolate: 'clamp' });
   const opacidadTexto = x.interpolate({ inputRange: [0, recorrido * 0.6], outputRange: [1, 0], extrapolate: 'clamp' });
   const desplazarTexto = x.interpolate({ inputRange: [0, recorrido], outputRange: [0, 24], extrapolate: 'clamp' });
   const escalaPerilla = x.interpolate({ inputRange: [0, recorrido], outputRange: [1, 1.08], extrapolate: 'clamp' });
 
   return (
-    <View style={st.pista} onLayout={(e: LayoutChangeEvent) => setAncho(e.nativeEvent.layout.width)}>
-      {/* Texto central que se va apagando mientras se arrastra */}
-      <Animated.View style={[st.textoWrap, { opacity: opacidadTexto, transform: [{ translateX: desplazarTexto }] }]} pointerEvents="none">
-        <Text style={st.texto}>{texto}</Text>
-        <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.9)" />
-        <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.55)" style={{ marginLeft: -10 }} />
-      </Animated.View>
+    <View style={st.sombra} onLayout={(e: LayoutChangeEvent) => setAncho(e.nativeEvent.layout.width)}>
+      <View style={st.pista}>
+        {/* Capas de tono: se mezclan según qué tan lejos está la perilla */}
+        <Animated.View style={[st.capa, { backgroundColor: '#FF9DBB', opacity: capaClara }]} pointerEvents="none" />
+        <Animated.View style={[st.capa, { backgroundColor: '#C42E5A', opacity: capaProfunda }]} pointerEvents="none" />
 
-      {/* Perilla que se arrastra */}
-      <Animated.View
-        {...responder.panHandlers}
-        style={[st.perilla, { transform: [{ translateX: Animated.add(x, pista) }, { scale: escalaPerilla }] }]}
-      >
-        <Ionicons name="arrow-forward" size={22} color={colors.primary} />
-      </Animated.View>
+        {/* Texto central que se va apagando mientras se arrastra */}
+        <Animated.View style={[st.textoWrap, { opacity: opacidadTexto, transform: [{ translateX: desplazarTexto }] }]} pointerEvents="none">
+          <Text style={st.texto}>{texto}</Text>
+          <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.9)" />
+          <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.55)" style={{ marginLeft: -10 }} />
+        </Animated.View>
+
+        {/* Perilla que se arrastra */}
+        <Animated.View
+          {...responder.panHandlers}
+          style={[st.perilla, { transform: [{ translateX: Animated.add(x, pista) }, { scale: escalaPerilla }] }]}
+        >
+          <Ionicons name="arrow-forward" size={22} color={colors.primary} />
+        </Animated.View>
+      </View>
     </View>
   );
 }
 
 const st = StyleSheet.create({
+  capa: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   pista: {
     height: ALTO,
     borderRadius: ALTO / 2,
     backgroundColor: colors.primary,
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  sombra: {
+    height: ALTO,
+    borderRadius: ALTO / 2,
+    backgroundColor: colors.primary,
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.35,
