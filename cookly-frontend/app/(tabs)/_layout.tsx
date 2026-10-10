@@ -50,7 +50,7 @@ export default function TabsLayout() {
           <Text
             numberOfLines={1}
             allowFontScaling={false}
-            style={{ color, fontSize: 11, fontFamily: focused ? fonts.bodyBold : fonts.bodyMedium }}
+            style={{ color, fontSize: 10, fontFamily: focused ? fonts.bodyBold : fonts.bodyMedium }}
           >
             {children}
           </Text>
@@ -72,9 +72,9 @@ export default function TabsLayout() {
           borderTopWidth: 0,
           elevation: 0,
           // Deja sitio a los botones de Android (atrás / inicio / recientes)
-          height: 86 + insets.bottom,
-          paddingTop: 14,
-          paddingBottom: insets.bottom + 12,
+          height: 66 + insets.bottom,
+          paddingTop: 8,
+          paddingBottom: insets.bottom + 8,
         },
       }}
     >
