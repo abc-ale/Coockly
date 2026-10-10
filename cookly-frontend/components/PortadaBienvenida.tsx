@@ -7,9 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/theme';
 
 // 👉 PEGA AQUÍ el enlace de tu PNG en Cloudinary (déjalo entre comillas).
-// Recomendado: agrégale "w_900,f_png" para que pese poco y conserve la transparencia, por ejemplo:
-// https://res.cloudinary.com/TU_CLOUD/image/upload/w_900,f_png/v123/plato-bienvenida.png
-// Mientras no lo pongas (o si no hay internet) se usa el plato local.
+// La imagen viene solo de Cloudinary (no hace falta ningún archivo local).
 const URL_PLATO = 'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791665358/Imagen-bienvenida.png';
 
 type Insig = { icono: keyof typeof Ionicons.glyphMap; fondo: string; color: string; x: number; y: number; fase: number };
@@ -54,11 +52,10 @@ function Insignia({ i, lado }: { i: Insig; lado: number }) {
 }
 
 export default function PortadaBienvenida({ ancho }: { ancho: number }) {
-  const [falloRemoto, setFalloRemoto] = useState(false);
-  const usarRemoto = URL_PLATO.length > 0 && !falloRemoto;
+  const [fallo, setFallo] = useState(false);
   useEffect(() => {
     // Descarga la imagen por adelantado para que aparezca al instante.
-    if (URL_PLATO) Image.prefetch(URL_PLATO).catch(() => setFalloRemoto(true));
+    Image.prefetch(URL_PLATO).catch(() => setFallo(true));
   }, []);
   const balanceo = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -75,9 +72,13 @@ export default function PortadaBienvenida({ ancho }: { ancho: number }) {
 
   return (
     <View style={{ width: ancho, height: ancho }}>
+      {fallo ? (
+        // Sin internet o enlace roto: un círculo suave en lugar del plato.
+        <View style={{ position: 'absolute', left: ancho * 0.12, top: ancho * 0.12, width: ancho * 0.76, height: ancho * 0.76, borderRadius: ancho * 0.38, backgroundColor: colors.primaryLight }} />
+      ) : (
       <Animated.Image
-        source={usarRemoto ? { uri: URL_PLATO } : require('../assets/images/plato.png')}
-        onError={() => setFalloRemoto(true)}
+        source={{ uri: URL_PLATO }}
+        onError={() => setFallo(true)}
         style={{
           width: ancho,
           height: ancho,
@@ -85,6 +86,7 @@ export default function PortadaBienvenida({ ancho }: { ancho: number }) {
         }}
         resizeMode="contain"
       />
+      )}
       {INSIGNIAS.map((i) => (
         <Insignia key={i.icono} i={i} lado={ancho} />
       ))}
