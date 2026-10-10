@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, fonts } from '../../constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, fonts, spacing } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 
 // Pantallas que solo ve cada tipo de cuenta. "profile" la ven las dos.
@@ -12,6 +13,7 @@ export default function TabsLayout() {
   const { usuario, token, cargando } = useAuth();
   const router = useRouter();
   const segmentos = useSegments();
+  const insets = useSafeAreaInsets();
   const esAdmin = usuario?.rol === 'ADMINISTRADOR';
   const rutaActual = String(segmentos[segmentos.length - 1] ?? '');
 
@@ -31,6 +33,9 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         freezeOnBlur: true, // las pestañas que no se ven dejan de re-renderizar
+        // Mismo margen de arriba en todas las pantallas (debajo de la hora / wifi / batería).
+        // Home ya aplica este mismo margen por su cuenta, por eso allí va en 0.
+        sceneStyle: { backgroundColor: colors.background, paddingTop: insets.top + spacing.sm },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: { fontFamily: fonts.bodyMedium, fontSize: 11 },
@@ -38,9 +43,10 @@ export default function TabsLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 64,
+          // Deja sitio a los botones de Android (atrás / inicio / recientes)
+          height: 58 + insets.bottom,
           paddingTop: 6,
-          paddingBottom: 8,
+          paddingBottom: insets.bottom + 6,
         },
       }}
     >
@@ -49,6 +55,7 @@ export default function TabsLayout() {
         name="home"
         options={{
           title: 'Inicio',
+          sceneStyle: { backgroundColor: colors.background, paddingTop: 0 },
           ...ocultarSi(esAdmin),
           tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
         }}

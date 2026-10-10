@@ -3,9 +3,10 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import { colors, radius, spacing, typography, shadow } from '../../constants/theme';
+import { colors, radius, spacing, typography, fonts, shadow } from '../../constants/theme';
 import { api } from '../../lib/api';
 import Button from '../../components/Button';
+import ListaVacia from '../../components/ListaVacia';
 
 type ElementoLista = { id: number; comprado: boolean };
 type ListaCompra = { id: number; nombre: string; creadaEn: string; elementos: ElementoLista[] };
@@ -56,15 +57,29 @@ export default function ListaCompraScreen() {
     }
   }
 
+  const hayListas = !cargando && listas.length > 0;
+
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl }}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={{ paddingBottom: spacing.xl }}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Encabezado */}
       <View style={styles.header}>
-        <Text style={styles.titulo}>Listas de compras</Text>
-        <Pressable style={styles.botonAgregar} onPress={() => setMostrarForm((v) => !v)}>
-          <Ionicons name={mostrarForm ? 'close' : 'add'} size={20} color={colors.white} />
-        </Pressable>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.titulo}>Listas de compras</Text>
+          <Text style={styles.subtitulo}>Organiza todo lo que necesitas para cocinar.</Text>
+        </View>
+        {hayListas && (
+          <Pressable style={styles.botonAgregar} onPress={() => setMostrarForm((v) => !v)}>
+            <Ionicons name={mostrarForm ? 'close' : 'add'} size={22} color={colors.white} />
+          </Pressable>
+        )}
       </View>
 
+      {/* Formulario para crear una lista */}
       {mostrarForm && (
         <View style={styles.formNueva}>
           <TextInput
@@ -73,6 +88,7 @@ export default function ListaCompraScreen() {
             placeholderTextColor={colors.textMuted}
             value={nombreNueva}
             onChangeText={setNombreNueva}
+            autoFocus
           />
           <Button label="Crear lista" onPress={crearLista} loading={creando} />
         </View>
@@ -81,7 +97,8 @@ export default function ListaCompraScreen() {
       {cargando ? (
         <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
       ) : listas.length === 0 ? (
-        <Text style={styles.vacioTexto}>Todavía no tienes listas. Toca + para crear una.</Text>
+        // Sin listas: tarjeta del diseño. El botón abre el formulario de arriba.
+        !mostrarForm && <ListaVacia onCrear={() => setMostrarForm(true)} />
       ) : (
         listas.map((lista) => {
           const total = lista.elementos.length;
@@ -108,24 +125,31 @@ export default function ListaCompraScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
   titulo: { ...typography.h1, color: colors.text },
+  subtitulo: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted, marginTop: 4 },
   botonAgregar: {
-    width: 36, height: 36, borderRadius: radius.pill, backgroundColor: colors.primary,
+    width: 40, height: 40, borderRadius: radius.pill, backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
   formNueva: {
     backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md,
-    marginBottom: spacing.md, gap: spacing.sm, ...shadow.card,
+    marginHorizontal: spacing.md, marginBottom: spacing.md, gap: spacing.sm, ...shadow.card,
   },
   input: {
     backgroundColor: colors.background, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border,
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm, ...typography.body, color: colors.text,
   },
-  vacioTexto: { ...typography.body, color: colors.textMuted, marginTop: spacing.lg, textAlign: 'center' },
   tarjeta: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surface,
-    borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, ...shadow.card,
+    borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm,
+    marginHorizontal: spacing.md, ...shadow.card,
   },
   iconoLista: {
     width: 40, height: 40, borderRadius: radius.md, backgroundColor: colors.primaryLight,
