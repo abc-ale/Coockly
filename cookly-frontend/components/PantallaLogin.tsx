@@ -4,7 +4,7 @@
 // (sin ir a otra pantalla): el indicador rosado se desliza y los campos entran con una transición.
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, TextInput, StyleSheet, ScrollView, Animated, Easing, LayoutChangeEvent,
+  View, Text, TextInput, StyleSheet, ScrollView, Image, Animated, Easing, LayoutChangeEvent,
   KeyboardAvoidingView, Platform, TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +24,10 @@ type Props = {
   cargando?: boolean;          // entrando con correo
   cargandoRegistro?: boolean;  // creando la cuenta
 };
+
+// Logos de Google y Facebook alojados en Cloudinary.
+const LOGO_GOOGLE = 'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791669868/google-g.png';
+const LOGO_FACEBOOK = 'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791669860/facebook-f.png';
 
 type Modo = 'login' | 'registro';
 type Foco = 'nombre' | 'email' | 'password' | null;
@@ -83,9 +87,9 @@ export default function PantallaLogin({
     <View style={s.fondo}>
       {/* Franja rosada y figuras de la marca */}
       <View style={s.franja} />
-      <View style={[s.figura, { width: 90, height: 90, borderRadius: 45, top: 104, left: -34, backgroundColor: colors.accent }]} />
-      <View style={[s.figura, { width: 26, height: 26, borderRadius: 13, top: 84, right: 170, backgroundColor: colors.magic }]} />
-      <View style={[s.figura, { width: 60, height: 60, borderRadius: 30, top: 205, right: 20, backgroundColor: colors.primary, opacity: 0.18 }]} />
+      <View style={[s.figura, { width: 90, height: 90, borderRadius: 45, top: 80, left: -34, backgroundColor: colors.accent }]} />
+      <View style={[s.figura, { width: 26, height: 26, borderRadius: 13, top: 62, right: 150, backgroundColor: colors.magic }]} />
+      <View style={[s.figura, { width: 60, height: 60, borderRadius: 30, top: 160, right: 14, backgroundColor: colors.primary, opacity: 0.18 }]} />
 
       <Animated.Image
         source={{ uri: URL_PLATO }}
@@ -102,17 +106,19 @@ export default function PantallaLogin({
       />
 
       <View style={s.logo}>
-        <Logo size={48} variante="rosa" conTexto colorTexto={colors.primary} />
+        <Logo size={42} variante="rosa" conTexto colorTexto={colors.primary} />
       </View>
       <Text style={s.titular}>Cocina fácil,{'\n'}a tu medida</Text>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          contentContainerStyle={{ paddingTop: 248, flexGrow: 1 }}
+          contentContainerStyle={{ paddingTop: 200, flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
+          bounces={false}
+          overScrollMode="never"
           showsVerticalScrollIndicator={false}
         >
-          <Aparecer distancia={26} style={[s.tarjeta, { paddingBottom: 40 + insets.bottom }]}>
+          <Aparecer distancia={26} style={[s.tarjeta, { paddingBottom: 24 + insets.bottom }]}>
             {/* Pestañas */}
             <View style={s.pestanas} onLayout={(e: LayoutChangeEvent) => setAnchoPestanas(e.nativeEvent.layout.width)}>
               <Animated.View
@@ -215,13 +221,13 @@ export default function PantallaLogin({
               <View style={s.redes}>
                 <View style={{ flex: 1 }}>
                   <Presionable style={s.red} onPress={onGoogle}>
-                    <Ionicons name="logo-google" size={20} color="#DB4437" />
+                    <Image source={{ uri: LOGO_GOOGLE }} style={{ width: 20, height: 20 }} />
                     <Text style={s.redTexto}>Google</Text>
                   </Presionable>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Presionable style={s.red} onPress={onFacebook}>
-                    <Ionicons name="logo-facebook" size={22} color="#1877F2" />
+                    <Image source={{ uri: LOGO_FACEBOOK }} style={{ width: 22, height: 22 }} />
                     <Text style={s.redTexto}>Facebook</Text>
                   </Presionable>
                 </View>
@@ -246,14 +252,14 @@ const s = StyleSheet.create({
   franja: { position: 'absolute', top: 0, left: 0, right: 0, height: 360, backgroundColor: colors.primaryLight },
   figura: { position: 'absolute' },
   plato: {
-    position: 'absolute', width: 190, height: 190, borderRadius: 95, right: -30, top: 52,
+    position: 'absolute', width: 156, height: 156, borderRadius: 78, right: -24, top: 44,
     borderWidth: 6, borderColor: colors.background, backgroundColor: colors.primaryLight,
     shadowColor: colors.text, shadowOpacity: 0.2, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 10,
   },
-  logo: { position: 'absolute', top: 50, left: 24 },
+  logo: { position: 'absolute', top: 44, left: 24 },
   titular: {
-    position: 'absolute', top: 142, left: 24, width: 170,
-    fontFamily: fonts.display, fontSize: 28, lineHeight: 31, letterSpacing: -0.5, color: colors.text,
+    position: 'absolute', top: 108, left: 24, width: 170,
+    fontFamily: fonts.display, fontSize: 26, lineHeight: 28, letterSpacing: -0.5, color: colors.text,
   },
   tarjeta: {
     flex: 1,
@@ -261,8 +267,8 @@ const s = StyleSheet.create({
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
     paddingHorizontal: 28,
-    paddingTop: 22,
-    paddingBottom: 40,
+    paddingTop: 20,
+    paddingBottom: 28,
     shadowColor: colors.text,
     shadowOpacity: 0.08,
     shadowRadius: 30,
@@ -270,11 +276,11 @@ const s = StyleSheet.create({
     elevation: 10,
   },
   pestanas: {
-    height: 52, borderRadius: 26, backgroundColor: colors.primaryLight,
-    flexDirection: 'row', padding: 4, marginBottom: 16,
+    height: 48, borderRadius: 24, backgroundColor: colors.primaryLight,
+    flexDirection: 'row', padding: 4, marginBottom: 14,
   },
   indicador: {
-    position: 'absolute', top: 4, left: 4, bottom: 4, borderRadius: 22, backgroundColor: colors.primary,
+    position: 'absolute', top: 4, left: 4, bottom: 4, borderRadius: 20, backgroundColor: colors.primary,
     shadowColor: colors.primary, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4,
   },
   pestana: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -282,7 +288,7 @@ const s = StyleSheet.create({
   campo: {
     flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.white,
     borderRadius: 999, borderWidth: 1.5, borderColor: colors.primaryLight,
-    paddingHorizontal: 20, height: 52, marginBottom: 10,
+    paddingHorizontal: 20, height: 50, marginBottom: 9,
     shadowColor: colors.text, shadowOpacity: 0.05, shadowRadius: 9, shadowOffset: { width: 0, height: 4 }, elevation: 1,
   },
   campoEnfocado: { borderColor: colors.primary },
@@ -291,18 +297,18 @@ const s = StyleSheet.create({
   olvide: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.primary },
   ayudaWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 0, marginBottom: 14, marginLeft: 8 },
   ayuda: { fontFamily: fonts.body, fontSize: 12.5, color: colors.textMuted },
-  separador: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 16, marginBottom: 14 },
+  separador: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 14, marginBottom: 12 },
   linea: { flex: 1, height: 1.5, backgroundColor: colors.primaryLight },
   sepTexto: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   redes: { flexDirection: 'row', gap: 12 },
   red: {
-    height: 52, borderRadius: 26, backgroundColor: colors.white,
+    height: 50, borderRadius: 25, backgroundColor: colors.white,
     borderWidth: 1.5, borderColor: colors.primaryLight,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
     shadowColor: colors.text, shadowOpacity: 0.05, shadowRadius: 7, shadowOffset: { width: 0, height: 3 }, elevation: 1,
   },
   redTexto: { fontFamily: fonts.heading, fontSize: 15, color: colors.text },
-  pie: { flexDirection: 'row', justifyContent: 'center', marginTop: 18 },
+  pie: { flexDirection: 'row', justifyContent: 'center', marginTop: 14 },
   pieTexto: { fontFamily: fonts.body, color: colors.textMuted, fontSize: 14 },
   registrate: { fontFamily: fonts.heading, color: colors.primary, fontSize: 14 },
 });
