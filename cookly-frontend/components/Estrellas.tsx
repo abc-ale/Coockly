@@ -1,35 +1,35 @@
 // components/Estrellas.tsx
-// 5 estrellitas que se llenan en rosado según el promedio (4.6 = cuatro llenas y la quinta casi llena).
+// 5 estrellitas con borde rosado intenso; se rellenan de rosa según el promedio (4.6 = cuatro llenas y la quinta casi llena).
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/theme';
 
 const ROSA = colors.primary; // rosado intenso de Cookly
-const GRIS = '#E3CDD2';
 
 export default function Estrellas({ valor, tamano = 13 }: { valor: number; tamano?: number; gap?: number }) {
   const v = Math.max(0, Math.min(5, Number(valor) || 0));
-  const ancho = tamano + 3; // ancho de cada estrella
-  const fila = (color: string) => (
+  const ancho = tamano + 3; // ancho de cada estrella (con un poquito de espacio)
+  const fila = (nombre: 'star' | 'star-outline') => (
     <View style={{ flexDirection: 'row' }}>
       {[0, 1, 2, 3, 4].map((i) => (
-        <Text
-          key={i}
-          allowFontScaling={false}
-          style={{ width: ancho, textAlign: 'center', fontSize: tamano + 2, lineHeight: tamano + 6, color }}
-        >
-          ★
-        </Text>
+        <View key={i} style={{ width: ancho, height: tamano + 2, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name={nombre} size={tamano} color={ROSA} />
+        </View>
       ))}
     </View>
   );
 
   return (
-    <View style={{ width: ancho * 5, height: tamano + 6 }}>
-      {/* Fondo gris con las 5 estrellas */}
-      <View style={{ position: 'absolute', top: 0, left: 0 }}>{fila(GRIS)}</View>
+    <View style={{ width: ancho * 5, height: tamano + 2 }}>
+      {/* Borde rosado de las 5 estrellas (siempre visible, aunque no haya reseñas) */}
+      <View style={{ position: 'absolute', top: 0, left: 0 }}>{fila('star-outline')}</View>
       {/* Relleno rosado: se recorta según el promedio */}
-      <View style={{ position: 'absolute', top: 0, left: 0, width: v * ancho, overflow: 'hidden' }}>{fila(ROSA)}</View>
+      {v > 0 && (
+        <View style={{ position: 'absolute', top: 0, left: 0, width: v * ancho, height: tamano + 2, overflow: 'hidden' }}>
+          {fila('star')}
+        </View>
+      )}
     </View>
   );
 }

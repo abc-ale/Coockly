@@ -1,7 +1,7 @@
 // app/(tabs)/home.tsx
 // Inicio según el mockup: saludo con campana, buscador con filtros, categorías,
 // "Receta del día", "Populares" en carrusel y debajo todas las recetas.
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TextInput, ScrollView, StyleSheet, Alert, Pressable, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
@@ -50,7 +50,26 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [texto, setTexto] = useState('');
   const [etiquetaSeleccionada, setEtiquetaSeleccionada] = useState<number | null>(null);
-  const [recetas, setRecetas] = useState<TarjetaReceta[]>([]);
+  const [recetasBase, setRecetas] = useState<TarjetaReceta[]>([]);
+  // La lista del servidor no trae el promedio de estrellas: se pide aparte por receta y se mezcla aquí.
+  const [promedios, setPromedios] = useState<Record<number, number>>({});
+  const idsActuales = useRef<number[]>([]);
+  const recetas = useMemo(
+    () => recetasBase.map((r) => ({ ...r, promedio: promedios[r.id] ?? r.promedio })),
+    [recetasBase, promedios]
+  );
+
+  const cargarPromedios = useCallback((ids: number[]) => {
+    ids.forEach((id) => {
+      api
+        .get(`/recetas/${id}/resenas`)
+        .then((res) => {
+          const prom = Number(res.data?.promedio ?? 0);
+          setPromedios((prev) => (prev[id] === prom ? prev : { ...prev, [id]: prom }));
+        })
+        .catch(() => {});
+    });
+  }, []);
   const [favoritosIds, setFavoritosIds] = useState<Set<number>>(new Set());
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
@@ -69,6 +88,7 @@ export default function HomeScreen() {
     if (guardada && !silencioso) {
       // Ya la teníamos: se muestra de inmediato y se actualiza por detrás sin esqueletos.
       setRecetas(guardada);
+      idsActuales.current = guardada.map((x) => x.id);
       setCargando(false);
       silencioso = true;
     }
@@ -89,6 +109,8 @@ export default function HomeScreen() {
       const lista: TarjetaReceta[] = resRecetas.data.content ?? [];
       memoria.current.set(clave, lista);
       setRecetas(lista);
+      idsActuales.current = lista.map((x) => x.id);
+      cargarPromedios(idsActuales.current);
       precargarImagenes(lista.map((x: any) => x.portada), 500);
     } catch (error: any) {
       if (!guardada) {
@@ -98,7 +120,7 @@ export default function HomeScreen() {
     } finally {
       setCargando(false);
     }
-  }, []);
+  }, [cargarPromedios]);
 
   useEffect(() => {
     buscarRecetas(texto, etiquetaSeleccionada);
@@ -119,7 +141,9 @@ export default function HomeScreen() {
         .catch(() => {});
       // Receta que el usuario dejó a medias en Cocina guiada.
       leerProgreso().then(setProgreso);
-    }, [])
+      // Si el usuario acaba de calificar una receta, las estrellitas se actualizan al volver.
+      cargarPromedios(idsActuales.current);
+    }, [cargarPromedios])
   );
 
   // El corazón cambia al instante; si el servidor falla, vuelve a como estaba.
@@ -315,7 +339,7 @@ export default function HomeScreen() {
                           {r.minutosPreparacion ? `${r.minutosPreparacion} min` : 'Ver receta'}
                         </Text>
                       </View>
-                      <Estrellas valor={Number(r.promedio ?? 0)} tamano={10} gap={0} />
+                      <Estrellas valor={Number(r.promedio ?? 0)} tamano={13} gap={1} />
                     </View>
                     <View style={styles.popularFlecha}>
                       <Ionicons name="arrow-forward" size={16} color={colors.white} />
