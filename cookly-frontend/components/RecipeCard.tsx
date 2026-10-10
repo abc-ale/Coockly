@@ -3,6 +3,7 @@ import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography, shadow } from '../constants/theme';
 
+/** Forma de los datos de ejemplo que usa la pantalla Buscar. */
 export type Recipe = {
   id: number;
   title: string;
@@ -16,50 +17,78 @@ export type Recipe = {
   isFavorite?: boolean;
 };
 
+/** Forma que devuelve el servidor en las listas de recetas (buscar, por etiqueta y favoritos). */
+export type TarjetaReceta = {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  minutosPreparacion?: number;
+  portada?: string;
+  promedio?: number;
+  isFavorite?: boolean;
+};
+
 type Props = {
-  recipe: Recipe;
+  recipe: Recipe | TarjetaReceta;
   onPress?: () => void;
   onToggleFavorite?: () => void;
 };
 
 function RecipeCard({ recipe, onPress, onToggleFavorite }: Props) {
+  // Acepta las dos formas: la del servidor (nombre, portada…) y la de ejemplo (title, image…).
+  const r = recipe as any;
+  const titulo: string = r.title ?? r.nombre ?? '';
+  const descripcion: string = r.description ?? r.descripcion ?? '';
+  const imagen: string | undefined = r.image ?? r.portada;
+  const puntuacion: number = Number(r.rating ?? r.promedio ?? 0);
+  const minutos: number | undefined = r.minutes ?? r.minutosPreparacion ?? undefined;
+  const dificultad: string | undefined = r.difficulty;
+  const personas: number | undefined = r.servings;
+  const kcal: number | undefined = r.kcal;
+
   return (
     <Pressable onPress={onPress} style={[styles.card, shadow.card]}>
       <View>
-        <Image
-          source={{ uri: recipe.image }}
-          style={styles.image}
-          resizeMode="cover"
-        />
+        {imagen ? (
+          <Image source={{ uri: imagen }} style={styles.image} resizeMode="cover" />
+        ) : (
+          <View style={[styles.image, styles.sinFoto]}>
+            <Ionicons name="restaurant-outline" size={34} color={colors.primary} />
+          </View>
+        )}
 
-        <View style={styles.ratingBadge}>
-          <Ionicons name="star" size={11} color={colors.warning} />
-          <Text style={styles.ratingText}>{recipe.rating.toFixed(1)}</Text>
-        </View>
+        {puntuacion > 0 && (
+          <View style={styles.ratingBadge}>
+            <Ionicons name="star" size={11} color={colors.warning} />
+            <Text style={styles.ratingText}>{puntuacion.toFixed(1)}</Text>
+          </View>
+        )}
 
         <Pressable style={styles.favoriteBadge} onPress={onToggleFavorite} hitSlop={8}>
           <Ionicons
-            name={recipe.isFavorite ? 'heart' : 'heart-outline'}
+            name={r.isFavorite ? 'heart' : 'heart-outline'}
             size={16}
-            color={recipe.isFavorite ? colors.primary : colors.textMuted}
+            color={r.isFavorite ? colors.primary : colors.textMuted}
           />
         </Pressable>
       </View>
 
       <View style={styles.body}>
         <View style={styles.titleRow}>
-          <Text style={styles.title} numberOfLines={1}>{recipe.title}</Text>
-          <View style={styles.difficultyChip}>
-            <Text style={styles.difficultyText}>{recipe.difficulty}</Text>
-          </View>
+          <Text style={styles.title} numberOfLines={1}>{titulo}</Text>
+          {dificultad ? (
+            <View style={styles.difficultyChip}>
+              <Text style={styles.difficultyText}>{dificultad}</Text>
+            </View>
+          ) : null}
         </View>
 
-        <Text style={styles.description} numberOfLines={2}>{recipe.description}</Text>
+        {descripcion ? <Text style={styles.description} numberOfLines={2}>{descripcion}</Text> : null}
 
         <View style={styles.metaRow}>
-          <Meta icon="time-outline" text={`${recipe.minutes} min`} />
-          <Meta icon="people-outline" text={`${recipe.servings} personas`} />
-          <Meta icon="flame-outline" text={`${recipe.kcal} kcal`} />
+          {minutos ? <Meta icon="time-outline" text={`${minutos} min`} /> : null}
+          {personas ? <Meta icon="people-outline" text={`${personas} personas`} /> : null}
+          {kcal ? <Meta icon="flame-outline" text={`${kcal} kcal`} /> : null}
         </View>
       </View>
     </Pressable>
@@ -88,6 +117,11 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: 110,
+  },
+  sinFoto: {
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   ratingBadge: {
     position: 'absolute',

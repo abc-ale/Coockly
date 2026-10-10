@@ -4,18 +4,21 @@ import { View, Text, TextInput, ScrollView, StyleSheet, ActivityIndicator, Alert
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import RecipeCard, { Recipe } from '../../components/RecipeCard';
+import RecipeCard, { TarjetaReceta } from '../../components/RecipeCard';
 import FiltroEtiquetas from '../../components/FiltroEtiquetas';
 import Logo from '../../components/Logo';
 import { Aparecer, Presionable, Rebote } from '../../components/Animaciones';
 import { colors, radius, spacing, typography, fonts, shadow } from '../../constants/theme';
 import { api } from '../../lib/api';
 
+// Mismo margen superior que usan las demás pestañas (ver _layout.tsx).
+const MARGEN_SUPERIOR = 24;
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [texto, setTexto] = useState('');
   const [etiquetaSeleccionada, setEtiquetaSeleccionada] = useState<number | null>(null);
-  const [recetas, setRecetas] = useState<Recipe[]>([]);
+  const [recetas, setRecetas] = useState<TarjetaReceta[]>([]);
   const [favoritosIds, setFavoritosIds] = useState<Set<number>>(new Set());
   const [cargando, setCargando] = useState(true);
 
@@ -39,6 +42,8 @@ export default function HomeScreen() {
 
       setRecetas(resRecetas.data.content ?? []);
     } catch (error: any) {
+      // Muestra la causa real en la terminal de Expo (estado HTTP y mensaje del servidor).
+      console.log('ERROR RECETAS', error?.response?.status, JSON.stringify(error?.response?.data), error?.message);
       Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudieron cargar las recetas.');
     } finally {
       setCargando(false);
@@ -49,7 +54,7 @@ export default function HomeScreen() {
     buscarRecetas(texto, etiquetaSeleccionada);
   }, [texto, etiquetaSeleccionada, buscarRecetas]);
 
-  async function alternarFavorito(receta: Recipe) {
+  async function alternarFavorito(receta: TarjetaReceta) {
     const esFavorito = favoritosIds.has(receta.id);
     try {
       if (esFavorito) {
@@ -84,7 +89,7 @@ export default function HomeScreen() {
       >
         {/* Encabezado con logo */}
         <Aparecer distancia={-12}>
-          <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
+          <View style={[styles.topBar, { paddingTop: insets.top + MARGEN_SUPERIOR }]}>
             <Logo size={38} variante="rosa" />
           </View>
         </Aparecer>

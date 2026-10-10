@@ -12,6 +12,7 @@ import { useAuth } from '../../context/AuthContext';
 import Stars from '../../components/Stars';
 import Button from '../../components/Button';
 import EtiquetasReceta from '../../components/EtiquetasReceta';
+import CocinaGuiada from '../../components/CocinaGuiada';
 
 
 type Ingrediente = {
@@ -62,6 +63,7 @@ export default function RecetaDetalleScreen() {
   const [cargando, setCargando] = useState(true);
   const [enviandoComentario, setEnviandoComentario] = useState(false);
   const [enviandoResena, setEnviandoResena] = useState(false);
+  const [cocinando, setCocinando] = useState(false);
 
   const cargarTodo = useCallback(async () => {
     try {
@@ -209,6 +211,17 @@ export default function RecetaDetalleScreen() {
 
           {receta.descripcion ? <Text style={styles.descripcion}>{receta.descripcion}</Text> : null}
 
+          {receta.pasos.length > 0 && (
+            <Pressable style={styles.botonCocinaGuiada} onPress={() => setCocinando(true)}>
+              <Ionicons name="timer-outline" size={22} color={colors.white} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cocinaGuiadaTitulo}>Cocina guiada</Text>
+                <Text style={styles.cocinaGuiadaSub}>Paso a paso con cronómetro</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.white} />
+            </Pressable>
+          )}
+
           <Text style={styles.seccionTitulo}>Ingredientes</Text>
           {receta.detallesIngredientes.length === 0 ? (
             <Text style={styles.vacioTexto}>Sin ingredientes registrados.</Text>
@@ -227,7 +240,7 @@ export default function RecetaDetalleScreen() {
           {receta.pasos.length === 0 ? (
             <Text style={styles.vacioTexto}>Sin pasos registrados.</Text>
           ) : (
-            receta.pasos
+            [...receta.pasos]
               .sort((a, b) => a.orden - b.orden)
               .map((paso) => (
                 <View key={paso.id} style={styles.pasoRow}>
@@ -300,6 +313,13 @@ export default function RecetaDetalleScreen() {
           ))}
         </View>
       </ScrollView>
+
+      <CocinaGuiada
+        visible={cocinando}
+        onClose={() => setCocinando(false)}
+        nombre={receta.nombre}
+        pasos={receta.pasos}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -325,6 +345,13 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.sm, gap: 4 },
   metaTexto: { ...typography.bodySmall, color: colors.textMuted },
   descripcion: { ...typography.body, color: colors.text, marginTop: spacing.sm },
+  botonCocinaGuiada: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+    backgroundColor: colors.primary, borderRadius: radius.lg,
+    paddingVertical: 14, paddingHorizontal: spacing.md, marginTop: spacing.md, ...shadow.card,
+  },
+  cocinaGuiadaTitulo: { ...typography.button, color: colors.white, fontSize: 16 },
+  cocinaGuiadaSub: { ...typography.bodySmall, color: colors.onPrimary },
   seccionTitulo: { ...typography.h3, color: colors.text, marginTop: spacing.lg, marginBottom: spacing.sm },
   subTitulo: { ...typography.h3, color: colors.text, marginTop: spacing.md, marginBottom: spacing.sm, fontSize: 15 },
   vacioTexto: { ...typography.bodySmall, color: colors.textMuted },

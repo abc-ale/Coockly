@@ -2,12 +2,12 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import RecipeCard, { Recipe } from '../../components/RecipeCard';
+import RecipeCard, { TarjetaReceta } from '../../components/RecipeCard';
 import { colors, spacing, typography } from '../../constants/theme';
 import { api } from '../../lib/api';
 
 export default function FavoritesScreen() {
-  const [recetas, setRecetas] = useState<Recipe[]>([]);
+  const [recetas, setRecetas] = useState<TarjetaReceta[]>([]);
   const [cargando, setCargando] = useState(true);
 
   const cargar = useCallback(async () => {
