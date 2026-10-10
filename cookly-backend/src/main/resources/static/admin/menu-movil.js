@@ -1,4 +1,30 @@
-/* Cookly · Panel administrativo · Menú hamburguesa (pantallas pequeñas) */
+/* Cookly · Panel administrativo · Menú hamburguesa y tablas en tarjetas (pantallas pequeñas) */
+(function () {
+  'use strict';
+  // Cada celda recibe el nombre de su columna para mostrarlo en las tarjetas del celular
+  function etiquetar(tabla) {
+    var cab = [];
+    tabla.querySelectorAll('thead th').forEach(function (th) {
+      var t = (th.textContent || '').trim();
+      cab.push(t === 'Acciones' ? '' : t);
+    });
+    tabla.querySelectorAll('tbody tr').forEach(function (tr) {
+      Array.prototype.forEach.call(tr.children, function (td, i) {
+        var t = cab[i] || '';
+        if (td.getAttribute('data-label') !== t) td.setAttribute('data-label', t);
+      });
+    });
+  }
+  function etiquetarTodas() { document.querySelectorAll('table').forEach(etiquetar); }
+  var pendiente = false;
+  new MutationObserver(function () {
+    if (pendiente) return;
+    pendiente = true;
+    requestAnimationFrame(function () { pendiente = false; etiquetarTodas(); });
+  }).observe(document.body, { childList: true, subtree: true });
+  etiquetarTodas();
+})();
+
 (function () {
   'use strict';
   var panel = document.getElementById('vista-panel');

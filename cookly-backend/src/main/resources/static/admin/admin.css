@@ -419,3 +419,42 @@ td .acciones { flex-direction: column; align-items: stretch; min-width: 112px; }
   select option:checked { background: var(--rosa); color: #fff; font-weight: 700; }
   select option::checkmark { display: none; }
 }
+
+
+/* ---- Tablas convertidas en tarjetas en el celular ---- */
+@media (max-width: 700px) {
+  .tabla-envoltura { background: transparent; border: 0; box-shadow: none; overflow: visible; border-radius: 0; }
+  table, tbody { display: block; }
+  thead { display: none; }
+  tbody tr {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2px 14px;
+    background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio);
+    box-shadow: var(--sombra); padding: 14px 16px; margin-bottom: 12px;
+  }
+  tbody tr:hover { background: var(--superficie); }
+  td { display: block; padding: 6px 0; border: 0; white-space: normal; overflow-wrap: anywhere; min-width: 0; text-align: left; }
+  td.num { text-align: left; }
+  td::before {
+    content: attr(data-label); display: block; font-size: 11px; font-weight: 700; letter-spacing: .05em;
+    text-transform: uppercase; color: #8A5560; margin-bottom: 2px;
+  }
+  td[data-label=""]::before { display: none; }
+  /* La primera celda (nombre / título) y las acciones ocupan todo el ancho */
+  tbody tr > td:first-child, td.largo, tbody tr > td:last-child:has(.acciones), tbody tr > td:last-child:has(button) { grid-column: 1 / -1; }
+  td:first-child { padding-bottom: 8px; border-bottom: 1px solid #F8E8EA; margin-bottom: 4px; }
+  td.largo { min-width: 0; max-width: none; }
+  td .acciones { flex-direction: row; min-width: 0; justify-content: stretch; padding-top: 8px; }
+  td .acciones .boton { flex: 1; }
+  td > .boton.chico { width: 100%; margin-top: 6px; }
+  td.sin-resultados { grid-column: 1 / -1; text-align: center; }
+  td.sin-resultados::before { display: none; }
+  tbody tr:has(td.sin-resultados) { display: block; }
+  /* Tabla pequeña del respaldo: queda como lista de dos columnas */
+  #tabla-respaldo tbody tr { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; margin-bottom: 8px; }
+  #tabla-respaldo td { padding: 0; }
+  #tabla-respaldo td::before { display: none; }
+  #tabla-respaldo td:first-child { border: 0; margin: 0; padding: 0; }
+  .herramientas .campo, .herramientas .campo:has(select) { flex: 1 1 100%; max-width: none; }
+  .herramientas .boton { flex: 1 1 calc(50% - 6px); }
+  .espacio { display: none; }
+}
