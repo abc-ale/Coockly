@@ -55,7 +55,7 @@ function CargandoCookly() {
 }
 
 export default function LoginScreen() {
-  const { token, login, loginConGoogle, loginConFacebook } = useAuth();
+  const { token, login, registrar, loginConGoogle, loginConFacebook } = useAuth();
   const { width, height } = useWindowDimensions();
   const scrollX = useRef(new Animated.Value(0)).current;
   const pager = useRef<any>(null);
@@ -79,9 +79,10 @@ export default function LoginScreen() {
   const [arrastrando, setArrastrando] = useState(false);
   const [enLogin, setEnLogin] = useState(false);
   const [cargandoEmail, setCargandoEmail] = useState(false);
+  const [cargandoRegistro, setCargandoRegistro] = useState(false);
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
   const [cargandoFacebook, setCargandoFacebook] = useState(false);
-  const cargandoAlguno = cargandoEmail || cargandoGoogle || cargandoFacebook;
+  const cargandoAlguno = cargandoEmail || cargandoRegistro || cargandoGoogle || cargandoFacebook;
 
   useEffect(() => {
     despertarServidor();
@@ -102,6 +103,27 @@ export default function LoginScreen() {
     } catch (error: any) {
       setCargandoEmail(false);
       mostrarAlerta('Error', mensajeDeError(error, 'No se pudo iniciar sesión. Verifica tus datos.'));
+    }
+  }
+
+  // Crear cuenta desde la pestaña "Registrarse" (mismos datos y reglas que antes).
+  async function manejarRegistro(nombre: string, correo: string, contrasena: string) {
+    if (!nombre || !correo || !contrasena) {
+      mostrarAlerta('Faltan datos', 'Completa todos los campos.');
+      return;
+    }
+    if (contrasena.length < 10) {
+      mostrarAlerta('Contraseña muy corta', 'Debe tener al menos 10 caracteres.');
+      return;
+    }
+    if (cargandoAlguno) return;
+    setCargandoRegistro(true);
+    try {
+      await registrar(nombre, correo, contrasena);
+      router.replace('/(tabs)/home');
+    } catch (error: any) {
+      setCargandoRegistro(false);
+      mostrarAlerta('Error', mensajeDeError(error, 'No se pudo crear la cuenta.'));
     }
   }
 
@@ -211,9 +233,10 @@ export default function LoginScreen() {
             onLogin={manejarLogin}
             onGoogle={manejarLoginGoogle}
             onFacebook={manejarLoginFacebook}
-            onRegistro={() => router.push('/register')}
+            onRegistrar={manejarRegistro}
             onOlvide={() => router.push('/olvide-contrasena')}
             cargando={cargandoEmail}
+            cargandoRegistro={cargandoRegistro}
           />
         </View>
       </Animated.ScrollView>

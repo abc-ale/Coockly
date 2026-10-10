@@ -1,9 +1,10 @@
 // components/PantallaLogin.tsx
-// Pantalla de inicio de sesión según el mockup: franja rosada con plato y logo arriba,
-// tarjeta crema que sube con las pestañas Iniciar sesión / Registrarse, campos, Google y Facebook.
+// Pantalla de acceso según el mockup: franja rosada con foto y logo arriba y una tarjeta crema con
+// las pestañas Iniciar sesión / Registrarse. Las pestañas cambian el formulario en el mismo lugar
+// (sin ir a otra pantalla): el indicador rosado se desliza y los campos entran con una transición.
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, TextInput, StyleSheet, ScrollView, Animated, Easing,
+  View, Text, TextInput, StyleSheet, ScrollView, Animated, Easing, LayoutChangeEvent,
   KeyboardAvoidingView, Platform, TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,12 +16,16 @@ import { seleccion, toque } from '../lib/vibracion';
 
 type Props = {
   onLogin: (email: string, password: string) => void;
+  onRegistrar: (nombre: string, email: string, password: string) => void;
   onGoogle: () => void;
   onFacebook: () => void;
-  onRegistro: () => void;
   onOlvide: () => void;
-  cargando?: boolean;
+  cargando?: boolean;          // entrando con correo
+  cargandoRegistro?: boolean;  // creando la cuenta
 };
+
+type Modo = 'login' | 'registro';
+type Foco = 'nombre' | 'email' | 'password' | null;
 
 // Foto del lomo saltado en Cloudinary (reducida a 700 px de ancho para que cargue rápido).
 const URL_PLATO = 'https://res.cloudinary.com/pjbmwoxn/image/upload/w_700,q_80/v1791668357/lomo-saltado.webp';
@@ -37,12 +42,15 @@ function Campo({
 }
 
 export default function PantallaLogin({
-  onLogin, onGoogle, onFacebook, onRegistro, onOlvide, cargando,
+  onLogin, onRegistrar, onGoogle, onFacebook, onOlvide, cargando, cargandoRegistro,
 }: Props) {
+  const [modo, setModo] = useState<Modo>('login');
+  const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [ver, setVer] = useState(false);
-  const [foco, setFoco] = useState<'email' | 'password' | null>(null);
+  const [foco, setFoco] = useState<Foco>(null);
+  const [anchoPestanas, setAnchoPestanas] = useState(0);
 
   // El plato flota suavemente.
   const flota = useRef(new Animated.Value(0)).current;
@@ -57,12 +65,24 @@ export default function PantallaLogin({
     return () => bucle.stop();
   }, [flota]);
 
+  // Indicador de la pestaña activa: se desliza de una a otra.
+  const posicion = useRef(new Animated.Value(0)).current;
+  const anchoIndicador = Math.max((anchoPestanas - 8) / 2, 0);
+  function cambiarModo(nuevo: Modo) {
+    if (nuevo === modo) return;
+    seleccion();
+    setModo(nuevo);
+    Animated.spring(posicion, { toValue: nuevo === 'login' ? 0 : 1, friction: 7, tension: 120, useNativeDriver: true }).start();
+  }
+
+  const esRegistro = modo === 'registro';
+
   return (
     <View style={s.fondo}>
       {/* Franja rosada y figuras de la marca */}
       <View style={s.franja} />
-      <View style={[s.figura, { width: 90, height: 90, borderRadius: 45, top: 120, left: -28, backgroundColor: colors.accent }]} />
-      <View style={[s.figura, { width: 26, height: 26, borderRadius: 13, top: 90, right: 150, backgroundColor: colors.magic }]} />
+      <View style={[s.figura, { width: 90, height: 90, borderRadius: 45, top: 120, left: -34, backgroundColor: colors.accent }]} />
+      <View style={[s.figura, { width: 26, height: 26, borderRadius: 13, top: 96, right: 170, backgroundColor: colors.magic }]} />
       <View style={[s.figura, { width: 60, height: 60, borderRadius: 30, top: 250, right: 20, backgroundColor: colors.primary, opacity: 0.18 }]} />
 
       <Animated.Image
@@ -86,89 +106,132 @@ export default function PantallaLogin({
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          contentContainerStyle={{ paddingTop: 300, flexGrow: 1 }}
+          contentContainerStyle={{ paddingTop: 290, flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           <Aparecer distancia={26} style={s.tarjeta}>
             {/* Pestañas */}
-            <View style={s.pestanas}>
-              <View style={[s.pestana, s.pestanaActiva]}>
-                <Text style={[s.pestanaTexto, { color: colors.white }]}>Iniciar sesión</Text>
+            <View style={s.pestanas} onLayout={(e: LayoutChangeEvent) => setAnchoPestanas(e.nativeEvent.layout.width)}>
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  s.indicador,
+                  {
+                    width: anchoIndicador,
+                    transform: [{ translateX: posicion.interpolate({ inputRange: [0, 1], outputRange: [0, anchoIndicador] }) }],
+                  },
+                ]}
+              />
+              <TouchableOpacity style={s.pestana} activeOpacity={0.8} onPress={() => cambiarModo('login')}>
+                <Text style={[s.pestanaTexto, { color: esRegistro ? colors.textMuted : colors.white }]}>Iniciar sesión</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.pestana} activeOpacity={0.8} onPress={() => cambiarModo('registro')}>
+                <Text style={[s.pestanaTexto, { color: esRegistro ? colors.white : colors.textMuted }]}>Registrarse</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Formulario: cada vez que cambia el modo entra con una pequeña animación */}
+            <Aparecer key={modo} distancia={14}>
+              {esRegistro && (
+                <Campo icono="person-outline" enfocado={foco === 'nombre'}>
+                  <TextInput
+                    style={s.input}
+                    placeholder="Nombre completo"
+                    placeholderTextColor={colors.textMuted}
+                    value={nombre}
+                    onChangeText={setNombre}
+                    onFocus={() => setFoco('nombre')}
+                    onBlur={() => setFoco(null)}
+                  />
+                </Campo>
+              )}
+
+              <Campo icono="mail-outline" enfocado={foco === 'email'}>
+                <TextInput
+                  style={s.input}
+                  placeholder="Correo electrónico"
+                  placeholderTextColor={colors.textMuted}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  value={email}
+                  onChangeText={setEmail}
+                  onFocus={() => setFoco('email')}
+                  onBlur={() => setFoco(null)}
+                />
+              </Campo>
+
+              <Campo icono="lock-closed-outline" enfocado={foco === 'password'}>
+                <TextInput
+                  style={s.input}
+                  placeholder={esRegistro ? 'Contraseña (mín. 10 caracteres)' : 'Contraseña'}
+                  placeholderTextColor={colors.textMuted}
+                  secureTextEntry={!ver}
+                  value={password}
+                  onChangeText={setPassword}
+                  onFocus={() => setFoco('password')}
+                  onBlur={() => setFoco(null)}
+                />
+                <TouchableOpacity onPress={() => { toque(); setVer(!ver); }} hitSlop={10}>
+                  <Ionicons name={ver ? 'eye-outline' : 'eye-off-outline'} size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+              </Campo>
+
+              {esRegistro ? (
+                <View style={s.ayudaWrap}>
+                  <Ionicons name="shield-checkmark-outline" size={14} color={colors.textMuted} />
+                  <Text style={s.ayuda}>Usa al menos 10 caracteres para proteger tu cuenta.</Text>
+                </View>
+              ) : (
+                <TouchableOpacity onPress={onOlvide} style={s.olvideWrap} hitSlop={8}>
+                  <Text style={s.olvide}>¿Olvidaste tu contraseña?</Text>
+                </TouchableOpacity>
+              )}
+
+              {esRegistro ? (
+                <Button
+                  label="Crear cuenta"
+                  variant="flecha"
+                  loading={cargandoRegistro}
+                  onPress={() => onRegistrar(nombre.trim(), email.trim(), password)}
+                />
+              ) : (
+                <Button
+                  label="Iniciar sesión"
+                  variant="flecha"
+                  loading={cargando}
+                  onPress={() => onLogin(email.trim(), password)}
+                />
+              )}
+
+              <View style={s.separador}>
+                <View style={s.linea} />
+                <Text style={s.sepTexto}>{esRegistro ? 'o regístrate con' : 'o continúa con'}</Text>
+                <View style={s.linea} />
               </View>
-              <Presionable
-                style={s.pestana}
-                escalaAlPresionar={0.96}
-                onPress={() => { seleccion(); onRegistro(); }}
-              >
-                <Text style={[s.pestanaTexto, { color: colors.textMuted }]}>Registrarse</Text>
-              </Presionable>
-            </View>
 
-            <Campo icono="mail-outline" enfocado={foco === 'email'}>
-              <TextInput
-                style={s.input}
-                placeholder="Correo electrónico"
-                placeholderTextColor={colors.textMuted}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                value={email}
-                onChangeText={setEmail}
-                onFocus={() => setFoco('email')}
-                onBlur={() => setFoco(null)}
-              />
-            </Campo>
+              <View style={s.redes}>
+                <View style={{ flex: 1 }}>
+                  <Presionable style={s.red} onPress={onGoogle}>
+                    <Ionicons name="logo-google" size={20} color="#DB4437" />
+                    <Text style={s.redTexto}>Google</Text>
+                  </Presionable>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Presionable style={s.red} onPress={onFacebook}>
+                    <Ionicons name="logo-facebook" size={22} color="#1877F2" />
+                    <Text style={s.redTexto}>Facebook</Text>
+                  </Presionable>
+                </View>
+              </View>
 
-            <Campo icono="lock-closed-outline" enfocado={foco === 'password'}>
-              <TextInput
-                style={s.input}
-                placeholder="Contraseña"
-                placeholderTextColor={colors.textMuted}
-                secureTextEntry={!ver}
-                value={password}
-                onChangeText={setPassword}
-                onFocus={() => setFoco('password')}
-                onBlur={() => setFoco(null)}
-              />
-              <TouchableOpacity onPress={() => { toque(); setVer(!ver); }} hitSlop={10}>
-                <Ionicons name={ver ? 'eye-outline' : 'eye-off-outline'} size={20} color={colors.textMuted} />
-              </TouchableOpacity>
-            </Campo>
-
-            <TouchableOpacity onPress={onOlvide} style={s.olvideWrap} hitSlop={8}>
-              <Text style={s.olvide}>¿Olvidaste tu contraseña?</Text>
-            </TouchableOpacity>
-
-            <Button
-              label="Iniciar sesión"
-              variant="flecha"
-              loading={cargando}
-              onPress={() => onLogin(email.trim(), password)}
-            />
-
-            <View style={s.separador}>
-              <View style={s.linea} />
-              <Text style={s.sepTexto}>o continúa con</Text>
-              <View style={s.linea} />
-            </View>
-
-            <View style={s.redes}>
-              <Presionable style={s.red} onPress={onGoogle}>
-                <Ionicons name="logo-google" size={20} color="#DB4437" />
-                <Text style={s.redTexto}>Google</Text>
-              </Presionable>
-              <Presionable style={s.red} onPress={onFacebook}>
-                <Ionicons name="logo-facebook" size={22} color="#1877F2" />
-                <Text style={s.redTexto}>Facebook</Text>
-              </Presionable>
-            </View>
-
-            <View style={s.pie}>
-              <Text style={s.pieTexto}>¿Aún no tienes cuenta? </Text>
-              <TouchableOpacity onPress={onRegistro} hitSlop={8}>
-                <Text style={s.registrate}>Regístrate</Text>
-              </TouchableOpacity>
-            </View>
+              <View style={s.pie}>
+                <Text style={s.pieTexto}>{esRegistro ? '¿Ya tienes cuenta? ' : '¿Aún no tienes cuenta? '}</Text>
+                <TouchableOpacity onPress={() => cambiarModo(esRegistro ? 'login' : 'registro')} hitSlop={8}>
+                  <Text style={s.registrate}>{esRegistro ? 'Inicia sesión' : 'Regístrate'}</Text>
+                </TouchableOpacity>
+              </View>
+            </Aparecer>
           </Aparecer>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -181,14 +244,14 @@ const s = StyleSheet.create({
   franja: { position: 'absolute', top: 0, left: 0, right: 0, height: 360, backgroundColor: colors.primaryLight },
   figura: { position: 'absolute' },
   plato: {
-    position: 'absolute', width: 250, height: 250, borderRadius: 125, right: -50, top: 50,
+    position: 'absolute', width: 210, height: 210, borderRadius: 105, right: -34, top: 66,
     borderWidth: 6, borderColor: colors.background, backgroundColor: colors.primaryLight,
     shadowColor: colors.text, shadowOpacity: 0.2, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 10,
   },
   logo: { position: 'absolute', top: 56, left: 24 },
   titular: {
-    position: 'absolute', top: 160, left: 24, width: 200,
-    fontFamily: fonts.display, fontSize: 30, lineHeight: 32, letterSpacing: -0.5, color: colors.text,
+    position: 'absolute', top: 168, left: 24, width: 170,
+    fontFamily: fonts.display, fontSize: 28, lineHeight: 31, letterSpacing: -0.5, color: colors.text,
   },
   tarjeta: {
     flex: 1,
@@ -196,8 +259,8 @@ const s = StyleSheet.create({
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
     paddingHorizontal: 28,
-    paddingTop: 30,
-    paddingBottom: 40,
+    paddingTop: 26,
+    paddingBottom: 36,
     shadowColor: colors.text,
     shadowOpacity: 0.08,
     shadowRadius: 30,
@@ -206,13 +269,13 @@ const s = StyleSheet.create({
   },
   pestanas: {
     height: 52, borderRadius: 26, backgroundColor: colors.primaryLight,
-    flexDirection: 'row', padding: 4, marginBottom: 22,
+    flexDirection: 'row', padding: 4, marginBottom: 20,
   },
-  pestana: { flex: 1, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  pestanaActiva: {
-    backgroundColor: colors.primary,
+  indicador: {
+    position: 'absolute', top: 4, left: 4, bottom: 4, borderRadius: 22, backgroundColor: colors.primary,
     shadowColor: colors.primary, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4,
   },
+  pestana: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   pestanaTexto: { fontFamily: fonts.heading, fontSize: 15 },
   campo: {
     flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.white,
@@ -224,18 +287,20 @@ const s = StyleSheet.create({
   input: { flex: 1, fontFamily: fonts.body, fontSize: 15, color: colors.text, paddingVertical: 0 },
   olvideWrap: { alignSelf: 'flex-end', marginTop: 2, marginBottom: 18, marginRight: 6 },
   olvide: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.primary },
-  separador: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 22, marginBottom: 18 },
+  ayudaWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2, marginBottom: 18, marginLeft: 8 },
+  ayuda: { fontFamily: fonts.body, fontSize: 12.5, color: colors.textMuted },
+  separador: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 20, marginBottom: 16 },
   linea: { flex: 1, height: 1.5, backgroundColor: colors.primaryLight },
   sepTexto: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   redes: { flexDirection: 'row', gap: 12 },
   red: {
-    flex: 1, height: 54, borderRadius: 27, backgroundColor: colors.white,
+    height: 54, borderRadius: 27, backgroundColor: colors.white,
     borderWidth: 1.5, borderColor: colors.primaryLight,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
     shadowColor: colors.text, shadowOpacity: 0.05, shadowRadius: 7, shadowOffset: { width: 0, height: 3 }, elevation: 1,
   },
   redTexto: { fontFamily: fonts.heading, fontSize: 15, color: colors.text },
-  pie: { flexDirection: 'row', justifyContent: 'center', marginTop: 22 },
+  pie: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
   pieTexto: { fontFamily: fonts.body, color: colors.textMuted, fontSize: 14 },
   registrate: { fontFamily: fonts.heading, color: colors.primary, fontSize: 14 },
 });
