@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography, shadow } from '../constants/theme';
 import { Presionable } from './Animaciones';
 import ImagenReceta from './ImagenReceta';
+import Estrellas from './Estrellas';
 import { toque } from '../lib/vibracion';
 
 /**
@@ -100,12 +101,11 @@ function RecipeCard({ recipe, onPress, onToggleFavorite, indice = 0 }: Props) {
         {/* Foto liviana (Cloudinary) con fundido: nunca queda un cuadro blanco mientras carga */}
         <ImagenReceta uri={imagen} ancho={500} style={styles.image} />
 
-        {puntuacion > 0 && (
-          <View style={styles.ratingBadge}>
-            <Ionicons name="star" size={11} color={colors.warning} />
-            <Text style={styles.ratingText}>{puntuacion.toFixed(1)}</Text>
-          </View>
-        )}
+        {/* Estrellitas arriba a la izquierda (siempre se ven, vacías si aún no hay reseñas) */}
+        <View style={styles.ratingBadge}>
+          <Estrellas valor={puntuacion} tamano={12} />
+          {puntuacion > 0 && <Text style={styles.ratingText}>{puntuacion.toFixed(1)}</Text>}
+        </View>
 
         <Pressable
           style={styles.favoriteBadge}
@@ -188,14 +188,14 @@ const styles = StyleSheet.create({
   ratingBadge: {
     position: 'absolute',
     left: spacing.sm,
-    bottom: spacing.sm,
+    top: spacing.sm,
     backgroundColor: colors.white,
     borderRadius: radius.pill,
     paddingHorizontal: 8,
     paddingVertical: 3,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: 4,
   },
   ratingText: { ...typography.caption, color: colors.text },
   favoriteBadge: {

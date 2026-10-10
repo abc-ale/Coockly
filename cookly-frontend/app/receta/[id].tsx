@@ -17,6 +17,7 @@ import { colors, fonts, radius, spacing, typography, shadow } from '../../consta
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import Stars from '../../components/Stars';
+import Estrellas from '../../components/Estrellas';
 import Button from '../../components/Button';
 import EtiquetasReceta from '../../components/EtiquetasReceta';
 import CocinaGuiada from '../../components/CocinaGuiada';
@@ -235,7 +236,7 @@ export default function RecetaDetalleScreen() {
 
           <View style={styles.metaRow}>
             <View style={styles.pastilla}>
-              <Ionicons name="star" size={14} color={colors.warning} />
+              <Estrellas valor={promedio} tamano={14} />
               <Text style={styles.pastillaTexto}>{promedio.toFixed(1)} ({resenas.length})</Text>
             </View>
             {receta.minutosPreparacion ? (
