@@ -6,7 +6,6 @@ import com.cookly.repositorios.*;
 import com.cookly.servicios.ServicioReceta;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +32,7 @@ public class ControladorReceta {
         return Map.of("recetas", servicio.menuExpress(s));
     }
 
-    /** Autenticado (ya cubierto por ConfiguracionSeguridad: todo lo que no es /autenticacion/** requiere login). */
+    /** Solo ADMINISTRADOR (lo exige ConfiguracionSeguridad). Las recetas con fotos se crean desde el panel. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Receta crear(@Valid @RequestBody SolicitudCrearReceta s, Authentication autenticacion) {
@@ -42,10 +41,18 @@ public class ControladorReceta {
 
     /** Búsqueda por nombre, insensible a mayúsculas, paginada. texto puede ser parcial ("past" encuentra "Pasta cremosa"). */
     @GetMapping("/buscar")
-    public Page<Receta> buscar(@RequestParam String texto,
-                                @RequestParam(defaultValue = "0") int pagina,
-                                @RequestParam(defaultValue = "20") int tamano) {
-        return recetas.findByNombreContainingIgnoreCase(texto, PageRequest.of(pagina, tamano));
+    public Page<TarjetaReceta> buscar(@RequestParam String texto,
+                                      @RequestParam(defaultValue = "0") int pagina,
+                                      @RequestParam(defaultValue = "20") int tamano) {
+        return servicio.buscar(texto, pagina, tamano);
+    }
+
+    /** Recetas que tienen una etiqueta (Postres, Saludables...). */
+    @GetMapping("/por-etiqueta/{etiquetaId}")
+    public Page<TarjetaReceta> porEtiqueta(@PathVariable Long etiquetaId,
+                                           @RequestParam(defaultValue = "0") int pagina,
+                                           @RequestParam(defaultValue = "20") int tamano) {
+        return servicio.porEtiqueta(etiquetaId, pagina, tamano);
     }
 
     @GetMapping("/{id}")
@@ -54,8 +61,8 @@ public class ControladorReceta {
     }
 
     @GetMapping("/favoritos")
-    public List<Receta> favoritos(Authentication autenticacion) {
-        return favoritos.buscarRecetasPorCorreo(autenticacion.getName());
+    public List<TarjetaReceta> favoritos(Authentication autenticacion) {
+        return servicio.tarjetas(favoritos.buscarRecetasPorCorreo(autenticacion.getName()));
     }
 
     @PostMapping("/{id}/favorito")

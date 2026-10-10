@@ -19,12 +19,14 @@ public class ServicioContenidoAdmin {
 
     private final JdbcTemplate jdbc;
     private final ServicioAuditoria auditoria;
+    private final ServicioCloudinary cloudinary;
     private final String zona;
 
-    public ServicioContenidoAdmin(JdbcTemplate jdbc, ServicioAuditoria auditoria,
+    public ServicioContenidoAdmin(JdbcTemplate jdbc, ServicioAuditoria auditoria, ServicioCloudinary cloudinary,
                                   @Value("${app.zona-horaria:America/Lima}") String zona) {
         this.jdbc = jdbc;
         this.auditoria = auditoria;
+        this.cloudinary = cloudinary;
         this.zona = zona;
     }
 
@@ -79,10 +81,13 @@ public class ServicioContenidoAdmin {
     public void eliminarReceta(Long id, String admin) {
         List<String> n = jdbc.queryForList("SELECT nombre FROM recetas WHERE id = ?", String.class, id);
         if (n.isEmpty()) throw new IllegalArgumentException("Receta no encontrada");
+        List<String> fotos = jdbc.queryForList("SELECT identificador_publico FROM imagenes WHERE receta_id = ?", String.class, id);
         for (String tabla : TABLAS_DE_RECETA) {
             jdbc.update("DELETE FROM " + tabla + " WHERE receta_id = ?", id);
         }
         jdbc.update("DELETE FROM recetas WHERE id = ?", id);
+        // Las fotos también se borran de Cloudinary para no dejar archivos sueltos (si falla, no se detiene el borrado).
+        for (String foto : fotos) cloudinary.destruir(foto);
         auditoria.registrar(admin, "RECETA_ELIMINADA", n.get(0) + " (#" + id + ")");
     }
 }
