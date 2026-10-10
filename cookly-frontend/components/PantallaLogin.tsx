@@ -83,9 +83,9 @@ export default function PantallaLogin({
     <View style={s.fondo}>
       {/* Franja rosada y figuras de la marca */}
       <View style={s.franja} />
-      <View style={[s.figura, { width: 90, height: 90, borderRadius: 45, top: 120, left: -34, backgroundColor: colors.accent }]} />
-      <View style={[s.figura, { width: 26, height: 26, borderRadius: 13, top: 96, right: 170, backgroundColor: colors.magic }]} />
-      <View style={[s.figura, { width: 60, height: 60, borderRadius: 30, top: 250, right: 20, backgroundColor: colors.primary, opacity: 0.18 }]} />
+      <View style={[s.figura, { width: 90, height: 90, borderRadius: 45, top: 104, left: -34, backgroundColor: colors.accent }]} />
+      <View style={[s.figura, { width: 26, height: 26, borderRadius: 13, top: 84, right: 170, backgroundColor: colors.magic }]} />
+      <View style={[s.figura, { width: 60, height: 60, borderRadius: 30, top: 205, right: 20, backgroundColor: colors.primary, opacity: 0.18 }]} />
 
       <Animated.Image
         source={{ uri: URL_PLATO }}
@@ -108,7 +108,7 @@ export default function PantallaLogin({
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          contentContainerStyle={{ paddingTop: 290, flexGrow: 1 }}
+          contentContainerStyle={{ paddingTop: 248, flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -246,13 +246,13 @@ const s = StyleSheet.create({
   franja: { position: 'absolute', top: 0, left: 0, right: 0, height: 360, backgroundColor: colors.primaryLight },
   figura: { position: 'absolute' },
   plato: {
-    position: 'absolute', width: 210, height: 210, borderRadius: 105, right: -34, top: 66,
+    position: 'absolute', width: 190, height: 190, borderRadius: 95, right: -30, top: 52,
     borderWidth: 6, borderColor: colors.background, backgroundColor: colors.primaryLight,
     shadowColor: colors.text, shadowOpacity: 0.2, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 10,
   },
-  logo: { position: 'absolute', top: 56, left: 24 },
+  logo: { position: 'absolute', top: 50, left: 24 },
   titular: {
-    position: 'absolute', top: 168, left: 24, width: 170,
+    position: 'absolute', top: 142, left: 24, width: 170,
     fontFamily: fonts.display, fontSize: 28, lineHeight: 31, letterSpacing: -0.5, color: colors.text,
   },
   tarjeta: {
