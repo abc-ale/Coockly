@@ -1,9 +1,33 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { api } from '../lib/api';
+import { Presionable } from './Animaciones';
+import { seleccion } from '../lib/vibracion';
 import { colors } from '../constants/theme';
 
 type Etiqueta = { id: number; nombre: string };
+
+// Icono según el nombre de la categoría (si no se reconoce, un cubierto).
+const ICONOS: [RegExp, keyof typeof Ionicons.glyphMap][] = [
+  [/postre|dulce|helado|torta|pastel/i, 'ice-cream-outline'],
+  [/saludable|light|ensalada|vegetar|vegan|fit/i, 'leaf-outline'],
+  [/r[aá]pid|snack|hamburg|antojo/i, 'fast-food-outline'],
+  [/pizza|pasta|italian/i, 'pizza-outline'],
+  [/pescado|marisco|mar|ceviche/i, 'fish-outline'],
+  [/desayuno|ma[ñn]ana/i, 'sunny-outline'],
+  [/cena|noche/i, 'moon-outline'],
+  [/sopa|caldo|crema|sancocho/i, 'water-outline'],
+  [/parrilla|brasa|asado|horno|frito/i, 'flame-outline'],
+  [/bebida|jugo|cóctel|coctel|trago/i, 'wine-outline'],
+  [/caf[eé]|t[eé]|infusi/i, 'cafe-outline'],
+  [/huevo/i, 'egg-outline'],
+  [/fruta|nutri/i, 'nutrition-outline'],
+];
+
+function iconoDe(nombre: string): keyof typeof Ionicons.glyphMap {
+  return ICONOS.find(([re]) => re.test(nombre))?.[1] ?? 'restaurant-outline';
+}
 
 type Props = {
   seleccionada: number | null;
@@ -30,14 +54,19 @@ export default function FiltroEtiquetas({ seleccionada, onCambiar }: Props) {
 
   if (etiquetas.length === 0) return null;
 
-  const chip = (texto: string, activo: boolean, alPulsar: () => void, clave: string) => (
-    <Pressable
+  const chip = (texto: string, icono: keyof typeof Ionicons.glyphMap, activo: boolean, alPulsar: () => void, clave: string) => (
+    <Presionable
       key={clave}
-      onPress={alPulsar}
+      escalaAlPresionar={0.9}
+      onPress={() => {
+        seleccion();
+        alPulsar();
+      }}
       style={[styles.chip, activo && styles.chipActivo]}
     >
+      <Ionicons name={icono} size={16} color={activo ? '#fff' : colors.primaryDark} />
       <Text style={[styles.texto, activo && styles.textoActivo]}>{texto}</Text>
-    </Pressable>
+    </Presionable>
   );
 
   return (
@@ -46,9 +75,9 @@ export default function FiltroEtiquetas({ seleccionada, onCambiar }: Props) {
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.fila}
     >
-      {chip('Todas', seleccionada === null, () => onCambiar(null), 'todas')}
+      {chip('Todas', 'grid-outline', seleccionada === null, () => onCambiar(null), 'todas')}
       {etiquetas.map((e) =>
-        chip(e.nombre, seleccionada === e.id, () => onCambiar(seleccionada === e.id ? null : e.id), String(e.id))
+        chip(e.nombre, iconoDe(e.nombre), seleccionada === e.id, () => onCambiar(seleccionada === e.id ? null : e.id), String(e.id))
       )}
     </ScrollView>
   );
@@ -58,9 +87,12 @@ const styles = StyleSheet.create({
   // paddingHorizontal: separa 'Todas' del borde del teléfono.
   fila: { gap: 8, paddingVertical: 8, paddingHorizontal: 16 },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: colors.primaryLight,
     borderRadius: 999,
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: 14,
   },
   chipActivo: { backgroundColor: colors.primary },

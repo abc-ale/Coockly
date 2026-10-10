@@ -7,6 +7,7 @@ import Button from '../../components/Button';
 import { colors, radius, spacing, typography, shadow } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 import { mostrarAlerta } from '../../components/Dialogo';
+import { Aparecer, Rebote, Presionable } from '../../components/Animaciones';
 
 export default function ProfileScreen() {
   const { usuario, logout } = useAuth();
@@ -27,40 +28,56 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.avatar}>
-        <Ionicons name="person" size={36} color={colors.white} />
-      </View>
+      <Rebote>
+        <View style={styles.avatar}>
+          <Ionicons name="person" size={36} color={colors.white} />
+        </View>
+      </Rebote>
 
-      <Text style={styles.name}>{usuario?.nombre ?? 'Usuario'}</Text>
-      <Text style={styles.email}>{usuario?.correo}</Text>
-      <View style={styles.roleChip}>
-        <Text style={styles.roleText}>{usuario?.rol}</Text>
-      </View>
+      <Aparecer delay={120}>
+        <Text style={styles.name}>{usuario?.nombre ?? 'Usuario'}</Text>
+      </Aparecer>
+      <Aparecer delay={200}>
+        <Text style={styles.email}>{usuario?.correo}</Text>
+      </Aparecer>
+      <Aparecer delay={260}>
+        <View style={styles.roleChip}>
+          <Text style={styles.roleText}>{usuario?.rol}</Text>
+        </View>
+      </Aparecer>
 
       <View style={styles.seccionOpciones}>
-        <Pressable style={styles.opcionFila} onPress={() => router.push('/menu-express')}>
+        <Aparecer delay={320}>
+          <Presionable escalaAlPresionar={0.97} style={styles.opcionFila} onPress={() => router.push('/menu-express')}>
           <Ionicons name="flash-outline" size={20} color={colors.primary} />
           <Text style={styles.opcionTexto}>Menú express</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-        </Pressable>
+        </Presionable>
+        </Aparecer>
 
-        <Pressable style={styles.opcionFila} onPress={() => router.push('/menu-semanal')}>
+        <Aparecer delay={400}>
+          <Presionable escalaAlPresionar={0.97} style={styles.opcionFila} onPress={() => router.push('/menu-semanal')}>
           <Ionicons name="calendar-outline" size={20} color={colors.primary} />
           <Text style={styles.opcionTexto}>Menú semanal</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-        </Pressable>
+        </Presionable>
+        </Aparecer>
 
-        <Pressable style={styles.opcionFila} onPress={() => router.push('/historial')}>
+        <Aparecer delay={480}>
+          <Presionable escalaAlPresionar={0.97} style={styles.opcionFila} onPress={() => router.push('/historial')}>
           <Ionicons name="time-outline" size={20} color={colors.primary} />
           <Text style={styles.opcionTexto}>Historial de recetas</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-        </Pressable>
+        </Presionable>
+        </Aparecer>
 
-        <Pressable style={styles.opcionFila} onPress={() => router.push('/cambiar-contrasena')}>
+        <Aparecer delay={560}>
+          <Presionable escalaAlPresionar={0.97} style={styles.opcionFila} onPress={() => router.push('/cambiar-contrasena')}>
           <Ionicons name="lock-closed-outline" size={20} color={colors.primary} />
           <Text style={styles.opcionTexto}>Cambiar contraseña</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-        </Pressable>
+        </Presionable>
+        </Aparecer>
       </View>
 
       <View style={{ marginTop: spacing.lg, width: '100%' }}>

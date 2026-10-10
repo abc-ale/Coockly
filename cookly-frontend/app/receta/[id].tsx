@@ -1,9 +1,14 @@
 // app/receta/[id].tsx
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, Image, ScrollView, StyleSheet, Pressable, TextInput,
   ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { Aparecer, Presionable, Pulso } from '../../components/Animaciones';
+import Degradado from '../../components/Degradado';
+import { mostrarAviso } from '../../components/Aviso';
+import { toque } from '../../lib/vibracion';
+import { leerProgreso } from '../../lib/progresoCocina';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import { colors, radius, spacing, typography, shadow } from '../../constants/theme';
@@ -13,6 +18,8 @@ import Stars from '../../components/Stars';
 import Button from '../../components/Button';
 import EtiquetasReceta from '../../components/EtiquetasReceta';
 import CocinaGuiada from '../../components/CocinaGuiada';
+import Porciones from '../../components/Porciones';
+import { Modo, PORCIONES_BASE, textoIngrediente } from '../../lib/cantidades';
 
 
 type Ingrediente = {
@@ -48,7 +55,7 @@ type Resena = {
 };
 
 export default function RecetaDetalleScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, continuar } = useLocalSearchParams<{ id: string; continuar?: string }>();
   const { usuario } = useAuth();
 
   const [receta, setReceta] = useState<RecetaDetalle | null>(null);
@@ -64,6 +71,10 @@ export default function RecetaDetalleScreen() {
   const [enviandoComentario, setEnviandoComentario] = useState(false);
   const [enviandoResena, setEnviandoResena] = useState(false);
   const [cocinando, setCocinando] = useState(false);
+  const [personas, setPersonas] = useState(PORCIONES_BASE);
+  const [modo, setModo] = useState<Modo>('original');
+  const [retomar, setRetomar] = useState(false);
+  const [pasoGuardado, setPasoGuardado] = useState<number | null>(null);
 
   const cargarTodo = useCallback(async () => {
     try {
@@ -100,16 +111,32 @@ export default function RecetaDetalleScreen() {
     cargarTodo();
   }, [cargarTodo]);
 
-  async function alternarFavorito() {
-    try {
-      if (esFavorito) {
-        await api.delete(`/recetas/${id}/favorito`);
-      } else {
-        await api.post(`/recetas/${id}/favorito`);
+  // ¿Dejó esta receta a medias en Cocina guiada? Se vuelve a revisar cada vez que se cierra la Cocina guiada.
+  const yaAbiertoPorContinuar = useRef(false);
+  useEffect(() => {
+    leerProgreso().then((p) => {
+      const esta = p && p.recetaId === Number(id);
+      setPasoGuardado(esta ? p!.paso : null);
+      // Si viene de "Continuar cocinando" (Inicio), se abre directo, una sola vez.
+      if (esta && continuar === '1' && !yaAbiertoPorContinuar.current) {
+        yaAbiertoPorContinuar.current = true;
+        setRetomar(true);
+        setCocinando(true);
       }
-      setEsFavorito(!esFavorito);
+    });
+  }, [id, continuar, cocinando]);
+
+  // El corazón cambia al instante; si el servidor falla, vuelve a como estaba.
+  async function alternarFavorito() {
+    const eraFavorito = esFavorito;
+    toque();
+    setEsFavorito(!eraFavorito);
+    try {
+      if (eraFavorito) await api.delete(`/recetas/${id}/favorito`);
+      else await api.post(`/recetas/${id}/favorito`);
     } catch (error: any) {
-      Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudo actualizar el favorito.');
+      setEsFavorito(eraFavorito);
+      Alert.alert('No se pudo actualizar', error?.response?.data?.mensaje || 'No pudimos actualizar tu favorito. Inténtalo de nuevo.');
     }
   }
 
@@ -121,8 +148,9 @@ export default function RecetaDetalleScreen() {
       setNuevoComentario('');
       const { data } = await api.get(`/recetas/${id}/comentarios`);
       setComentarios(data);
+      mostrarAviso('Comentario publicado');
     } catch (error: any) {
-      Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudo publicar el comentario.');
+      Alert.alert('No se pudo publicar', error?.response?.data?.mensaje || 'No pudimos publicar tu comentario. Inténtalo de nuevo.');
     } finally {
       setEnviandoComentario(false);
     }
@@ -151,9 +179,9 @@ export default function RecetaDetalleScreen() {
       const { data } = await api.get(`/recetas/${id}/resenas`);
       setResenas(data.resenas ?? []);
       setPromedio(data.promedio ?? 0);
-      Alert.alert('¡Gracias!', 'Tu reseña se guardó.');
+      mostrarAviso('¡Gracias! Tu reseña se guardó');
     } catch (error: any) {
-      Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudo guardar tu reseña.');
+      Alert.alert('No se pudo guardar', error?.response?.data?.mensaje || 'No pudimos guardar tu reseña. Inténtalo de nuevo.');
     } finally {
       setEnviandoResena(false);
     }
@@ -212,27 +240,49 @@ export default function RecetaDetalleScreen() {
           {receta.descripcion ? <Text style={styles.descripcion}>{receta.descripcion}</Text> : null}
 
           {receta.pasos.length > 0 && (
-            <Pressable style={styles.botonCocinaGuiada} onPress={() => setCocinando(true)}>
-              <Ionicons name="timer-outline" size={22} color={colors.white} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cocinaGuiadaTitulo}>Cocina guiada</Text>
-                <Text style={styles.cocinaGuiadaSub}>Paso a paso con cronómetro</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.white} />
-            </Pressable>
+            <Pulso intensidad={1.02}>
+            <Presionable
+              escalaAlPresionar={0.97}
+              style={styles.cocinaGuiadaSombra}
+              onPress={() => {
+                setRetomar(pasoGuardado !== null);
+                setCocinando(true);
+              }}
+            >
+              <Degradado colores={[colors.primary, '#FF7A9E']} style={styles.botonCocinaGuiada}>
+                <Ionicons name="timer-outline" size={26} color={colors.white} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cocinaGuiadaTitulo}>
+                    {pasoGuardado !== null ? 'Continuar cocinando' : 'Empezar a cocinar'}
+                  </Text>
+                  <Text style={styles.cocinaGuiadaSub}>
+                    {pasoGuardado !== null
+                      ? `Paso ${pasoGuardado + 1} de ${receta.pasos.length}`
+                      : `${receta.pasos.length} pasos${receta.minutosPreparacion ? ` · ${receta.minutosPreparacion} min` : ''} · con cronómetro`}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.white} />
+              </Degradado>
+            </Presionable>
+            </Pulso>
           )}
 
           <Text style={styles.seccionTitulo}>Ingredientes</Text>
+          {receta.detallesIngredientes.length > 0 && (
+            <Porciones personas={personas} modo={modo} onPersonas={setPersonas} onModo={setModo} />
+          )}
           {receta.detallesIngredientes.length === 0 ? (
             <Text style={styles.vacioTexto}>Sin ingredientes registrados.</Text>
           ) : (
             receta.detallesIngredientes.map((item, idx) => (
-              <View key={idx} style={styles.ingredienteRow}>
-                <View style={styles.puntoIngrediente} />
-                <Text style={styles.ingredienteTexto}>
-                  {item.cantidad} {item.unidad} de {item.ingrediente.nombre}
-                </Text>
-              </View>
+              <Aparecer key={idx} delay={Math.min(idx, 10) * 60} distancia={12}>
+                <View style={styles.ingredienteRow}>
+                  <View style={styles.puntoIngrediente} />
+                  <Text style={styles.ingredienteTexto}>
+                    {textoIngrediente(item.cantidad, item.unidad, item.ingrediente.nombre, personas, modo)}
+                  </Text>
+                </View>
+              </Aparecer>
             ))
           )}
 
@@ -319,6 +369,8 @@ export default function RecetaDetalleScreen() {
         onClose={() => setCocinando(false)}
         nombre={receta.nombre}
         pasos={receta.pasos}
+        recetaId={Number(id)}
+        retomar={retomar}
       />
     </KeyboardAvoidingView>
   );
@@ -345,10 +397,10 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.sm, gap: 4 },
   metaTexto: { ...typography.bodySmall, color: colors.textMuted },
   descripcion: { ...typography.body, color: colors.text, marginTop: spacing.sm },
+  cocinaGuiadaSombra: { marginTop: spacing.md, borderRadius: radius.lg, ...shadow.card },
   botonCocinaGuiada: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    backgroundColor: colors.primary, borderRadius: radius.lg,
-    paddingVertical: 14, paddingHorizontal: spacing.md, marginTop: spacing.md, ...shadow.card,
+    borderRadius: radius.lg, paddingVertical: 16, paddingHorizontal: spacing.md,
   },
   cocinaGuiadaTitulo: { ...typography.button, color: colors.white, fontSize: 16 },
   cocinaGuiadaSub: { ...typography.bodySmall, color: colors.onPrimary },

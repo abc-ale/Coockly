@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Animated, BackHandler, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography } from '../constants/theme';
+import { limpiarMensaje } from '../lib/errores';
 
 type BotonAlerta = {
   text?: string;
@@ -25,6 +26,8 @@ let manejador: Manejador | null = null;
 
 /** Úsala en vez de Alert.alert: muestra el diálogo de Cookly (o el nativo si el provider aún no montó). */
 export function mostrarAlerta(titulo: string, mensaje?: string, botones?: BotonAlerta[]) {
+  // Nunca se le muestra al usuario un texto técnico (excepciones de Java, errores de red...).
+  mensaje = limpiarMensaje(mensaje);
   console.log('[Dialogo] mostrarAlerta ->', titulo, manejador ? '(diálogo Cookly)' : '(nativo)');
   if (manejador) manejador(titulo, mensaje, botones);
   else alertaOriginal.call(Alert, titulo, mensaje, botones as any);

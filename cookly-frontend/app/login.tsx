@@ -54,6 +54,20 @@ export default function LoginScreen() {
   const { token, login, loginConGoogle, loginConFacebook } = useAuth();
   const { width } = useWindowDimensions();
   const scrollX = useRef(new Animated.Value(0)).current;
+  const flotacion = useRef(new Animated.Value(0)).current;
+  const flotar = flotacion.interpolate({ inputRange: [0, 1], outputRange: [0, -10] });
+
+  // La ilustración sube y baja suavemente.
+  useEffect(() => {
+    const bucle = Animated.loop(
+      Animated.sequence([
+        Animated.timing(flotacion, { toValue: 1, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(flotacion, { toValue: 0, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ])
+    );
+    bucle.start();
+    return () => bucle.stop();
+  }, [flotacion]);
 
   const [cargandoEmail, setCargandoEmail] = useState(false);
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
@@ -153,13 +167,18 @@ export default function LoginScreen() {
         <View style={{ width, flex: 1 }}>
           <FondoBlobs variante="bienvenida" />
           <View style={s.centro}>
-            <Logo size={130} variante="rosa" conTexto colorTexto={colors.primary} />
+            <Logo size={76} variante="rosa" conTexto colorTexto={colors.primary} />
             <Text style={s.bien}>¡Bienvenido a</Text>
             <Text style={s.bienRosa}>Cookly!</Text>
             <Text style={s.slogan}>Calculamos por ti.{'\n'}Tú solo preocúpate de cocinar.</Text>
-            <Image
+            <Animated.Image
               source={require('../assets/images/ilustracion-olla.png')}
-              style={{ width: width * 0.8, height: width * 0.8 * 0.89, marginTop: 14 }}
+              style={{
+                width: width * 0.7,
+                height: width * 0.7 * (700 / 780),
+                marginTop: 26,
+                transform: [{ translateY: flotar }],
+              }}
               resizeMode="contain"
             />
           </View>
@@ -191,8 +210,8 @@ export default function LoginScreen() {
 }
 
 const s = StyleSheet.create({
-  centro: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 70, paddingHorizontal: 30 },
-  bien: { fontFamily: fonts.display, fontSize: 32, lineHeight: 38, color: colors.text, marginTop: 20, textAlign: 'center' },
+  centro: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 90, paddingHorizontal: 30 },
+  bien: { fontFamily: fonts.display, fontSize: 32, lineHeight: 38, color: colors.text, marginTop: 26, textAlign: 'center' },
   bienRosa: { fontFamily: fonts.displayBold, fontSize: 38, lineHeight: 44, color: colors.primary, textAlign: 'center' },
   slogan: { fontFamily: fonts.body, fontSize: 16, lineHeight: 23, textAlign: 'center', color: colors.textMuted, marginTop: 8 },
   desliza: {

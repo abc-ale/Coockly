@@ -1,14 +1,17 @@
 // components/CocinaGuiada.tsx
 // Modo "Cocina guiada": un paso a la vez, con cronómetro para los pasos
 // que llevan tiempo (hervir, sancochar, hornear, reposar...).
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Modal, View, Text, Pressable, ScrollView, StyleSheet, Vibration, Alert,
+  Modal, View, Text, Pressable, ScrollView, StyleSheet, Vibration, Alert, Animated, Easing, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import { colors, fonts, radius, spacing, typography, shadow } from '../constants/theme';
+import { exito, seleccion } from '../lib/vibracion';
+import { guardarProgreso, borrarProgreso, leerProgreso } from '../lib/progresoCocina';
+import { mostrarAviso } from './Aviso';
 
 export type PasoGuia = { id: number; orden: number; instruccion: string };
 
@@ -17,6 +20,10 @@ type Props = {
   onClose: () => void;
   nombre: string;
   pasos: PasoGuia[];
+  /** Para recordar en qué paso se quedó el usuario. */
+  recetaId?: number;
+  /** true: abre en el último paso guardado en vez de en el primero. */
+  retomar?: boolean;
 };
 
 type Cronometro = {
@@ -74,12 +81,79 @@ function formato(segundos: number): string {
 
 /* ---------- Componente ---------- */
 
-export default function CocinaGuiada({ visible, onClose, nombre, pasos }: Props) {
+/* ---------- Celebración al terminar la receta ---------- */
+const CONFETI: { icono: keyof typeof Ionicons.glyphMap; color: string; x: number; retraso: number }[] = [
+  { icono: 'heart', color: '#FF4D80', x: 0.1, retraso: 0 },
+  { icono: 'leaf', color: '#6FBF73', x: 0.22, retraso: 220 },
+  { icono: 'heart', color: '#FF8DB2', x: 0.34, retraso: 90 },
+  { icono: 'star', color: '#FFD866', x: 0.46, retraso: 330 },
+  { icono: 'leaf', color: '#BEE3A5', x: 0.58, retraso: 140 },
+  { icono: 'heart', color: '#FF4D80', x: 0.7, retraso: 280 },
+  { icono: 'star', color: '#FFD866', x: 0.82, retraso: 60 },
+  { icono: 'leaf', color: '#6FBF73', x: 0.92, retraso: 200 },
+];
+
+function PiezaConfeti({ icono, color, x, retraso, alto, ancho }: (typeof CONFETI)[number] & { alto: number; ancho: number }) {
+  const caida = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(caida, { toValue: 1, duration: 1800, delay: retraso, easing: Easing.in(Easing.quad), useNativeDriver: true }).start();
+  }, [caida, retraso]);
+  return (
+    <Animated.View
+      style={{
+        position: 'absolute',
+        top: -30,
+        left: ancho * x - 12,
+        opacity: caida.interpolate({ inputRange: [0, 0.1, 0.85, 1], outputRange: [0, 1, 1, 0] }),
+        transform: [
+          { translateY: caida.interpolate({ inputRange: [0, 1], outputRange: [0, alto] }) },
+          { rotate: caida.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '300deg'] }) },
+        ],
+      }}
+    >
+      <Ionicons name={icono} size={26} color={color} />
+    </Animated.View>
+  );
+}
+
+function Celebracion() {
+  const { width, height } = useWindowDimensions();
+  const escala = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.spring(escala, { toValue: 1, friction: 5, tension: 90, useNativeDriver: true }).start();
+  }, [escala]);
+  return (
+    <View style={celebracionEstilos.fondo} pointerEvents="none">
+      {CONFETI.map((c, i) => (
+        <PiezaConfeti key={i} {...c} alto={height} ancho={width} />
+      ))}
+      <Animated.View style={[celebracionEstilos.circulo, { transform: [{ scale: escala }] }]}>
+        <Ionicons name="checkmark" size={64} color="#fff" />
+      </Animated.View>
+      <Text style={celebracionEstilos.titulo}>¡Listo!</Text>
+      <Text style={celebracionEstilos.texto}>Buen provecho</Text>
+    </View>
+  );
+}
+
+const celebracionEstilos = StyleSheet.create({
+  fondo: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(255,248,246,0.96)', alignItems: 'center', justifyContent: 'center' },
+  circulo: { width: 120, height: 120, borderRadius: 60, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  titulo: { fontFamily: fonts.displayBold, fontSize: 34, color: colors.primary, marginTop: spacing.md },
+  texto: { fontFamily: fonts.body, fontSize: 17, color: colors.textMuted, marginTop: 4 },
+});
+
+export default function CocinaGuiada({ visible, onClose, nombre, pasos, recetaId, retomar }: Props) {
   const lista = useMemo(() => [...pasos].sort((a, b) => a.orden - b.orden), [pasos]);
   const [indice, setIndice] = useState(0);
   const [crono, setCrono] = useState<Record<number, Cronometro>>({});
   const [ahora, setAhora] = useState(Date.now());
   const [leyendo, setLeyendo] = useState(false);
+  const [celebrando, setCelebrando] = useState(false);
+  const deslizar = useRef(new Animated.Value(1)).current;
+  const direccion = useRef(1);
+  // Evita sobrescribir el paso guardado antes de haberlo leído.
+  const puedeGuardar = useRef(true);
 
   const hayCorriendo = Object.values(crono).some((c) => c.estado === 'corriendo');
 
@@ -105,6 +179,7 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos }: Props)
       return sig;
     });
     Vibration.vibrate([0, 600, 300, 600, 300, 600]);
+    exito();
     const ordenes = terminados
       .map(([k]) => lista.find((p) => p.id === Number(k))?.orden)
       .filter(Boolean)
@@ -112,16 +187,38 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos }: Props)
     Alert.alert('¡Tiempo cumplido!', `Terminó el cronómetro del paso ${ordenes}.`);
   }, [ahora, crono, lista]);
 
-  // Al abrir, vuelve al primer paso
+  // Al abrir: primer paso, o el último guardado si el usuario viene a "Continuar".
   useEffect(() => {
-    if (visible) setIndice(0);
-    else {
+    if (visible) {
+      setIndice(0);
+      puedeGuardar.current = !(retomar && recetaId !== undefined);
+      if (!puedeGuardar.current) {
+        leerProgreso().then((p) => {
+          if (p && p.recetaId === recetaId) setIndice(Math.min(p.paso, Math.max(lista.length - 1, 0)));
+          puedeGuardar.current = true;
+        });
+      }
+    } else {
       Speech.stop();
       setLeyendo(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
+  // Guarda el paso actual para poder "Continuar cocinando" más tarde.
+  useEffect(() => {
+    if (visible && puedeGuardar.current && recetaId !== undefined && lista.length > 0) {
+      guardarProgreso({ recetaId, nombre, paso: indice, total: lista.length });
+    }
+  }, [visible, indice, recetaId, nombre, lista.length]);
+
   if (lista.length === 0) return null;
+
+  // Cada paso entra deslizando desde el lado al que vas (adelante o atrás).
+  useEffect(() => {
+    deslizar.setValue(0);
+    Animated.timing(deslizar, { toValue: 1, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, [indice, deslizar]);
 
   const paso = lista[indice];
   const esUltimo = indice === lista.length - 1;
@@ -168,9 +265,21 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos }: Props)
     });
   }
 
+  function terminar() {
+    borrarProgreso();
+    exito();
+    setCelebrando(true);
+    setTimeout(() => {
+      setCelebrando(false);
+      cerrar();
+    }, 2200);
+  }
+
   function ir(nuevo: number) {
+    seleccion();
     Speech.stop();
     setLeyendo(false);
+    direccion.current = nuevo >= indice ? 1 : -1;
     setIndice(Math.min(Math.max(nuevo, 0), lista.length - 1));
   }
 
@@ -241,6 +350,13 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos }: Props)
           </ScrollView>
         )}
 
+        <Animated.View
+          style={{
+            flex: 1,
+            opacity: deslizar,
+            transform: [{ translateX: deslizar.interpolate({ inputRange: [0, 1], outputRange: [40 * direccion.current, 0] }) }],
+          }}
+        >
         <ScrollView contentContainerStyle={styles.cuerpo}>
           <View style={styles.tarjetaPaso}>
             <View style={styles.numeroGrande}>
@@ -282,6 +398,7 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos }: Props)
             </Pressable>
           ) : null}
         </ScrollView>
+        </Animated.View>
 
         {/* Navegación */}
         <View style={styles.navegacion}>
@@ -295,12 +412,13 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos }: Props)
           </Pressable>
           <Pressable
             style={[styles.navBoton, styles.navSiguiente]}
-            onPress={() => (esUltimo ? cerrar() : ir(indice + 1))}
+            onPress={() => (esUltimo ? terminar() : ir(indice + 1))}
           >
             <Text style={[styles.navTexto, { color: colors.white }]}>{esUltimo ? '¡Terminé!' : 'Siguiente'}</Text>
             <Ionicons name={esUltimo ? 'checkmark' : 'chevron-forward'} size={20} color={colors.white} />
           </Pressable>
         </View>
+        {celebrando && <Celebracion />}
       </SafeAreaView>
     </Modal>
   );

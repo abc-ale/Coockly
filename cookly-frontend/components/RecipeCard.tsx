@@ -1,7 +1,9 @@
-import React from 'react';
-import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, Image, Pressable, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography, shadow } from '../constants/theme';
+import { Aparecer, Presionable } from './Animaciones';
+import { toque } from '../lib/vibracion';
 
 /** Forma de los datos de ejemplo que usa la pantalla Buscar. */
 export type Recipe = {
@@ -32,9 +34,11 @@ type Props = {
   recipe: Recipe | TarjetaReceta;
   onPress?: () => void;
   onToggleFavorite?: () => void;
+  /** Posición en la lista: las tarjetas entran una tras otra. */
+  indice?: number;
 };
 
-function RecipeCard({ recipe, onPress, onToggleFavorite }: Props) {
+function RecipeCard({ recipe, onPress, onToggleFavorite, indice = 0 }: Props) {
   // Acepta las dos formas: la del servidor (nombre, portada…) y la de ejemplo (title, image…).
   const r = recipe as any;
   const titulo: string = r.title ?? r.nombre ?? '';
@@ -46,8 +50,23 @@ function RecipeCard({ recipe, onPress, onToggleFavorite }: Props) {
   const personas: number | undefined = r.servings;
   const kcal: number | undefined = r.kcal;
 
+  // El corazón "late" cada vez que cambia (no al aparecer por primera vez).
+  const escalaCorazon = useRef(new Animated.Value(1)).current;
+  const primeraVez = useRef(true);
+  useEffect(() => {
+    if (primeraVez.current) {
+      primeraVez.current = false;
+      return;
+    }
+    Animated.sequence([
+      Animated.timing(escalaCorazon, { toValue: 1.4, duration: 110, useNativeDriver: true }),
+      Animated.spring(escalaCorazon, { toValue: 1, friction: 4, tension: 160, useNativeDriver: true }),
+    ]).start();
+  }, [r.isFavorite, escalaCorazon]);
+
   return (
-    <Pressable onPress={onPress} style={[styles.card, shadow.card]}>
+    <Aparecer delay={Math.min(indice, 8) * 70} distancia={14} style={styles.envoltura}>
+    <Presionable onPress={onPress} escalaAlPresionar={0.97} style={[styles.card, shadow.card]}>
       <View>
         {imagen ? (
           <Image source={{ uri: imagen }} style={styles.image} resizeMode="cover" />
@@ -64,12 +83,21 @@ function RecipeCard({ recipe, onPress, onToggleFavorite }: Props) {
           </View>
         )}
 
-        <Pressable style={styles.favoriteBadge} onPress={onToggleFavorite} hitSlop={8}>
-          <Ionicons
-            name={r.isFavorite ? 'heart' : 'heart-outline'}
-            size={16}
-            color={r.isFavorite ? colors.primary : colors.textMuted}
-          />
+        <Pressable
+          style={styles.favoriteBadge}
+          onPress={() => {
+            toque();
+            onToggleFavorite?.();
+          }}
+          hitSlop={8}
+        >
+          <Animated.View style={{ transform: [{ scale: escalaCorazon }] }}>
+            <Ionicons
+              name={r.isFavorite ? 'heart' : 'heart-outline'}
+              size={16}
+              color={r.isFavorite ? colors.primary : colors.textMuted}
+            />
+          </Animated.View>
         </Pressable>
       </View>
 
@@ -91,7 +119,8 @@ function RecipeCard({ recipe, onPress, onToggleFavorite }: Props) {
           {kcal ? <Meta icon="flame-outline" text={`${kcal} kcal`} /> : null}
         </View>
       </View>
-    </Pressable>
+    </Presionable>
+    </Aparecer>
   );
 }
 
@@ -107,12 +136,15 @@ function Meta({ icon, text }: { icon: any; text: string }) {
 }
 
 const styles = StyleSheet.create({
+  envoltura: {
+    width: '48%',
+    marginBottom: spacing.md,
+  },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     overflow: 'hidden',
-    width: '48%',
-    marginBottom: spacing.md,
+    width: '100%',
   },
   image: {
     width: '100%',

@@ -10,6 +10,7 @@ import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from '@expo-googl
 import { AuthProvider } from '../context/AuthContext';
 import { despertarServidor } from '../lib/api';
 import { DialogoProvider } from '../components/Dialogo';
+import { AvisoProvider } from '../components/Aviso';
 
 // Mantiene la pantalla de carga visible hasta que las fuentes estén listas.
 SplashScreen.preventAutoHideAsync();
@@ -39,14 +40,16 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <DialogoProvider>
+       <AvisoProvider>
         <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 260, contentStyle: { backgroundColor: '#FFF8F6' } }}>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="login" />
+          <Stack.Screen name="login" options={{ animation: 'fade' }} />
           <Stack.Screen name="register" />
-          <Stack.Screen name="chatbot" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="create-post" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="chatbot" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="create-post" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         </Stack>
+       </AvisoProvider>
       </DialogoProvider>
     </AuthProvider>
   );
