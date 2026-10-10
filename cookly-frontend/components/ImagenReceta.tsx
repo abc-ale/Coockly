@@ -5,7 +5,14 @@ import React, { useRef, useState } from 'react';
 import { Animated, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/theme';
-import { optimizarImagen } from '../lib/imagen';
+
+// Pide a Cloudinary una versión más liviana de la foto (ancho máximo y calidad 80), así carga más rápido.
+// Si la dirección no es de Cloudinary, o ya trae transformaciones, se usa tal cual.
+export function optimizarImagen(url?: string | null, ancho = 600): string | undefined {
+  if (!url) return undefined;
+  if (!url.includes('res.cloudinary.com') || !/\/upload\/v\d+\//.test(url)) return url;
+  return url.replace('/upload/', `/upload/w_${ancho},q_80/`);
+}
 
 type Props = {
   uri?: string | null;
