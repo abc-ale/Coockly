@@ -33,12 +33,25 @@ public class ServicioReceta {
         this.resenas = resenas;
     }
 
+    /** Compara ingredientes sin importar mayúsculas, tildes ni plural simple (Limones = limón). */
+    static String normalizar(String texto) {
+        if (texto == null) return "";
+        String t = java.text.Normalizer.normalize(texto.trim().toLowerCase(), java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "").replaceAll("\\s+", " ");
+        if (t.length() > 4 && t.endsWith("es") && "lnrdz".indexOf(t.charAt(t.length() - 3)) >= 0) return t.substring(0, t.length() - 2);
+        if (t.length() > 3 && t.endsWith("s")) return t.substring(0, t.length() - 1);
+        return t;
+    }
+
     @Transactional(readOnly = true)
     public List<RecomendacionReceta> menuExpress(SolicitudMenuExpress solicitud) {
-        var disponibles = solicitud.ingredientes().stream().map(x -> x.trim().toLowerCase()).collect(Collectors.toSet());
+        var disponibles = solicitud.ingredientes().stream().map(ServicioReceta::normalizar).collect(Collectors.toSet());
         return recetas.findAll().stream().map(r -> {
-            var requeridos = r.getIngredientes().stream().map(i -> i.getNombre().toLowerCase()).collect(Collectors.toSet());
-            var faltantes = requeridos.stream().filter(x -> !disponibles.contains(x)).sorted().toList();
+            // clave normalizada -> nombre original (para mostrar los faltantes tal como están en el catálogo)
+            var requeridos = new java.util.TreeMap<String, String>();
+            r.getIngredientes().forEach(i -> requeridos.putIfAbsent(normalizar(i.getNombre()), i.getNombre()));
+            var faltantes = requeridos.entrySet().stream().filter(e -> !disponibles.contains(e.getKey()))
+                    .map(java.util.Map.Entry::getValue).sorted().toList();
             int porcentaje = requeridos.isEmpty() ? 0 : (int) Math.round(100.0 * (requeridos.size() - faltantes.size()) / requeridos.size());
             Integer minutos = r.getMinutosPreparacion() == null ? null : r.getMinutosPreparacion().intValue();
             return new RecomendacionReceta(r.getId(), r.getNombre(), porcentaje, faltantes, minutos);

@@ -7,22 +7,72 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const INSTRUCCION_SISTEMA =
-  'Eres el asistente de cocina de la app Cookly. Ayudas a los usuarios a decidir qué cocinar, sugieres recetas peruanas cuando sea posible, das consejos sobre sustitución de ingredientes y técnicas de cocina. Responde siempre en español, de forma breve, cálida y práctica (máximo 3-4 líneas). IMPORTANTE: nunca uses abreviaciones de medidas (como "cda", "cdta", "gr", "ml"); escribe siempre las palabras completas ("cucharada", "cucharadita", "gramos", "mililitros"), ya que tus respuestas se leen en voz alta. Usa un tono conversacional y cálido, como si hablaras con un amigo en la cocina.';
+// El asistente ya no solo conversa: además de responder, le dice a la app QUÉ HACER
+// (buscar una receta con lo que hay en la nevera, ajustar porciones, enviar a la lista…).
+// La app ejecuta esa acción con la base de datos de Cookly y arma la tarjeta de la receta.
+const INSTRUCCION_SISTEMA = `Eres "Chef Cookly", el asistente de cocina de la app Cookly. Hablas en español, con un tono cálido y breve, como un amigo en la cocina (máximo 3 líneas). Nunca uses abreviaciones de medidas ("cda", "gr", "ml"): escribe "cucharada", "gramos", "mililitros", porque tus respuestas se leen en voz alta. No uses emojis.
+
+Tu trabajo principal: el usuario te dice qué ingredientes tiene y la app le propone una receta de su base de datos. Tú NO inventes recetas ni cantidades: de eso se encarga la app. Tú entiendes lo que pide y devuelves SIEMPRE un JSON válido, sin texto fuera del JSON, con esta forma exacta:
+
+{
+  "texto": "respuesta corta y cálida para el usuario",
+  "accion": "ninguna" | "buscar_receta" | "otra_receta" | "cambiar_ingrediente" | "porciones" | "enviar_lista",
+  "ingredientes": [],
+  "excluir": [],
+  "porciones": null
+}
+
+Cuándo usar cada acción:
+- "buscar_receta": el usuario dice qué ingredientes tiene o pide una receta con algo. Pon en "ingredientes" lo que tiene (nombres en minúscula y en singular: "pollo", "arroz", "zanahoria", "papa"). Si pide solo una idea general (por ejemplo "algo rápido" o "un postre") y no menciona ingredientes, deja "ingredientes" vacío y usa "ninguna" con una pregunta breve pidiéndole qué tiene.
+- "otra_receta": quiere ver otra opción distinta a la propuesta.
+- "cambiar_ingrediente": no tiene o no quiere un ingrediente, o quiere reemplazarlo. Pon en "excluir" lo que NO usará y en "ingredientes" lo que tiene en su lugar (si lo dijo).
+- "porciones": quiere la receta para otro número de personas. Pon el número en "porciones".
+- "enviar_lista": quiere mandar los ingredientes de la receta a su lista de compras.
+- "ninguna": cualquier otra cosa (saludos, dudas de cocina, consejos, sustituciones). Ahí "texto" es tu respuesta completa.
+
+Para las acciones distintas de "ninguna", "texto" es solo una frase corta de acompañamiento; la app añadirá el nombre de la receta y los detalles. No menciones nombres de recetas concretas en "texto".`;
+
+function extraerJson(crudo) {
+  if (!crudo) return null;
+  try {
+    return JSON.parse(crudo);
+  } catch (_) {
+    const m = crudo.match(/\{[\s\S]*\}/);
+    if (m) {
+      try {
+        return JSON.parse(m[0]);
+      } catch (_) {}
+    }
+  }
+  return null;
+}
+
+const ACCIONES = ['ninguna', 'buscar_receta', 'otra_receta', 'cambiar_ingrediente', 'porciones', 'enviar_lista'];
+const lista = (x) => (Array.isArray(x) ? x.map((s) => String(s).trim().toLowerCase()).filter(Boolean).slice(0, 15) : []);
 
 app.post('/chat', async (req, res) => {
   try {
-    const { mensajes } = req.body;
+    const { mensajes, contexto } = req.body;
 
     if (!mensajes || !Array.isArray(mensajes)) {
       return res.status(400).json({ error: 'Formato inválido, se espera { mensajes: [...] }' });
     }
 
+    // Lo que la app ya sabe de la conversación (para entender "otra", "para 8", "sin zanahoria"…).
+    let ctx = '';
+    if (contexto && typeof contexto === 'object') {
+      const partes = [];
+      if (contexto.receta) partes.push(`Receta propuesta ahora: ${contexto.receta}`);
+      if (contexto.personas) partes.push(`Cantidades para ${contexto.personas} personas`);
+      if (Array.isArray(contexto.ingredientes) && contexto.ingredientes.length) partes.push(`Ingredientes que dijo tener: ${contexto.ingredientes.join(', ')}`);
+      if (partes.length) ctx = `\n\nContexto de la conversación: ${partes.join('. ')}.`;
+    }
+
     const messages = [
-      { role: 'system', content: INSTRUCCION_SISTEMA },
-      ...mensajes.map((m) => ({
+      { role: 'system', content: INSTRUCCION_SISTEMA + ctx },
+      ...mensajes.slice(-10).map((m) => ({
         role: m.esUsuario ? 'user' : 'assistant',
-        content: m.texto,
+        content: String(m.texto ?? ''),
       })),
     ];
 
@@ -35,20 +85,35 @@ app.post('/chat', async (req, res) => {
       body: JSON.stringify({
         model: 'openai/gpt-oss-120b',
         messages,
-        temperature: 0.7,
-        max_tokens: 300,
+        temperature: 0.5,
+        max_tokens: 700,
+        reasoning_effort: 'low',
+        response_format: { type: 'json_object' },
       }),
     });
 
     const data = await response.json();
-    const texto = data?.choices?.[0]?.message?.content;
+    const crudo = data?.choices?.[0]?.message?.content;
 
-    if (!texto) {
+    if (!crudo) {
       console.log('RESPUESTA SIN TEXTO DE GROQ:', JSON.stringify(data));
       return res.status(502).json({ error: 'Groq no devolvió texto' });
     }
 
-    res.json({ texto: texto.trim() });
+    const json = extraerJson(crudo);
+    if (!json) {
+      // Si no vino JSON, se devuelve como charla normal.
+      return res.json({ texto: crudo.trim(), accion: 'ninguna', ingredientes: [], excluir: [], porciones: null });
+    }
+
+    const porciones = Number(json.porciones);
+    res.json({
+      texto: String(json.texto ?? '').trim(),
+      accion: ACCIONES.includes(json.accion) ? json.accion : 'ninguna',
+      ingredientes: lista(json.ingredientes),
+      excluir: lista(json.excluir),
+      porciones: Number.isFinite(porciones) && porciones > 0 ? Math.round(porciones) : null,
+    });
   } catch (error) {
     console.log('ERROR EN /chat:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
@@ -56,7 +121,7 @@ app.post('/chat', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('Cookly backend funcionando ✅');
+  res.send('Cookly chatbot funcionando');
 });
 
 const PORT = process.env.PORT || 3000;
