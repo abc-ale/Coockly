@@ -6,6 +6,7 @@ import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { api, despertarServidor, registrarNoAutorizado } from '../lib/api';
 import { supabase } from '../lib/supabase';
+import { actualizarPerfilSupabase } from '../lib/perfilSupabase';
 
 type Usuario = {
   nombre: string;
@@ -22,7 +23,8 @@ type AuthContextType = {
   loginConGoogle: () => Promise<void>;
   loginConFacebook: () => Promise<void>;
   logout: () => Promise<void>;
-  actualizarNombre: (nombre: string) => Promise<void>;
+  /** Devuelve false si el nombre se guardó pero la Comunidad no pudo actualizarse. */
+  actualizarNombre: (nombre: string) => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -230,14 +232,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         AsyncStorage.setItem('cookly_user', JSON.stringify(actualizado)).catch(() => {});
         return actualizado;
       });
-      // La comunidad muestra el nombre del perfil de Supabase; si falla no pasa nada grave.
-      try {
-        const { data: sesion } = await supabase.auth.getSession();
-        const id = sesion.session?.user.id;
-        if (id) await supabase.from('profiles').update({ nombre_completo: nuevo }).eq('id', id);
-      } catch {
-        /* sin comunidad, el nombre igual quedó guardado en la app */
-      }
+      // La comunidad muestra el nombre del perfil de Supabase.
+      return actualizarPerfilSupabase({ nombre_completo: nuevo });
     },
     []
   );

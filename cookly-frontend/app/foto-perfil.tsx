@@ -58,9 +58,9 @@ export default function FotoPerfilScreen() {
     if (guardando) return;
     setGuardando(true);
     try {
-      if (usuario?.correo) await guardarAvatar(usuario.correo, avatar);
+      const enComunidad = usuario?.correo ? await guardarAvatar(usuario.correo, avatar) : true;
       exito();
-      mostrarAviso('Foto actualizada', 'exito');
+      mostrarAviso(enComunidad ? 'Foto actualizada' : 'Foto guardada, pero la Comunidad aún no la ve', enComunidad ? 'exito' : 'info');
       router.back();
     } catch {
       mostrarAviso('No se pudo guardar tu foto', 'info');

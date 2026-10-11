@@ -315,6 +315,32 @@ export default function HomeScreen() {
           </EntradaSuave>
         )}
 
+        {/* Ruleta del antojo */}
+        {!filtrando && (
+          <Aparecer delay={170}>
+            <Presionable
+              onPress={() => {
+                toque();
+                router.push('/ruleta');
+              }}
+              escalaAlPresionar={0.98}
+              style={styles.ruletaSombra}
+              accessibilityLabel="Abrir la ruleta del antojo"
+            >
+              <View style={styles.ruleta}>
+                <View style={styles.ruletaIcono}>
+                  <Ionicons name="dice" size={24} color={colors.text} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.ruletaTitulo}>Ruleta del antojo</Text>
+                  <Text style={styles.ruletaSub}>¿No sabes qué cocinar? Gira y que decida Cookly.</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.text} />
+              </View>
+            </Presionable>
+          </Aparecer>
+        )}
+
         {/* Populares */}
         {populares.length > 0 && (
           <Aparecer delay={220}>
@@ -538,6 +564,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
   },
+  ruletaSombra: { marginHorizontal: spacing.md, marginTop: spacing.md, borderRadius: radius.lg, ...shadow.card },
+  ruleta: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: 12, borderRadius: radius.lg, backgroundColor: colors.accent,
+  },
+  ruletaIcono: { width: 46, height: 46, borderRadius: 16, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
+  ruletaTitulo: { fontFamily: fonts.heading, fontSize: 16, color: colors.text },
+  ruletaSub: { fontFamily: fonts.body, fontSize: 12, lineHeight: 16, color: colors.text, opacity: 0.75 },
   continuarSombra: { marginHorizontal: spacing.md, marginTop: spacing.sm, borderRadius: radius.lg, ...shadow.card },
   continuar: {
     flexDirection: 'row',

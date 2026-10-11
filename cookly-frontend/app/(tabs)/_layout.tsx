@@ -7,6 +7,7 @@ import { colors, fonts, spacing } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 import { pintarBarraNavegacion } from '../../lib/barraNavegacion';
 import { escucharToques, reprogramarRecordatorios } from '../../lib/recordatorios';
+import { onboardingCompletado } from '../../lib/onboarding';
 
 // Pantallas que solo ve cada tipo de cuenta. "profile" la ven las dos.
 const RUTAS_USUARIO = ['home', 'search', 'comunity', 'favorites', 'list'];
@@ -44,6 +45,18 @@ export default function TabsLayout() {
       dejarDeEscuchar();
     };
   }, [cargando, token, esAdmin, router]);
+
+  // Primera vez que esta cuenta inicia sesión: términos y alergias antes de entrar a la app.
+  useEffect(() => {
+    if (cargando || !token || esAdmin || !usuario?.correo) return;
+    let activo = true;
+    onboardingCompletado(usuario.correo).then((listo) => {
+      if (activo && !listo) router.replace('/onboarding');
+    });
+    return () => {
+      activo = false;
+    };
+  }, [cargando, token, esAdmin, usuario?.correo, router]);
 
   // Si alguien llega a una pantalla que no le corresponde (por ejemplo, al iniciar sesión), lo lleva a la suya.
   useEffect(() => {

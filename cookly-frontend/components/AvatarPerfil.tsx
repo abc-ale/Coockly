@@ -27,9 +27,9 @@ export default function AvatarPerfil({ avatar, inicial = 'C', tam, radio, borde 
   };
   const interior = tam - borde * 2;
   return (
-    <View style={[st.base, caja, style]}>
+    <View style={[st.base, caja, animal && { justifyContent: 'flex-end' }, style]}>
       {animal ? (
-        <Image source={{ uri: animal.uri }} style={{ width: interior * 0.82, height: interior * 0.82 }} resizeMode="contain" />
+        <Image source={{ uri: animal.uri }} style={{ width: interior * 1.05, height: interior * 1.05, marginBottom: -interior * 0.13 }} resizeMode="contain" />
       ) : (
         <Text style={[st.letra, { fontSize: tam * 0.48, lineHeight: tam * 0.58 }]}>{inicial}</Text>
       )}

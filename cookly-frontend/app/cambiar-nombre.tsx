@@ -38,9 +38,9 @@ export default function CambiarNombreScreen() {
     }
     setGuardando(true);
     try {
-      await actualizarNombre(limpio);
+      const enComunidad = await actualizarNombre(limpio);
       exito();
-      mostrarAviso('Nombre actualizado', 'exito');
+      mostrarAviso(enComunidad ? 'Nombre actualizado' : 'Nombre guardado, pero la Comunidad aún no lo ve', enComunidad ? 'exito' : 'info');
       router.back();
     } catch (e: any) {
       Alert.alert('No se pudo cambiar', e?.response?.data?.mensaje || 'Revisa tu conexión e inténtalo de nuevo.');

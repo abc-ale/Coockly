@@ -3,7 +3,7 @@
 // Se guarda en el celular (por cuenta) y, si se puede, también en el perfil de Supabase (columna "avatar").
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../constants/theme';
-import { supabase } from './supabase';
+import { actualizarPerfilSupabase } from './perfilSupabase';
 
 export type AnimalId = 'per1' | 'per2' | 'per3' | 'per4' | 'per5' | 'per6';
 
@@ -63,17 +63,10 @@ export async function cargarAvatar(correo?: string | null): Promise<Avatar | nul
   }
 }
 
-/** Guarda la foto en el celular y la sube al perfil (si Supabase lo permite). */
-export async function guardarAvatar(correo: string, avatar: Avatar): Promise<void> {
+/** Guarda la foto en el celular y la sube al perfil. Devuelve false si la Comunidad no pudo actualizarse. */
+export async function guardarAvatar(correo: string, avatar: Avatar): Promise<boolean> {
   await AsyncStorage.setItem(clave(correo), JSON.stringify(avatar));
-  // La comunidad podrá mostrarla desde el perfil; si la columna aún no existe, no pasa nada.
-  try {
-    const { data: sesion } = await supabase.auth.getSession();
-    const id = sesion.session?.user.id;
-    if (id) await supabase.from('profiles').update({ avatar: `${avatar.animal}:${avatar.fondo}` }).eq('id', id);
-  } catch {
-    /* sin comunidad, la foto igual queda guardada en el celular */
-  }
+  return actualizarPerfilSupabase({ avatar: `${avatar.animal}:${avatar.fondo}` });
 }
 
 /** Convierte "per1:#FF4D80" (como se guarda en Supabase) en un Avatar. */

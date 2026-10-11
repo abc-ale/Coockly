@@ -31,7 +31,7 @@ const UMBRAL_AGITADO = 1.9; // en "g": reposo ≈ 1
 export default function RuletaScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const tam = Math.min(width - 56, 330);
+  const tam = Math.min(width - 150, 230);
 
   const [vibra, setVibra] = useState<number | null>(null); // null = que decida la ruleta
   const [girando, setGirando] = useState(false);
@@ -154,30 +154,30 @@ export default function RuletaScreen() {
 
   return (
     <View style={st.pantalla}>
+      {/* Cabecera fija: no se mete debajo de la hora al hacer scroll */}
+      <View style={[st.cabecera, { paddingTop: insets.top + 10 }]}>
+        <Presionable onPress={() => router.back()} style={st.volver} accessibilityLabel="Volver">
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
+        </Presionable>
+        <Text style={st.titulo}>Ruleta del antojo</Text>
+      </View>
       <ScrollView
-        contentContainerStyle={{ paddingTop: insets.top + 14, paddingBottom: 110 + insets.bottom }}
+        contentContainerStyle={{ paddingBottom: 110 + insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Cabecera */}
-        <View style={st.cabecera}>
-          <Presionable onPress={() => router.back()} style={st.volver} accessibilityLabel="Volver">
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
-          </Presionable>
-          <Text style={st.titulo}>Ruleta del antojo</Text>
-        </View>
         <Text style={st.subtitulo}>Agita el celular y Cookly decide por ti.</Text>
 
         {/* Rueda */}
         <Aparecer delay={60}>
-          <View style={[st.escena, { height: tam + 36 }]}>
-            <View style={[st.fondoRueda, { width: tam + 24, height: tam + 24, borderRadius: (tam + 24) / 2, top: 28 }]} />
+          <View style={[st.escena, { height: tam + 44 }]}>
+            <View style={[st.fondoRueda, { width: tam + 24, height: tam + 24, borderRadius: (tam + 24) / 2, top: 24 }]} />
             <Animated.Image
               source={{ uri: URL_RUEDA }}
-              style={{ width: tam, height: tam, marginTop: 40, transform: [{ rotate: rotar }] }}
+              style={{ width: tam, height: tam, marginTop: 34, transform: [{ rotate: rotar }] }}
               resizeMode="contain"
             />
             {/* Centro (no gira) */}
-            <View style={[st.centro, { top: 40 + tam / 2 - 34 }]}>
+            <View style={[st.centro, { top: 34 + tam / 2 - 28 }]}>
               <View style={st.centroAnillo}>
                 <Text style={st.centroTexto}>GIRA</Text>
               </View>
@@ -242,30 +242,32 @@ export default function RuletaScreen() {
 
 const st = StyleSheet.create({
   pantalla: { flex: 1, backgroundColor: colors.background },
-  cabecera: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20 },
+  cabecera: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingBottom: 6, backgroundColor: colors.background,
+  },
   volver: {
     width: 44, height: 44, borderRadius: 22, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center',
     shadowColor: colors.text, shadowOpacity: 0.1, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3,
   },
-  titulo: { fontFamily: fonts.display, fontSize: 28, lineHeight: 34, color: colors.text },
-  subtitulo: { fontFamily: fonts.body, fontSize: 15, lineHeight: 21, color: colors.textMuted, paddingHorizontal: 20, marginTop: 8 },
+  titulo: { fontFamily: fonts.display, fontSize: 26, lineHeight: 32, color: colors.text },
+  subtitulo: { fontFamily: fonts.body, fontSize: 15, lineHeight: 21, color: colors.textMuted, paddingHorizontal: 20, marginTop: 2 },
 
   escena: { alignItems: 'center', marginTop: 4 },
   fondoRueda: { position: 'absolute', backgroundColor: colors.primaryLight, opacity: 0.8 },
-  centro: { position: 'absolute', width: 68, height: 68, alignItems: 'center', justifyContent: 'center' },
+  centro: { position: 'absolute', width: 56, height: 56, alignItems: 'center', justifyContent: 'center' },
   centroAnillo: {
-    width: 68, height: 68, borderRadius: 34, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 4, borderColor: colors.text,
+    width: 56, height: 56, borderRadius: 28, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 3, borderColor: colors.text,
     shadowColor: colors.text, shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 6,
   },
-  centroTexto: { fontFamily: fonts.display, fontSize: 16, color: colors.white },
-  puntero: { position: 'absolute', top: 14, alignItems: 'center' },
+  centroTexto: { fontFamily: fonts.display, fontSize: 13, color: colors.white },
+  puntero: { position: 'absolute', top: 4, alignItems: 'center' },
   punteroTriangulo: {
-    width: 0, height: 0, borderLeftWidth: 17, borderRightWidth: 17, borderTopWidth: 44,
+    width: 0, height: 0, borderLeftWidth: 14, borderRightWidth: 14, borderTopWidth: 38,
     borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: colors.primary,
   },
   punteroPunto: {
-    position: 'absolute', top: 8, width: 12, height: 12, borderRadius: 6, backgroundColor: colors.white,
+    position: 'absolute', top: 7, width: 10, height: 10, borderRadius: 5, backgroundColor: colors.white,
     borderWidth: 2, borderColor: colors.text,
   },
 

@@ -15,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Presionable } from '../../components/Animaciones';
+import AvatarPerfil from '../../components/AvatarPerfil';
+import { avatarDesdeTexto } from '../../lib/avatar';
 import { colors, fonts, spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 
@@ -22,7 +24,7 @@ type Comentario = {
   id: string;
   contenido: string;
   parent_comment_id: string | null;
-  profiles: { username: string; nombre_completo: string | null } | null;
+  profiles: { username: string; nombre_completo: string | null; avatar?: string | null } | null;
   likesCount: number;
   yaLeDiLike: boolean;
   respuestas: Comentario[];
@@ -69,13 +71,16 @@ export default function CommentsScreen() {
     const { data: sesion } = await supabase.auth.getSession();
     const userId = sesion.session?.user.id;
 
-    const { data, error: errorCarga } = await supabase
-      .from('comments')
-      .select(
-        '*, profiles!comments_user_id_fkey(username, nombre_completo), comment_likes(user_id)'
-      )
-      .eq('post_id', postId)
-      .order('created_at', { ascending: true });
+    // Si la columna "avatar" aún no existe en Supabase, se vuelve a pedir sin ella.
+    const pedir = (columnasPerfil: string) =>
+      supabase
+        .from('comments')
+        .select(`*, profiles!comments_user_id_fkey(${columnasPerfil}), comment_likes(user_id)`)
+        .eq('post_id', postId)
+        .order('created_at', { ascending: true });
+    let respuesta = await pedir('username, nombre_completo, avatar');
+    if (respuesta.error) respuesta = await pedir('username, nombre_completo');
+    const { data, error: errorCarga } = respuesta;
 
     if (errorCarga) {
       console.log('ERROR AL CARGAR COMENTARIOS:', errorCarga.message);
@@ -190,9 +195,13 @@ export default function CommentsScreen() {
     return (
       <View style={[styles.tarjeta, esRespuesta && styles.tarjetaRespuesta]}>
         <View style={styles.autorFila}>
-          <View style={[styles.avatar, esRespuesta && styles.avatarChico, { backgroundColor: colorDe(item.user_id) }]}>
-            <Text style={[styles.avatarLetra, esRespuesta && { fontSize: 14 }]}>{nombre.charAt(0).toUpperCase()}</Text>
-          </View>
+          {avatarDesdeTexto(item.profiles?.avatar) ? (
+            <AvatarPerfil avatar={avatarDesdeTexto(item.profiles?.avatar)} tam={esRespuesta ? 32 : 38} />
+          ) : (
+            <View style={[styles.avatar, esRespuesta && styles.avatarChico, { backgroundColor: colorDe(item.user_id) }]}>
+              <Text style={[styles.avatarLetra, esRespuesta && { fontSize: 14 }]}>{nombre.charAt(0).toUpperCase()}</Text>
+            </View>
+          )}
           <View style={{ flex: 1 }}>
             <Text style={styles.autorNombre} numberOfLines={1}>{nombre}</Text>
             {item.created_at ? <Text style={styles.hora}>{tiempoRelativo(item.created_at)}</Text> : null}

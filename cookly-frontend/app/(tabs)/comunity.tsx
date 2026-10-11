@@ -17,6 +17,8 @@ import { supabase } from '../../lib/supabase';
 import BotonReportarContenido from '../../components/BotonReportarContenido';
 import BotonChat from '../../components/BotonChat';
 import { Presionable } from '../../components/Animaciones';
+import AvatarPerfil from '../../components/AvatarPerfil';
+import { avatarDesdeTexto } from '../../lib/avatar';
 
 const POR_PAGINA = 10;
 const TAM_POPULARES = 40; // 'Populares' ordena por likes entre las últimas publicaciones
@@ -52,7 +54,7 @@ type Post = {
   imagen_url: string | null;
   created_at: string;
   user_id: string;
-  profiles: { username: string; nombre_completo: string | null } | null;
+  profiles: { username: string; nombre_completo: string | null; avatar?: string | null } | null;
   likesCount: number;
   yaLeDiLike: boolean;
   commentsCount: number;
@@ -72,16 +74,20 @@ async function traerPagina(desde: number, pestana: Pestana): Promise<Post[]> {
     if (!userId) return [];
   }
 
-  let consulta = supabase
-    .from('posts')
-    .select(
-      'id, contenido, imagen_url, created_at, user_id, profiles!posts_user_id_fkey(username, nombre_completo), likes(count), comments(count)'
-    );
-  if (pestana === 'mios') consulta = consulta.eq('user_id', userId as string);
-  const tamano = pestana === 'populares' ? TAM_POPULARES : POR_PAGINA;
-  const { data, error } = await consulta
-    .order('created_at', { ascending: false })
-    .range(desde, desde + tamano - 1);
+  // Si la columna "avatar" aún no existe en Supabase, se vuelve a pedir sin ella (la Comunidad no se rompe).
+  const pedir = async (columnasPerfil: string) => {
+    let consulta = supabase
+      .from('posts')
+      .select(
+        `id, contenido, imagen_url, created_at, user_id, profiles!posts_user_id_fkey(${columnasPerfil}), likes(count), comments(count)`
+      );
+    if (pestana === 'mios') consulta = consulta.eq('user_id', userId as string);
+    const tamano = pestana === 'populares' ? TAM_POPULARES : POR_PAGINA;
+    return consulta.order('created_at', { ascending: false }).range(desde, desde + tamano - 1);
+  };
+  let respuesta = await pedir('username, nombre_completo, avatar');
+  if (respuesta.error) respuesta = await pedir('username, nombre_completo');
+  const { data, error } = respuesta;
 
   if (error) throw error;
   const lista: any[] = data ?? [];
@@ -129,9 +135,13 @@ const PostCard = memo(function PostCard({
   return (
     <View style={styles.postCard}>
       <View style={styles.postHeader}>
-        <View style={[styles.avatar, { backgroundColor: colorDe(item.user_id) }]}>
-          <Text style={styles.avatarLetra}>{nombre.charAt(0).toUpperCase()}</Text>
-        </View>
+        {avatarDesdeTexto(item.profiles?.avatar) ? (
+          <AvatarPerfil avatar={avatarDesdeTexto(item.profiles?.avatar)} tam={40} />
+        ) : (
+          <View style={[styles.avatar, { backgroundColor: colorDe(item.user_id) }]}>
+            <Text style={styles.avatarLetra}>{nombre.charAt(0).toUpperCase()}</Text>
+          </View>
+        )}
         <View style={{ flex: 1 }}>
           <Text style={styles.autorNombre} numberOfLines={1}>{nombre}</Text>
           <Text style={styles.fecha}>{tiempoRelativo(item.created_at)}</Text>
