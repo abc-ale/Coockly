@@ -72,6 +72,7 @@ export default function FiltroEtiquetas({ seleccionada, onCambiar }: Props) {
   return (
     <ScrollView
       horizontal
+      style={{ flexGrow: 0 }}
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.fila}
     >
@@ -85,17 +86,18 @@ export default function FiltroEtiquetas({ seleccionada, onCambiar }: Props) {
 
 const styles = StyleSheet.create({
   // paddingHorizontal: separa 'Todas' del borde del teléfono.
-  fila: { gap: 8, paddingVertical: 8, paddingHorizontal: 16 },
+  fila: { gap: 8, paddingVertical: 10, paddingHorizontal: 16, alignItems: 'center' },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     backgroundColor: colors.primaryLight,
     borderRadius: 999,
-    paddingVertical: 10,
+    height: 44,
     paddingHorizontal: 16,
+    justifyContent: 'center',
   },
   chipActivo: { backgroundColor: colors.primary },
-  texto: { color: colors.text, fontSize: 14, fontFamily: fonts.heading },
+  texto: { color: colors.text, fontSize: 14, lineHeight: 20, fontFamily: fonts.heading, includeFontPadding: false, textAlignVertical: 'center' },
   textoActivo: { color: '#fff' },
 })

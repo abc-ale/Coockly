@@ -18,6 +18,13 @@ import BotonChat from '../../components/BotonChat';
 import { Presionable } from '../../components/Animaciones';
 
 const POR_PAGINA = 10;
+const TAM_POPULARES = 40; // 'Populares' ordena por likes entre las últimas publicaciones
+type Pestana = 'recientes' | 'populares' | 'mios';
+const PESTANAS: { clave: Pestana; etiqueta: string }[] = [
+  { clave: 'recientes', etiqueta: 'Recientes' },
+  { clave: 'populares', etiqueta: 'Populares' },
+  { clave: 'mios', etiqueta: 'Mis posts' },
+];
 const COLORES_AVATAR = [colors.accent, colors.magic, colors.primaryLight];
 
 function tiempoRelativo(iso: string) {
@@ -51,17 +58,22 @@ type Post = {
 };
 
 /** Trae UNA página de posts. Los contadores vienen agregados (count) en vez de listas completas. */
-async function traerPagina(desde: number): Promise<Post[]> {
+async function traerPagina(desde: number, pestana: Pestana): Promise<Post[]> {
   const { data: sesion } = await supabase.auth.getSession();
   const userId = sesion.session?.user.id;
 
-  const { data, error } = await supabase
+  if (pestana === 'mios' && !userId) return [];
+
+  let consulta = supabase
     .from('posts')
     .select(
       '*, profiles!posts_user_id_fkey(username, nombre_completo), likes(count), comments(count)'
-    )
+    );
+  if (pestana === 'mios') consulta = consulta.eq('user_id', userId as string);
+  const tamano = pestana === 'populares' ? TAM_POPULARES : POR_PAGINA;
+  const { data, error } = await consulta
     .order('created_at', { ascending: false })
-    .range(desde, desde + POR_PAGINA - 1);
+    .range(desde, desde + tamano - 1);
 
   if (error) throw error;
   const lista: any[] = data ?? [];
@@ -77,7 +89,7 @@ async function traerPagina(desde: number): Promise<Post[]> {
     propios = new Set((misLikes ?? []).map((l: any) => l.post_id));
   }
 
-  return lista.map((p) => {
+  const posts = lista.map((p) => {
     const { likes, comments, ...resto } = p;
     return {
       ...resto,
@@ -86,6 +98,8 @@ async function traerPagina(desde: number): Promise<Post[]> {
       yaLeDiLike: propios.has(p.id),
     } as Post;
   });
+  if (pestana === 'populares') posts.sort((a, b) => b.likesCount - a.likesCount || (a.created_at < b.created_at ? 1 : -1));
+  return posts;
 }
 
 // Tarjeta memoizada: al dar like solo se vuelve a dibujar ESA tarjeta, no toda la lista.
@@ -98,7 +112,8 @@ const PostCard = memo(function PostCard({
   onLike: (post: Post) => void;
   onComentarios: (id: string) => void;
 }) {
-  const nombre = item.profiles?.nombre_completo || item.profiles?.username || 'Usuario';
+  // El usuario puede traer un sufijo automático (ej. mell_df337297): se quita para que se vea limpio.
+  const nombre = (item.profiles?.nombre_completo || item.profiles?.username || 'Usuario').replace(/_[0-9a-f]{6,}$/i, '');
   return (
     <View style={styles.postCard}>
       <View style={styles.postHeader}>
@@ -119,17 +134,21 @@ const PostCard = memo(function PostCard({
       {item.contenido ? <Text style={styles.contenido}>{item.contenido}</Text> : null}
 
       <View style={styles.accionesRow}>
-        <TouchableOpacity style={styles.accionBoton} onPress={() => onLike(item)} hitSlop={8}>
+        <TouchableOpacity
+          style={[styles.pastilla, item.yaLeDiLike && styles.pastillaLike]}
+          onPress={() => onLike(item)}
+          hitSlop={6}
+        >
           <Ionicons
             name={item.yaLeDiLike ? 'heart' : 'heart-outline'}
-            size={21}
+            size={18}
             color={item.yaLeDiLike ? colors.primary : colors.textMuted}
           />
-          <Text style={styles.accionTexto}>{item.likesCount}</Text>
+          <Text style={[styles.accionTexto, item.yaLeDiLike && { color: colors.primary }]}>{item.likesCount}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.accionBoton} onPress={() => onComentarios(item.id)} hitSlop={8}>
-          <Ionicons name="chatbubble-outline" size={20} color={colors.textMuted} />
+        <TouchableOpacity style={styles.pastilla} onPress={() => onComentarios(item.id)} hitSlop={6}>
+          <Ionicons name="chatbubble-outline" size={17} color={colors.textMuted} />
           <Text style={styles.accionTexto}>{item.commentsCount}</Text>
         </TouchableOpacity>
       </View>
@@ -144,6 +163,8 @@ export default function CommunityScreen() {
   const [cargandoMas, setCargandoMas] = useState(false);
   const [hayMas, setHayMas] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pestana, setPestana] = useState<Pestana>('recientes');
+  const pestanaRef = useRef<Pestana>('recientes');
 
   const ocupado = useRef(false);
   const totalPostsRef = useRef(0);
@@ -152,11 +173,13 @@ export default function CommunityScreen() {
   /** Primera página. Si ya hay posts en pantalla se actualiza en silencio (sin spinner ni saltos). */
   const refrescar = useCallback(async (reemplazar: boolean) => {
     try {
-      const primera = await traerPagina(0);
+      const modo = pestanaRef.current;
+      const primera = await traerPagina(0, modo);
+      if (modo !== pestanaRef.current) return; // el usuario cambió de pestaña mientras cargaba
       setError(null);
-      setHayMas(primera.length === POR_PAGINA);
+      setHayMas(modo !== 'populares' && primera.length === POR_PAGINA);
       setPosts((prev) => {
-        if (reemplazar || prev.length === 0) return primera;
+        if (reemplazar || prev.length === 0 || modo === 'populares') return primera;
         const ids = new Set(primera.map((p) => p.id));
         return [...primera, ...prev.filter((p) => !ids.has(p.id))];
       });
@@ -182,7 +205,9 @@ export default function CommunityScreen() {
     ocupado.current = true;
     setCargandoMas(true);
     try {
-      const siguiente = await traerPagina(totalPostsRef.current);
+      const modo = pestanaRef.current;
+      const siguiente = await traerPagina(totalPostsRef.current, modo);
+      if (modo !== pestanaRef.current) return;
       setHayMas(siguiente.length === POR_PAGINA);
       setPosts((prev) => {
         const ids = new Set(prev.map((p) => p.id));
@@ -226,6 +251,17 @@ export default function CommunityScreen() {
     if (errorLike) aplicar(!darLike);
   }, []);
 
+  const cambiarPestana = useCallback((nueva: Pestana) => {
+    if (nueva === pestanaRef.current) return;
+    pestanaRef.current = nueva;
+    setPestana(nueva);
+    setPosts([]);
+    setError(null);
+    setHayMas(true);
+    setCargando(true);
+    refrescar(true);
+  }, [refrescar]);
+
   const irAComentarios = useCallback((id: string) => router.push(`/comments/${id}`), []);
 
   const irACrearPost = useCallback(async () => {
@@ -250,19 +286,26 @@ export default function CommunityScreen() {
     [alternarLike, irAComentarios]
   );
 
-  if (cargando) {
-    return (
-      <View style={styles.centrado}>
-        <ActivityIndicator color={colors.primary} size="large" />
-      </View>
-    );
-  }
-
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={styles.encabezado}>
         <Text style={styles.kicker}>Cocina junto a otros</Text>
         <Text style={styles.headerTitulo}>Comunidad</Text>
+      </View>
+
+      <View style={styles.pestanas}>
+        {PESTANAS.map(({ clave, etiqueta }) => {
+          const activa = pestana === clave;
+          return (
+            <TouchableOpacity
+              key={clave}
+              style={[styles.pestana, activa && styles.pestanaActiva]}
+              onPress={() => cambiarPestana(clave)}
+            >
+              <Text style={[styles.pestanaTexto, activa && styles.pestanaTextoActivo]}>{etiqueta}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <FlatList
@@ -293,7 +336,9 @@ export default function CommunityScreen() {
         }
         ListEmptyComponent={
           <View style={styles.centrado}>
-            {error ? (
+            {cargando ? (
+              <ActivityIndicator color={colors.primary} size="large" />
+            ) : error ? (
               <>
                 <Text style={styles.vacioTexto}>{error}</Text>
                 <TouchableOpacity style={styles.botonReintentar} onPress={reintentar}>
@@ -302,7 +347,9 @@ export default function CommunityScreen() {
               </>
             ) : (
               <Text style={styles.vacioTexto}>
-                Aún no hay publicaciones. ¡Sé la primera en compartir algo! 🍳
+                {pestana === 'mios'
+                  ? 'Todavía no has publicado nada. Toca + para compartir tu primer plato.'
+                  : 'Aún no hay publicaciones. ¡Sé la primera en compartir algo!'}
               </Text>
             )}
           </View>
@@ -348,12 +395,21 @@ const styles = StyleSheet.create({
   contenido: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22, color: colors.text, marginTop: 12 },
   imagenPost: {
     width: '100%',
-    height: 220,
+    height: 180,
     borderRadius: 22,
     backgroundColor: colors.border,
   },
-  accionesRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, marginTop: 12 },
-  accionBoton: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  accionesRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
+  pastilla: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 14,
+    borderRadius: 999, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border,
+  },
+  pastillaLike: { backgroundColor: '#FFE3EB', borderColor: '#FFE3EB' },
+  pestanas: { flexDirection: 'row', gap: 8, paddingHorizontal: spacing.md, marginBottom: spacing.xs },
+  pestana: { paddingHorizontal: 16, height: 38, borderRadius: 999, backgroundColor: colors.primaryLight, justifyContent: 'center' },
+  pestanaActiva: { backgroundColor: colors.primary },
+  pestanaTexto: { fontFamily: fonts.heading, fontSize: 13, lineHeight: 18, color: colors.text },
+  pestanaTextoActivo: { color: colors.white },
   accionTexto: { fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.textMuted },
   fabContenedor: { position: 'absolute', right: 20, bottom: 96 },
   fab: {

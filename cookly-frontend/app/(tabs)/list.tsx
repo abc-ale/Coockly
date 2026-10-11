@@ -71,6 +71,7 @@ export default function ListaCompraScreen() {
   const [pestana, setPestana] = useState<'recetas' | 'mercado'>('recetas');
   const [nota, setNota] = useState('');
   const [anotando, setAnotando] = useState(false);
+  const [limpiando, setLimpiando] = useState(false);
 
   const cargar = useCallback(async (silencioso = false) => {
     if (!silencioso) setCargando(true);
@@ -134,6 +135,52 @@ export default function ListaCompraScreen() {
     } finally {
       setAnotando(false);
     }
+  }
+
+  // El servidor no tiene "borrar ítem": se borra el bloc y se vuelve a crear solo con lo que se conserva.
+  async function reconstruirBloc(conservar: ElementoLista[]) {
+    if (!bloc || limpiando) return;
+    setLimpiando(true);
+    try {
+      await api.delete(`/listas-compra/${bloc.id}`);
+      if (conservar.length > 0) {
+        const { data: nueva } = await api.post('/listas-compra', { nombre: NOMBRE_BLOC });
+        for (const e of conservar) {
+          const { data: creado } = await api.post(`/listas-compra/${nueva.id}/elementos`, {
+            nombrePersonalizado: e.nombreMostrado,
+            cantidad: e.cantidad,
+            unidad: e.unidad,
+          });
+          if (e.comprado) {
+            await api.put(`/listas-compra/elementos/${creado.id}/comprado`, null, { params: { valor: true } });
+          }
+        }
+      }
+      exito();
+    } catch (error: any) {
+      Alert.alert('No se pudo limpiar', error?.response?.data?.mensaje || 'Inténtalo de nuevo.');
+    } finally {
+      await cargar(true);
+      setLimpiando(false);
+    }
+  }
+
+  function opcionesLimpiar() {
+    const hechos = itemsBloc.filter((e) => e.comprado);
+    const botones: any[] = [];
+    if (hechos.length > 0 && hechos.length < itemsBloc.length) {
+      botones.push({ text: 'Quitar los comprados', onPress: () => reconstruirBloc(itemsBloc.filter((e) => !e.comprado)) });
+    }
+    botones.push({ text: 'Borrar todo', style: 'destructive', onPress: () => reconstruirBloc([]) });
+    botones.push({ text: 'Cancelar', style: 'cancel' });
+    Alert.alert('Limpiar el bloc', '¿Qué quieres hacer?', botones);
+  }
+
+  function quitarItem(item: ElementoLista) {
+    Alert.alert('Quitar de la lista', `¿Quitar "${item.nombreMostrado}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Quitar', style: 'destructive', onPress: () => reconstruirBloc(itemsBloc.filter((e) => e.id !== item.id)) },
+    ]);
   }
 
   function tarjetaReceta(lista: ListaCompra, indice: number) {
@@ -204,10 +251,15 @@ export default function ListaCompraScreen() {
                 {itemsBloc.length === 0 ? 'Anota lo que te falte' : `${itemsBloc.length} ${itemsBloc.length === 1 ? 'anotado' : 'anotados'}`}
               </Text>
             </View>
+            {itemsBloc.length > 0 && (
+              <Pressable style={styles.botonLimpiar} onPress={opcionesLimpiar} disabled={limpiando} hitSlop={8}>
+                {limpiando ? <ActivityIndicator size="small" color={colors.text} /> : <Ionicons name="trash-outline" size={20} color={colors.text} />}
+              </Pressable>
+            )}
           </View>
 
           {itemsBloc.map((item) => (
-            <Pressable key={item.id} style={styles.fila} onPress={() => alternarItem(bloc!.id, item)} hitSlop={4}>
+            <Pressable key={item.id} style={styles.fila} onPress={() => alternarItem(bloc!.id, item)} onLongPress={() => quitarItem(item)} hitSlop={4}>
               <View style={[styles.circulo, item.comprado && styles.circuloMarcado]}>
                 {item.comprado && <Ionicons name="checkmark" size={14} color={colors.background} />}
               </View>
@@ -217,6 +269,8 @@ export default function ListaCompraScreen() {
               <Text style={[styles.cantidad, item.comprado && styles.textoHecho]}>{textoCantidad(item)}</Text>
             </Pressable>
           ))}
+
+          {itemsBloc.length > 0 && <Text style={styles.pista}>Mantén presionado un ítem para quitarlo</Text>}
 
           <View style={styles.filaInput}>
             <TextInput
@@ -331,6 +385,8 @@ const styles = StyleSheet.create({
   cantidad: { fontFamily: fonts.body, fontSize: 14, color: colors.text, opacity: 0.75 },
   verMas: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.text, marginTop: 6, textDecorationLine: 'underline' },
 
+  botonLimpiar: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.55)', alignItems: 'center', justifyContent: 'center' },
+  pista: { fontFamily: fonts.body, fontSize: 12, color: colors.text, opacity: 0.6, marginTop: 6 },
   filaInput: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: spacing.md },
   input: {
     flex: 1, height: 50, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.7)',
