@@ -11,7 +11,7 @@ import CargandoReceta from '../../components/CargandoReceta';
 import { mostrarAviso } from '../../components/Aviso';
 import { toque, exito } from '../../lib/vibracion';
 import { leerProgreso } from '../../lib/progresoCocina';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import { colors, fonts, radius, spacing, typography, shadow } from '../../constants/theme';
 import { api } from '../../lib/api';
@@ -279,7 +279,7 @@ export default function RecetaDetalleScreen() {
       <ScrollView
         ref={scrollRef}
         style={styles.screen}
-        contentContainerStyle={{ paddingBottom: mostrarBarra ? 120 + insets.bottom : spacing.xl }}
+        contentContainerStyle={{ paddingBottom: mostrarBarra ? 130 + insets.bottom : spacing.xl }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -441,16 +441,16 @@ export default function RecetaDetalleScreen() {
               {enviandoLista ? (
                 <ActivityIndicator size="small" color={colors.accent} />
               ) : (
-                <Ionicons name="cart" size={20} color={colors.accent} />
+                <MaterialCommunityIcons name="cart-plus" size={24} color={colors.accent} />
               )}
-              <Text style={styles.botonListaTexto}>Enviar a mi lista</Text>
+              <Text style={styles.botonListaTexto} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>Enviar a mi lista</Text>
             </Presionable>
           )}
           {tienePasos && (
             <Presionable escalaAlPresionar={0.97} style={styles.botonCocinar} onPress={cocinar}>
               <Text style={styles.botonCocinarTexto}>{pasoGuardado !== null ? 'Continuar' : 'Cocinar'}</Text>
               <View style={styles.circuloPlay}>
-                <Ionicons name="play" size={16} color={colors.primary} style={{ marginLeft: 2 }} />
+                <Ionicons name="play" size={20} color={colors.primary} style={{ marginLeft: 3 }} />
               </View>
             </Presionable>
           )}
@@ -517,15 +517,16 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: colors.border,
   },
   botonLista: {
-    flex: 1.15, height: 58, borderRadius: 29, backgroundColor: colors.text, paddingHorizontal: 12,
+    flex: 1, height: 62, borderRadius: 31, backgroundColor: colors.text, paddingHorizontal: 14,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    shadowColor: colors.text, shadowOpacity: 0.28, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },
-  botonListaTexto: { fontFamily: fonts.bodyBold, fontSize: 13, flexShrink: 1, color: colors.white },
+  botonListaTexto: { fontFamily: fonts.heading, fontSize: 15, flexShrink: 1, color: colors.white },
   botonCocinar: {
-    flex: 1, height: 58, borderRadius: 29, backgroundColor: colors.primary, paddingLeft: 22, paddingRight: 7,
+    flex: 1.2, height: 62, borderRadius: 31, backgroundColor: colors.primary, paddingLeft: 30, paddingRight: 8,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    shadowColor: colors.primary, shadowOpacity: 0.35, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 5,
+    shadowColor: colors.primary, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },
-  botonCocinarTexto: { fontFamily: fonts.bodyBold, fontSize: 16, marginRight: 8, color: colors.white },
-  circuloPlay: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
+  botonCocinarTexto: { fontFamily: fonts.heading, fontSize: 18, color: colors.white },
+  circuloPlay: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
 });

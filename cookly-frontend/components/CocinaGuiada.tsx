@@ -70,6 +70,14 @@ function sugerenciaSinTiempo(texto: string): { etiqueta: string; minutos: number
   return null;
 }
 
+/** Separa la primera frase (título grande de la tarjeta) del resto (detalle más pequeño). */
+function dividirPaso(texto: string): { titulo: string; detalle: string } {
+  const limpio = (texto ?? '').trim();
+  const m = limpio.match(/^(.{3,110}?[.!?:])\s+([\s\S]+)$/);
+  if (m) return { titulo: m[1].trim(), detalle: m[2].trim() };
+  return { titulo: limpio, detalle: '' };
+}
+
 function formato(segundos: number): string {
   const s = Math.max(0, Math.ceil(segundos));
   const h = Math.floor(s / 3600);
@@ -212,13 +220,13 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos, recetaId
     }
   }, [visible, indice, recetaId, nombre, lista.length]);
 
-  if (lista.length === 0) return null;
-
   // Cada paso entra deslizando desde el lado al que vas (adelante o atrás).
   useEffect(() => {
     deslizar.setValue(0);
     Animated.timing(deslizar, { toValue: 1, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [indice, deslizar]);
+
+  if (lista.length === 0) return null;
 
   const paso = lista[indice];
   const esUltimo = indice === lista.length - 1;
@@ -309,38 +317,35 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos, recetaId
     (p) => p.id !== paso.id && crono[p.id] && crono[p.id].estado !== 'listo',
   );
 
+  const partes = dividirPaso(paso.instruccion);
+  const siguiente = esUltimo ? null : lista[indice + 1];
+  const textoSiguiente = siguiente ? dividirPaso(siguiente.instruccion).titulo.replace(/[.!?:]+$/, '') : '';
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={cerrar}>
       <SafeAreaView style={styles.pantalla}>
-        {/* Encabezado */}
+        <View style={styles.decoracion} pointerEvents="none" />
+
+        {/* Encabezado: cerrar + nombre de la receta */}
         <View style={styles.encabezado}>
-          <Pressable onPress={cerrar} style={styles.botonCerrar} hitSlop={10}>
+          <Pressable onPress={cerrar} style={styles.botonCerrar} hitSlop={10} accessibilityLabel="Cerrar">
             <Ionicons name="close" size={22} color={colors.text} />
           </Pressable>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.etiquetaModo}>Cocina guiada</Text>
-            <Text style={styles.nombreReceta} numberOfLines={1}>{nombre}</Text>
-          </View>
+          <Text style={styles.nombreReceta} numberOfLines={1}>{nombre}</Text>
+          <View style={{ width: 44 }} />
         </View>
 
         {/* Progreso */}
         <View style={styles.progresoFila}>
           {lista.map((p, i) => (
-            <View
-              key={p.id}
-              style={[
-                styles.progresoBarra,
-                i <= indice && { backgroundColor: colors.primary },
-              ]}
-            />
+            <View key={p.id} style={[styles.progresoBarra, i <= indice && { backgroundColor: colors.primary }]} />
           ))}
         </View>
-        <Text style={styles.contador}>Paso {indice + 1} de {lista.length}</Text>
 
         {/* Cronómetros de otros pasos */}
         {otrosActivos.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}
-            contentContainerStyle={{ gap: spacing.sm, paddingHorizontal: spacing.md }}>
+            contentContainerStyle={{ gap: spacing.sm, paddingHorizontal: 20 }}>
             {otrosActivos.map((p) => (
               <Pressable key={p.id} style={styles.chip} onPress={() => ir(lista.findIndex((x) => x.id === p.id))}>
                 <Ionicons name="timer-outline" size={14} color={colors.text} />
@@ -357,65 +362,100 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos, recetaId
             transform: [{ translateX: deslizar.interpolate({ inputRange: [0, 1], outputRange: [40 * direccion.current, 0] }) }],
           }}
         >
-        <ScrollView contentContainerStyle={styles.cuerpo}>
-          <View style={styles.tarjetaPaso}>
-            <View style={styles.numeroGrande}>
-              <Text style={styles.numeroGrandeTexto}>{paso.orden}</Text>
-            </View>
-            <Text style={styles.textoPaso}>{paso.instruccion}</Text>
-            <Pressable style={styles.botonVoz} onPress={alternarVoz}>
-              <Ionicons name={leyendo ? 'stop-circle-outline' : 'volume-high-outline'} size={18} color={colors.primary} />
-              <Text style={styles.botonVozTexto}>{leyendo ? 'Detener' : 'Leer en voz alta'}</Text>
-            </Pressable>
-          </View>
+          <ScrollView contentContainerStyle={styles.cuerpo} showsVerticalScrollIndicator={false}>
+            {/* Tarjeta del paso (color ciruela liso) */}
+            <View style={styles.tarjetaPaso}>
+              <View style={styles.pasoCabecera}>
+                <View style={styles.numeroGrande}>
+                  <Text style={styles.numeroGrandeTexto}>{paso.orden}</Text>
+                </View>
+                <Text style={styles.etiquetaPaso}>PASO {indice + 1} DE {lista.length}</Text>
+              </View>
 
-          {/* Cronómetro */}
-          {c ? (
-            <View style={[styles.tarjetaCrono, c.estado === 'listo' && { backgroundColor: colors.magic }]}>
-              <Text style={styles.cronoEtiqueta}>
-                {c.estado === 'listo' ? '¡Listo!' : c.estado === 'pausa' ? 'En pausa' : 'Cronómetro en marcha'}
-              </Text>
-              <Text style={styles.cronoTiempo}>{formato(c.estado === 'listo' ? 0 : restanteDe(c))}</Text>
-              <View style={styles.cronoBotones}>
-                {c.estado !== 'listo' && (
-                  <Pressable style={styles.cronoBoton} onPress={pausarOReanudar}>
-                    <Ionicons name={c.estado === 'corriendo' ? 'pause' : 'play'} size={18} color={colors.white} />
-                    <Text style={styles.cronoBotonTexto}>{c.estado === 'corriendo' ? 'Pausar' : 'Seguir'}</Text>
+              <Text style={styles.tituloPaso}>{partes.titulo}</Text>
+              {partes.detalle ? <Text style={styles.detallePaso}>{partes.detalle}</Text> : null}
+
+              <Pressable style={styles.botonVoz} onPress={alternarVoz}>
+                <Ionicons name={leyendo ? 'stop-circle-outline' : 'volume-high-outline'} size={18} color={colors.accent} />
+                <Text style={styles.botonVozTexto}>{leyendo ? 'Detener' : 'Leer en voz alta'}</Text>
+              </Pressable>
+            </View>
+
+            {/* Temporizador */}
+            {c ? (
+              <View style={[styles.tarjetaCrono, c.estado === 'listo' && { backgroundColor: colors.magic }]}>
+                <Pressable style={styles.cronoReloj} onPress={reiniciar} accessibilityLabel="Reiniciar cronómetro" hitSlop={6}>
+                  <Ionicons name={c.estado === 'listo' ? 'checkmark' : 'time-outline'} size={30} color={colors.text} />
+                </Pressable>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cronoTiempo}>{formato(c.estado === 'listo' ? 0 : restanteDe(c))}</Text>
+                  <Text style={styles.cronoEtiqueta}>
+                    {c.estado === 'listo' ? '¡Tiempo cumplido!' : c.estado === 'pausa' ? 'Temporizador en pausa' : 'Temporizador en marcha'}
+                  </Text>
+                </View>
+                {c.estado !== 'listo' ? (
+                  <Pressable style={styles.cronoBoton} onPress={pausarOReanudar} accessibilityLabel={c.estado === 'corriendo' ? 'Pausar' : 'Seguir'}>
+                    <Ionicons name={c.estado === 'corriendo' ? 'pause' : 'play'} size={20} color={colors.white} style={c.estado === 'corriendo' ? undefined : { marginLeft: 2 }} />
+                  </Pressable>
+                ) : (
+                  <Pressable style={styles.cronoBoton} onPress={reiniciar} accessibilityLabel="Reiniciar">
+                    <Ionicons name="refresh" size={20} color={colors.white} />
                   </Pressable>
                 )}
-                <Pressable style={[styles.cronoBoton, styles.cronoBotonClaro]} onPress={reiniciar}>
-                  <Ionicons name="refresh" size={18} color={colors.text} />
-                  <Text style={[styles.cronoBotonTexto, { color: colors.text }]}>Reiniciar</Text>
-                </Pressable>
               </View>
-            </View>
-          ) : segundosPaso > 0 ? (
-            <Pressable style={styles.botonIniciar} onPress={() => iniciar(segundosPaso)}>
-              <Ionicons name="timer-outline" size={22} color={colors.white} />
-              <Text style={styles.botonIniciarTexto}>
-                {sugerencia ? `${sugerencia.etiqueta} · ` : ''}Poner cronómetro · {formato(segundosPaso)}
-              </Text>
-            </Pressable>
-          ) : null}
-        </ScrollView>
+            ) : segundosPaso > 0 ? (
+              <Pressable style={styles.tarjetaCrono} onPress={() => iniciar(segundosPaso)}>
+                <View style={styles.cronoReloj}>
+                  <Ionicons name="time-outline" size={30} color={colors.text} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cronoTiempo}>{formato(segundosPaso)}</Text>
+                  <Text style={styles.cronoEtiqueta}>{sugerencia ? `${sugerencia.etiqueta} · ` : ''}Toca para poner el temporizador</Text>
+                </View>
+                <View style={styles.cronoBoton}>
+                  <Ionicons name="play" size={20} color={colors.white} style={{ marginLeft: 2 }} />
+                </View>
+              </Pressable>
+            ) : null}
+
+            {/* Lo que viene después */}
+            {siguiente ? (
+              <View style={styles.despues}>
+                <View style={styles.despuesNumero}>
+                  <Text style={styles.despuesNumeroTexto}>{siguiente.orden}</Text>
+                </View>
+                <Text style={styles.despuesTexto} numberOfLines={2}>
+                  <Text style={{ fontFamily: fonts.bodyBold }}>Después: </Text>{textoSiguiente}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.despues}>
+                <View style={styles.despuesNumero}>
+                  <Ionicons name="checkmark" size={16} color={colors.text} />
+                </View>
+                <Text style={styles.despuesTexto}>
+                  <Text style={{ fontFamily: fonts.bodyBold }}>Último paso. </Text>¡Ya casi está lista!
+                </Text>
+              </View>
+            )}
+          </ScrollView>
         </Animated.View>
 
         {/* Navegación */}
         <View style={styles.navegacion}>
           <Pressable
-            style={[styles.navBoton, styles.navAtras, indice === 0 && { opacity: 0.4 }]}
+            style={[styles.navAtras, indice === 0 && { opacity: 0.4 }]}
             disabled={indice === 0}
             onPress={() => ir(indice - 1)}
           >
-            <Ionicons name="chevron-back" size={20} color={colors.text} />
-            <Text style={[styles.navTexto, { color: colors.text }]}>Anterior</Text>
+            <Ionicons name="arrow-back" size={18} color={colors.text} />
+            <Text style={styles.navAtrasTexto}>Anterior</Text>
           </Pressable>
-          <Pressable
-            style={[styles.navBoton, styles.navSiguiente]}
-            onPress={() => (esUltimo ? terminar() : ir(indice + 1))}
-          >
-            <Text style={[styles.navTexto, { color: colors.white }]}>{esUltimo ? '¡Terminé!' : 'Siguiente'}</Text>
-            <Ionicons name={esUltimo ? 'checkmark' : 'chevron-forward'} size={20} color={colors.white} />
+          <Pressable style={styles.navSiguiente} onPress={() => (esUltimo ? terminar() : ir(indice + 1))}>
+            <Text style={styles.navSiguienteTexto}>{esUltimo ? '¡Terminé!' : 'Siguiente'}</Text>
+            <View style={styles.navCirculo}>
+              <Ionicons name={esUltimo ? 'checkmark' : 'arrow-forward'} size={22} color={colors.primary} />
+            </View>
           </Pressable>
         </View>
         {celebrando && <Celebracion />}
@@ -426,22 +466,22 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos, recetaId
 
 const styles = StyleSheet.create({
   pantalla: { flex: 1, backgroundColor: colors.background },
+  // Círculo suave de adorno arriba a la izquierda (el fondo del mockup).
+  decoracion: { position: 'absolute', top: -90, left: -70, width: 260, height: 260, borderRadius: 130, backgroundColor: colors.primaryLight, opacity: 0.55 },
   encabezado: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: spacing.md,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingTop: spacing.sm, paddingBottom: spacing.md,
   },
   botonCerrar: {
-    width: 38, height: 38, borderRadius: radius.pill, backgroundColor: colors.surface,
+    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface,
     alignItems: 'center', justifyContent: 'center', ...shadow.card,
   },
-  etiquetaModo: { ...typography.caption, color: colors.primary, textTransform: 'uppercase', letterSpacing: 1 },
-  nombreReceta: { ...typography.h3 },
+  nombreReceta: { flex: 1, textAlign: 'center', fontFamily: fonts.heading, fontSize: 16, color: colors.text, paddingHorizontal: spacing.sm },
 
-  progresoFila: { flexDirection: 'row', gap: 4, paddingHorizontal: spacing.md },
+  progresoFila: { flexDirection: 'row', gap: 6, paddingHorizontal: 20 },
   progresoBarra: { flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.primaryLight },
-  contador: { ...typography.bodySmall, paddingHorizontal: spacing.md, marginTop: spacing.sm },
 
-  chipsScroll: { flexGrow: 0, marginTop: spacing.sm },
+  chipsScroll: { flexGrow: 0, marginTop: spacing.md },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: colors.accent, borderRadius: radius.pill,
@@ -449,48 +489,46 @@ const styles = StyleSheet.create({
   },
   chipTexto: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.text },
 
-  cuerpo: { padding: spacing.md, gap: spacing.md },
+  cuerpo: { paddingHorizontal: 20, paddingTop: spacing.lg, paddingBottom: spacing.md, gap: 14 },
+
+  // Tarjeta ciruela, color liso (sin círculos de adorno).
   tarjetaPaso: {
-    backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, ...shadow.card,
+    backgroundColor: colors.text, borderRadius: 34, padding: 24,
+    shadowColor: colors.text, shadowOpacity: 0.25, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 8,
   },
-  numeroGrande: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primaryLight,
-    alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md,
-  },
-  numeroGrandeTexto: { fontFamily: fonts.displayBold, fontSize: 20, color: colors.primary },
-  textoPaso: { fontFamily: fonts.body, fontSize: 20, lineHeight: 30, color: colors.text },
-  botonVoz: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.md, alignSelf: 'flex-start' },
-  botonVozTexto: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.primary },
+  pasoCabecera: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  numeroGrande: { width: 54, height: 54, borderRadius: 27, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  numeroGrandeTexto: { fontFamily: fonts.displayBold, fontSize: 26, color: colors.white },
+  etiquetaPaso: { fontFamily: fonts.bodyBold, fontSize: 12, letterSpacing: 1.5, color: colors.accent },
+  tituloPaso: { fontFamily: fonts.displayBold, fontSize: 28, lineHeight: 36, color: colors.white, marginTop: 20 },
+  detallePaso: { fontFamily: fonts.body, fontSize: 16, lineHeight: 24, color: 'rgba(255,248,246,0.72)', marginTop: 14 },
+  botonVoz: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 20, alignSelf: 'flex-start' },
+  botonVozTexto: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.accent },
 
-  botonIniciar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
-    backgroundColor: colors.primary, borderRadius: radius.lg, paddingVertical: 16,
-  },
-  botonIniciarTexto: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.white },
+  // Temporizador mantequilla
+  tarjetaCrono: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.accent, borderRadius: 30, padding: 14 },
+  cronoReloj: { width: 56, height: 56, borderRadius: 28, borderWidth: 4, borderColor: colors.text, alignItems: 'center', justifyContent: 'center' },
+  cronoTiempo: { fontFamily: fonts.displayBold, fontSize: 32, lineHeight: 38, color: colors.text },
+  cronoEtiqueta: { fontFamily: fonts.bodyBold, fontSize: 12, lineHeight: 16, color: colors.text },
+  cronoBoton: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center' },
 
+  // "Después: ..."
+  despues: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.primaryLight, borderRadius: 24, paddingVertical: 12, paddingHorizontal: 14 },
+  despuesNumero: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
+  despuesNumeroTexto: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.text },
+  despuesTexto: { flex: 1, fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.text },
 
-  tarjetaCrono: {
-    backgroundColor: colors.accent, borderRadius: radius.lg, padding: spacing.lg, alignItems: 'center', gap: spacing.sm,
+  navegacion: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16, backgroundColor: colors.background },
+  navAtras: {
+    height: 62, borderRadius: 31, paddingHorizontal: 22, backgroundColor: colors.primaryLight,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
   },
-  cronoEtiqueta: { ...typography.body, fontFamily: fonts.bodyBold },
-  cronoTiempo: { fontFamily: fonts.displayBold, fontSize: 64, lineHeight: 72, color: colors.text },
-  cronoBotones: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
-  cronoBoton: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: colors.text, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 10,
+  navAtrasTexto: { fontFamily: fonts.heading, fontSize: 16, color: colors.text },
+  navSiguiente: {
+    flex: 1, height: 62, borderRadius: 31, backgroundColor: colors.primary, paddingLeft: 28, paddingRight: 8,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    shadowColor: colors.primary, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },
-  cronoBotonClaro: { backgroundColor: colors.white },
-  cronoBotonTexto: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.white },
-
-  navegacion: {
-    flexDirection: 'row', gap: spacing.md, padding: spacing.md,
-    borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surface,
-  },
-  navBoton: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    borderRadius: radius.lg, paddingVertical: 14,
-  },
-  navAtras: { backgroundColor: colors.primaryLight },
-  navSiguiente: { backgroundColor: colors.primary },
-  navTexto: { fontFamily: fonts.bodyBold, fontSize: 16 },
+  navSiguienteTexto: { fontFamily: fonts.heading, fontSize: 18, color: colors.white },
+  navCirculo: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
 });
