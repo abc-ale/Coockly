@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
-import { Text, View } from 'react-native';
+import { AppState, Text, View } from 'react-native';
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts, spacing } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 import { pintarBarraNavegacion } from '../../lib/barraNavegacion';
+import { escucharToques, reprogramarRecordatorios } from '../../lib/recordatorios';
 
 // Pantallas que solo ve cada tipo de cuenta. "profile" la ven las dos.
 const RUTAS_USUARIO = ['home', 'search', 'comunity', 'favorites', 'list'];
@@ -23,6 +24,26 @@ export default function TabsLayout() {
 
   const esAdmin = usuario?.rol === 'ADMINISTRADOR';
   const rutaActual = String(segmentos[segmentos.length - 1] ?? '');
+
+  // Avisos al celular (estilo "¡Te extrañamos!"): solo para cuentas de usuario.
+  // Se reprograman al abrir la app y cada vez que sale a segundo plano.
+  useEffect(() => {
+    if (cargando || !token || esAdmin) return;
+    reprogramarRecordatorios();
+    const sub = AppState.addEventListener('change', (estado) => {
+      if (estado === 'background') reprogramarRecordatorios();
+    });
+    // Al tocar un aviso: si era de una receta a medias, se abre esa receta; si no, queda en Inicio.
+    const dejarDeEscuchar = escucharToques((data) => {
+      if (data?.tipo === 'receta' && data?.recetaId) {
+        router.push({ pathname: '/receta/[id]', params: { id: String(data.recetaId) } });
+      }
+    });
+    return () => {
+      sub.remove();
+      dejarDeEscuchar();
+    };
+  }, [cargando, token, esAdmin, router]);
 
   // Si alguien llega a una pantalla que no le corresponde (por ejemplo, al iniciar sesión), lo lleva a la suya.
   useEffect(() => {

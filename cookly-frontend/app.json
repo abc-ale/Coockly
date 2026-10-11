@@ -38,7 +38,8 @@
       "expo-speech-recognition",
       "expo-web-browser",
       "expo-image",
-      "expo-splash-screen"
+      "expo-splash-screen",
+      ["expo-notifications", { "color": "#FF4D80" }]
     ],
     "extra": {
       "router": {},
