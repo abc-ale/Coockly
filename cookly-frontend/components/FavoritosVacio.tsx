@@ -12,6 +12,9 @@ type Props = { portadas: string[]; onExplorar: () => void };
 
 const ND = { useNativeDriver: true } as const;
 
+// Las fotos traen margen blanco alrededor del plato; se acercan un poco para que el plato llene el círculo.
+const ZOOM = 1.28;
+
 /** Aparece creciendo (rebote) al entrar a la pantalla. */
 function usePop(retraso: number) {
   const v = useRef(new Animated.Value(0)).current;
@@ -39,7 +42,7 @@ function Platillo({
         { transform: [{ scale: pop }] },
       ]}
     >
-      <ImagenReceta uri={uri} ancho={300} tamanoIcono={tam / 3} style={{ width: '100%', height: '100%' }} />
+      <ImagenReceta uri={uri} ancho={300} tamanoIcono={tam / 3} style={{ width: '100%', height: '100%', backgroundColor: colors.white, transform: [{ scale: ZOOM }] }} />
     </Animated.View>
   );
 }
@@ -112,7 +115,7 @@ export default function FavoritosVacio({ portadas, onExplorar }: Props) {
         {/* Plato central */}
         <Animated.View style={[styles.centro, { transform: [{ scale: popCentro }] }]}>
           <View style={styles.centroFoto}>
-            <ImagenReceta uri={p(0)} ancho={500} style={StyleSheet.absoluteFill as any} />
+            <ImagenReceta uri={p(0)} ancho={500} style={[StyleSheet.absoluteFill as any, { backgroundColor: colors.white, transform: [{ scale: ZOOM }] }]} />
           </View>
 
           {/* Corazón con onda */}
@@ -121,8 +124,8 @@ export default function FavoritosVacio({ portadas, onExplorar }: Props) {
               style={[
                 styles.onda,
                 {
-                  opacity: latido.interpolate({ inputRange: [0, 1], outputRange: [0.55, 0] }),
-                  transform: [{ scale: latido.interpolate({ inputRange: [0, 1], outputRange: [1, 2.1] }) }],
+                  opacity: latido.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0] }),
+                  transform: [{ scale: latido.interpolate({ inputRange: [0, 1], outputRange: [1, 1.7] }) }],
                 },
               ]}
             />

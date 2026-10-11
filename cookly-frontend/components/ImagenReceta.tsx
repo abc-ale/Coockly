@@ -31,10 +31,12 @@ type Props = {
   /** Ancho que se pide a Cloudinary (en píxeles). */
   ancho?: number;
   tamanoIcono?: number;
+  /** No dibuja el cubierto cuando no hay foto (por ejemplo, en la pantalla de carga). */
+  sinIcono?: boolean;
   children?: React.ReactNode;
 };
 
-export default function ImagenReceta({ uri, style, ancho = 600, tamanoIcono = 34, children }: Props) {
+export default function ImagenReceta({ uri, style, ancho = 600, tamanoIcono = 34, sinIcono = false, children }: Props) {
   const url = optimizarImagen(uri, ancho);
   const aparece = useRef(new Animated.Value(url && yaCargadas.has(url) ? 1 : 0)).current;
   const [fallo, setFallo] = useState(false);
@@ -48,7 +50,7 @@ export default function ImagenReceta({ uri, style, ancho = 600, tamanoIcono = 34
   return (
     <View style={[st.caja, style]}>
       {/* El cubierto solo aparece si no hay foto o si falló; mientras carga se ve el fondo liso. */}
-      {!url || fallo ? (
+      {(!url || fallo) && !sinIcono ? (
         <View style={st.centro}>
           <Ionicons name="restaurant-outline" size={tamanoIcono} color={colors.primary} style={{ opacity: 0.55 }} />
         </View>

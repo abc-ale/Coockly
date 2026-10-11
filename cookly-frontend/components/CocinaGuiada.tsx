@@ -14,6 +14,16 @@ import { guardarProgreso, borrarProgreso, leerProgreso } from '../lib/progresoCo
 import { mostrarAviso } from './Aviso';
 import ResenaFinal from './ResenaFinal';
 
+// Pantalla siempre encendida mientras se cocina (manos mojadas, el celular no se apaga).
+// Si el módulo nativo aún no está en tu APK, simplemente no hace nada.
+let KeepAwake: any = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  KeepAwake = require('expo-keep-awake');
+} catch {
+  KeepAwake = null;
+}
+
 export type PasoGuia = { id: number; orden: number; instruccion: string };
 
 type Props = {
@@ -226,6 +236,19 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos, recetaId
   const puedeGuardar = useRef(true);
 
   const hayCorriendo = Object.values(crono).some((c) => c.estado === 'corriendo');
+
+  // Mantiene la pantalla encendida mientras la cocina guiada está abierta.
+  useEffect(() => {
+    if (!visible) return;
+    try {
+      Promise.resolve(KeepAwake?.activateKeepAwakeAsync?.('cocina-guiada')).catch(() => {});
+    } catch {}
+    return () => {
+      try {
+        Promise.resolve(KeepAwake?.deactivateKeepAwake?.('cocina-guiada')).catch(() => {});
+      } catch {}
+    };
+  }, [visible]);
 
   // Reloj: solo gira mientras haya algún cronómetro en marcha
   useEffect(() => {

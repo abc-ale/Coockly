@@ -10,6 +10,8 @@ import { useAuth } from '../../context/AuthContext';
 import { api } from '../../lib/api';
 import { mostrarAlerta } from '../../components/Dialogo';
 import { Aparecer, Rebote, Presionable } from '../../components/Animaciones';
+import AvatarPerfil from '../../components/AvatarPerfil';
+import { cargarAvatar, type Avatar } from '../../lib/avatar';
 
 const SOMBRA = {
   shadowColor: colors.text, shadowOpacity: 0.07, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 3,
@@ -22,14 +24,16 @@ export default function ProfileScreen() {
 
   const [favoritas, setFavoritas] = useState<number | null>(null);
   const [listas, setListas] = useState<number | null>(null);
+  const [avatar, setAvatar] = useState<Avatar | null>(null);
 
   // Estadísticas: se actualizan cada vez que se abre la pestaña.
   useFocusEffect(
     useCallback(() => {
+      cargarAvatar(usuario?.correo).then(setAvatar);
       if (esAdmin) return;
       api.get('/recetas/favoritos').then((r) => setFavoritas(Array.isArray(r.data) ? r.data.length : 0)).catch(() => {});
       api.get('/listas-compra').then((r) => setListas(Array.isArray(r.data) ? r.data.length : 0)).catch(() => {});
-    }, [esAdmin])
+    }, [esAdmin, usuario?.correo])
   );
 
   function confirmarCerrarSesion() {
@@ -47,6 +51,7 @@ export default function ProfileScreen() {
   }
 
   const abrirEditar = () => router.push('/cambiar-nombre');
+  const abrirFoto = () => router.push('/foto-perfil');
 
   const nombre = usuario?.nombre ?? 'Usuario';
   const inicial = nombre.trim().charAt(0).toUpperCase() || 'C';
@@ -61,10 +66,10 @@ export default function ProfileScreen() {
 
         <Rebote>
           <View style={st.avatarCaja}>
-            <View style={st.avatar}>
-              <Text style={st.avatarLetra}>{inicial}</Text>
-            </View>
-            <Pressable onPress={abrirEditar} style={st.lapiz} accessibilityLabel="Editar nombre" hitSlop={6}>
+            <Pressable onPress={abrirFoto} accessibilityLabel="Cambiar foto de perfil">
+              <AvatarPerfil avatar={avatar} inicial={inicial} tam={112} radio={38} borde={4} style={st.avatar} />
+            </Pressable>
+            <Pressable onPress={abrirFoto} style={st.lapiz} accessibilityLabel="Cambiar foto de perfil" hitSlop={6}>
               <Ionicons name="pencil" size={16} color={colors.text} />
             </Pressable>
           </View>
@@ -106,6 +111,16 @@ export default function ProfileScreen() {
             <View style={st.nuevo}>
               <Text style={st.nuevoTexto}>Nuevo</Text>
             </View>
+          </Presionable>
+        </Aparecer>
+
+        <Aparecer delay={310}>
+          <Presionable escalaAlPresionar={0.97} style={st.fila} onPress={() => router.push('/ruleta')}>
+            <View style={[st.filaIcono, { backgroundColor: colors.accent }]}>
+              <Ionicons name="dice-outline" size={22} color={colors.text} />
+            </View>
+            <Text style={st.filaTexto}>Ruleta del antojo</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
           </Presionable>
         </Aparecer>
 
@@ -162,8 +177,6 @@ const st = StyleSheet.create({
   titulo: { fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginBottom: 18 },
   avatarCaja: { width: 112, height: 112, marginBottom: 12 },
   avatar: {
-    width: 112, height: 112, borderRadius: 38, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 4, borderColor: colors.white,
     shadowColor: colors.primary, shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 8,
   },
   avatarLetra: { fontFamily: fonts.display, fontSize: 54, lineHeight: 64, color: colors.white },

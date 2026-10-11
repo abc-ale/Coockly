@@ -5,7 +5,7 @@
     "slug": "cookly-frontend",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
@@ -18,10 +18,9 @@
     "android": {
       "package": "com.cooklyteam.cookly",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#FF4D80",
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "monochromeImage": "./assets/images/monochrome-icon.png"
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
@@ -29,7 +28,7 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
@@ -38,7 +37,7 @@
       "expo-speech-recognition",
       "expo-web-browser",
       "expo-image",
-      "expo-splash-screen",
+      ["expo-splash-screen", { "image": "./assets/images/splash-icon.png", "imageWidth": 200, "resizeMode": "contain", "backgroundColor": "#FF4D80" }],
       ["expo-notifications", { "color": "#FF4D80" }]
     ],
     "extra": {

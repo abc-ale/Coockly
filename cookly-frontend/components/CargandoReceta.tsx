@@ -37,7 +37,7 @@ export default function CargandoReceta({ portada, nombre, minutos, fallo, onRein
   return (
     <View style={st.pantalla}>
       <View style={st.fotoMarco}>
-        <ImagenReceta uri={portada} ancho={900} tamanoIcono={48} style={st.foto} />
+        <ImagenReceta uri={portada} ancho={900} sinIcono style={st.foto} />
         <Pressable style={[st.atras, { top: Math.max(insets.top, 12) + 8 }]} onPress={() => router.back()} hitSlop={8}>
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </Pressable>

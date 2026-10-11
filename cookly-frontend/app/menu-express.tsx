@@ -121,7 +121,7 @@ export default function MenuExpressScreen() {
                 <Text style={st.bannerTitulo}>¿Poco tiempo?</Text>
                 <Text style={st.bannerSub}>Recetas listas en {minutos} minutos o menos.</Text>
                 <Presionable onPress={sorprender} style={st.sorprende} escalaAlPresionar={0.95}>
-                  <Ionicons name="flash" size={14} color={colors.accent} />
+                  <Ionicons name="flash" size={13} color={colors.accent} />
                   <Text style={st.sorprendeTexto}>Sorpréndeme</Text>
                 </Presionable>
               </View>
@@ -230,9 +230,9 @@ const st = StyleSheet.create({
   bannerSub: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.text, marginTop: 2 },
   sorprende: {
     alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.text,
-    borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6, marginTop: 6,
+    borderRadius: 15, height: 30, paddingHorizontal: 11, paddingVertical: 0, marginTop: 4,
   },
-  sorprendeTexto: { fontFamily: fonts.heading, fontSize: 14, color: colors.accent },
+  sorprendeTexto: { fontFamily: fonts.heading, fontSize: 13, lineHeight: 17, color: colors.accent, includeFontPadding: false },
   bannerFoto: { width: 150, height: 108, backgroundColor: colors.primaryLight, overflow: 'hidden' },
   chips: { flexDirection: 'row', gap: 10, marginTop: 20, marginBottom: 20 },
   chip: { flex: 1, height: 48, borderRadius: 24, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
