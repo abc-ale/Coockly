@@ -12,6 +12,7 @@ import { colors, fonts, radius, spacing, typography, shadow } from '../constants
 import { exito, seleccion } from '../lib/vibracion';
 import { guardarProgreso, borrarProgreso, leerProgreso } from '../lib/progresoCocina';
 import { mostrarAviso } from './Aviso';
+import ResenaFinal from './ResenaFinal';
 
 export type PasoGuia = { id: number; orden: number; instruccion: string };
 
@@ -24,6 +25,13 @@ type Props = {
   recetaId?: number;
   /** true: abre en el último paso guardado en vez de en el primero. */
   retomar?: boolean;
+  /** Foto de la receta (para la pantalla de reseña del final). */
+  imagen?: string | null;
+  /** Reseña que el usuario ya había dejado (si existe). */
+  puntuacionInicial?: number;
+  comentarioInicial?: string;
+  /** Se llama cuando publica su reseña al terminar. */
+  onResenaPublicada?: () => void;
 };
 
 type Cronometro = {
@@ -204,13 +212,14 @@ const celebracionEstilos = StyleSheet.create({
   texto: { fontFamily: fonts.body, fontSize: 17, color: colors.textMuted, marginTop: 4 },
 });
 
-export default function CocinaGuiada({ visible, onClose, nombre, pasos, recetaId, retomar }: Props) {
+export default function CocinaGuiada({ visible, onClose, nombre, pasos, recetaId, retomar, imagen, puntuacionInicial, comentarioInicial, onResenaPublicada }: Props) {
   const lista = useMemo(() => [...pasos].sort((a, b) => a.orden - b.orden), [pasos]);
   const [indice, setIndice] = useState(0);
   const [crono, setCrono] = useState<Record<number, Cronometro>>({});
   const [ahora, setAhora] = useState(Date.now());
   const [leyendo, setLeyendo] = useState(false);
   const [celebrando, setCelebrando] = useState(false);
+  const [resenando, setResenando] = useState(false);
   const deslizar = useRef(new Animated.Value(1)).current;
   const direccion = useRef(1);
   // Evita sobrescribir el paso guardado antes de haberlo leído.
@@ -251,6 +260,7 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos, recetaId
   // Al abrir: primer paso, o el último guardado si el usuario viene a "Continuar".
   useEffect(() => {
     if (visible) {
+      setResenando(false);
       setIndice(0);
       puedeGuardar.current = !(retomar && recetaId !== undefined);
       if (!puedeGuardar.current) {
@@ -330,10 +340,12 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos, recetaId
     borrarProgreso();
     exito();
     setCelebrando(true);
+    // Tras la celebración se pide la reseña (si la receta tiene id); si no, se cierra.
     setTimeout(() => {
       setCelebrando(false);
-      cerrar();
-    }, 2200);
+      if (recetaId !== undefined) setResenando(true);
+      else cerrar();
+    }, 1800);
   }
 
   function ir(nuevo: number) {
@@ -510,6 +522,20 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos, recetaId
           </Pressable>
         </View>
         {celebrando && <Celebracion />}
+        {resenando && recetaId !== undefined && (
+          <ResenaFinal
+            recetaId={recetaId}
+            nombre={nombre}
+            imagen={imagen}
+            puntuacionInicial={puntuacionInicial}
+            comentarioInicial={comentarioInicial}
+            onPublicada={onResenaPublicada}
+            onCerrar={() => {
+              setResenando(false);
+              cerrar();
+            }}
+          />
+        )}
       </SafeAreaView>
     </Modal>
   );

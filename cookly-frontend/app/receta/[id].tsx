@@ -1,7 +1,7 @@
 // app/receta/[id].tsx
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, Pressable, TextInput,
+  View, Text, ScrollView, StyleSheet, Pressable,
   Alert, KeyboardAvoidingView, Keyboard, Platform, ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,7 +12,7 @@ import { mostrarAviso } from '../../components/Aviso';
 import { toque, exito } from '../../lib/vibracion';
 import { leerProgreso } from '../../lib/progresoCocina';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, useFocusEffect, router } from 'expo-router';
 import { colors, fonts, radius, spacing, typography, shadow } from '../../constants/theme';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
@@ -20,7 +20,6 @@ import Estrellas from '../../components/Estrellas';
 import EtiquetasReceta from '../../components/EtiquetasReceta';
 import CocinaGuiada from '../../components/CocinaGuiada';
 import Porciones from '../../components/Porciones';
-import { FormularioResena, ResumenResenas, TarjetaResena } from '../../components/Resenas';
 import { Modo, PORCIONES_BASE, partesIngrediente } from '../../lib/cantidades';
 
 
@@ -79,13 +78,10 @@ export default function RecetaDetalleScreen() {
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [resenas, setResenas] = useState<Resena[]>([]);
   const [promedio, setPromedio] = useState(0);
-  const [nuevoComentario, setNuevoComentario] = useState('');
   const [miPuntuacion, setMiPuntuacion] = useState(0);
   const [miComentarioResena, setMiComentarioResena] = useState('');
   const [cargando, setCargando] = useState(true);
   const [fallo, setFallo] = useState(false);
-  const [enviandoComentario, setEnviandoComentario] = useState(false);
-  const [enviandoResena, setEnviandoResena] = useState(false);
   const [cocinando, setCocinando] = useState(false);
   const [personas, setPersonas] = useState(PORCIONES_BASE);
   const [modo, setModo] = useState<Modo>('original');
@@ -93,9 +89,6 @@ export default function RecetaDetalleScreen() {
   const [pasoGuardado, setPasoGuardado] = useState<number | null>(null);
   const [enviandoLista, setEnviandoLista] = useState(false);
   const [tecladoVisible, setTecladoVisible] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
-  const yResenas = useRef(0);
-  const yComentarios = useRef(0);
 
   // Con el teclado abierto se esconde la barra de abajo (así no tapa lo que escribes).
   useEffect(() => {
@@ -170,52 +163,29 @@ export default function RecetaDetalleScreen() {
     }
   }
 
-  async function enviarComentario() {
-    if (!nuevoComentario.trim()) return;
-    setEnviandoComentario(true);
-    try {
-      await api.post(`/recetas/${id}/comentarios`, { contenido: nuevoComentario.trim() });
-      setNuevoComentario('');
-      const { data } = await api.get(`/recetas/${id}/comentarios`);
-      setComentarios(data);
-      mostrarAviso('Comentario publicado');
-    } catch (error: any) {
-      Alert.alert('No se pudo publicar', error?.response?.data?.mensaje || 'No pudimos publicar tu comentario. Inténtalo de nuevo.');
-    } finally {
-      setEnviandoComentario(false);
-    }
+
+
+  function irAResenas() {
+    toque();
+    router.push({ pathname: '/resenas/[id]', params: { id: String(id), nombre: receta?.nombre ?? '' } });
   }
 
-  async function eliminarComentario(comentarioId: number) {
+  // Se vuelven a leer reseñas, promedio y comentarios (al publicar desde la Cocina guiada o al volver de la pantalla de reseñas).
+  async function refrescarResenas() {
     try {
-      await api.delete(`/recetas/${id}/comentarios/${comentarioId}`);
-      setComentarios((prev) => prev.filter((c) => c.id !== comentarioId));
-    } catch (error: any) {
-      Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudo eliminar el comentario.');
-    }
-  }
-
-  async function enviarResena() {
-    if (miPuntuacion === 0) {
-      Alert.alert('Falta tu calificación', 'Toca una estrella para calificar la receta.');
-      return;
-    }
-    setEnviandoResena(true);
-    try {
-      await api.put(`/recetas/${id}/resenas`, {
-        puntuacion: miPuntuacion,
-        comentario: miComentarioResena.trim() || undefined,
-      });
+      api.get(`/recetas/${id}/comentarios`).then((r) => setComentarios(r.data)).catch(() => {});
       const { data } = await api.get(`/recetas/${id}/resenas`);
-      setResenas(data.resenas ?? []);
+      const lista: Resena[] = data.resenas ?? [];
+      setResenas(lista);
       setPromedio(data.promedio ?? 0);
-      mostrarAviso('¡Gracias! Tu reseña se guardó');
-    } catch (error: any) {
-      Alert.alert('No se pudo guardar', error?.response?.data?.mensaje || 'No pudimos guardar tu reseña. Inténtalo de nuevo.');
-    } finally {
-      setEnviandoResena(false);
-    }
+      const mia = lista.find((r) => r.usuario.correo === usuario?.correo);
+      if (mia) {
+        setMiPuntuacion(mia.puntuacion);
+        setMiComentarioResena(mia.comentario ?? '');
+      }
+    } catch {}
   }
+
 
   // Crea una lista de compras con los ingredientes, ya ajustados a las personas elegidas.
   async function enviarALaLista() {
@@ -245,16 +215,25 @@ export default function RecetaDetalleScreen() {
     }
   }
 
-  function irA(y: number) {
-    toque();
-    scrollRef.current?.scrollTo({ y: Math.max(0, y - 12), animated: true });
-  }
 
   function cocinar() {
     toque();
     setRetomar(pasoGuardado !== null);
     setCocinando(true);
   }
+
+  // Al volver de la pantalla de reseñas se actualizan los números (la primera vez ya vienen cargados).
+  const primeraVez = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (primeraVez.current) {
+        primeraVez.current = false;
+        return;
+      }
+      refrescarResenas();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id])
+  );
 
   // Mientras llegan los datos: foto y nombre al instante + bloques que laten (sin pantalla en blanco ni saltos).
   if (cargando || !receta) {
@@ -277,7 +256,6 @@ export default function RecetaDetalleScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
-        ref={scrollRef}
         style={styles.screen}
         contentContainerStyle={{ paddingBottom: mostrarBarra ? 130 + insets.bottom : spacing.xl }}
         keyboardShouldPersistTaps="handled"
@@ -304,7 +282,7 @@ export default function RecetaDetalleScreen() {
           <Text style={styles.titulo}>{receta.nombre}</Text>
 
           <View style={styles.metaRow}>
-            <Pressable style={[styles.pastilla, { backgroundColor: colors.accent }]} onPress={() => irA(ALTO_FOTO + yResenas.current)}>
+            <Pressable style={[styles.pastilla, { backgroundColor: colors.accent }]} onPress={irAResenas}>
               <Ionicons name="star" size={14} color={colors.text} />
               <Text style={styles.pastillaTexto}>{textoResenas}</Text>
             </Pressable>
@@ -313,7 +291,7 @@ export default function RecetaDetalleScreen() {
                 <Text style={styles.pastillaTexto}>{receta.minutosPreparacion} min</Text>
               </View>
             ) : null}
-            <Pressable style={[styles.pastilla, { backgroundColor: colors.magic }]} onPress={() => irA(ALTO_FOTO + yComentarios.current)}>
+            <Pressable style={[styles.pastilla, { backgroundColor: colors.magic }]} onPress={irAResenas}>
               <Ionicons name="chatbubble-outline" size={13} color={colors.text} />
               <Text style={styles.pastillaTexto}>{comentarios.length}</Text>
             </Pressable>
@@ -373,63 +351,25 @@ export default function RecetaDetalleScreen() {
             )}
           </View>
 
-          {/* Reseñas */}
-          <View onLayout={(e) => { yResenas.current = e.nativeEvent.layout.y; }}>
-            <Text style={[styles.seccionTitulo, { marginTop: spacing.lg }]}>Reseñas</Text>
-            <ResumenResenas resenas={resenas} promedio={promedio} />
-            <FormularioResena
-              puntuacion={miPuntuacion}
-              comentario={miComentarioResena}
-              onPuntuacion={setMiPuntuacion}
-              onComentario={setMiComentarioResena}
-              onEnviar={enviarResena}
-              enviando={enviandoResena}
-              yaTieneResena={resenas.some((r) => r.usuario.correo === usuario?.correo)}
-            />
-
-            {resenas.filter((r) => r.usuario.correo !== usuario?.correo).length > 0 && (
-              <>
-                <Text style={styles.subTitulo}>Otras reseñas</Text>
-                {resenas
-                  .filter((r) => r.usuario.correo !== usuario?.correo)
-                  .map((r, i) => (
-                    <TarjetaResena key={r.id} resena={r} indice={i} />
-                  ))}
-              </>
-            )}
-          </View>
-
-          {/* Comentarios */}
-          <View onLayout={(e) => { yComentarios.current = e.nativeEvent.layout.y; }}>
-            <Text style={[styles.seccionTitulo, { marginTop: spacing.lg }]}>Comentarios ({comentarios.length})</Text>
-
-            <View style={styles.filaInputComentario}>
-              <TextInput
-                placeholder="Escribe un comentario..."
-                placeholderTextColor={colors.textMuted}
-                value={nuevoComentario}
-                onChangeText={setNuevoComentario}
-                style={styles.inputComentario}
-              />
-              <Pressable style={styles.botonEnviar} onPress={enviarComentario} disabled={enviandoComentario}>
-                <Ionicons name="send" size={16} color={colors.white} />
-              </Pressable>
+          {/* Entrada a la pantalla de Reseñas y comentarios */}
+          <Presionable escalaAlPresionar={0.97} style={styles.entradaResenas} onPress={irAResenas}>
+            <View style={styles.entradaIcono}>
+              <Ionicons name="chatbubbles-outline" size={24} color={colors.text} />
             </View>
-
-            {comentarios.map((c) => (
-              <View key={c.id} style={styles.tarjeta}>
-                <View style={styles.filaAutor}>
-                  <Text style={styles.autorNombre}>{c.usuario.nombre}</Text>
-                  {c.usuario.correo === usuario?.correo && (
-                    <Pressable onPress={() => eliminarComentario(c.id)}>
-                      <Ionicons name="trash-outline" size={16} color={colors.danger} />
-                    </Pressable>
-                  )}
-                </View>
-                <Text style={styles.comentarioTexto}>{c.contenido}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.entradaTitulo}>Reseñas y comentarios</Text>
+              <View style={styles.entradaSub}>
+                {resenas.length > 0 ? <Estrellas valor={promedio} tamano={13} gap={1} /> : null}
+                <Text style={styles.entradaTexto} numberOfLines={1}>
+                  {resenas.length > 0 ? `${promedio.toFixed(1)} · ` : ''}
+                  {resenas.length} {resenas.length === 1 ? 'reseña' : 'reseñas'} · {comentarios.length} {comentarios.length === 1 ? 'comentario' : 'comentarios'}
+                </Text>
               </View>
-            ))}
-          </View>
+            </View>
+            <View style={styles.entradaFlecha}>
+              <Ionicons name="arrow-forward" size={20} color={colors.white} />
+            </View>
+          </Presionable>
         </Aparecer>
       </ScrollView>
 
@@ -464,6 +404,10 @@ export default function RecetaDetalleScreen() {
         pasos={receta.pasos}
         recetaId={Number(id)}
         retomar={retomar}
+        imagen={imagenUrl ?? (portadaParam || null)}
+        puntuacionInicial={miPuntuacion}
+        comentarioInicial={miComentarioResena}
+        onResenaPublicada={refrescarResenas}
       />
     </KeyboardAvoidingView>
   );
@@ -488,6 +432,12 @@ const styles = StyleSheet.create({
   seccionCabecera: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
   seccionTitulo: { fontFamily: fonts.heading, fontSize: 22, color: colors.text },
   enlace: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.primary },
+  entradaResenas: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.surface, borderRadius: 30, borderWidth: 1, borderColor: colors.border, padding: 14, marginTop: spacing.lg, shadowColor: colors.text, shadowOpacity: 0.07, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
+  entradaIcono: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  entradaTitulo: { fontFamily: fonts.heading, fontSize: 17, color: colors.text },
+  entradaSub: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 },
+  entradaTexto: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted, flexShrink: 1 },
+  entradaFlecha: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   subTitulo: { ...typography.h3, color: colors.text, marginTop: spacing.md, marginBottom: spacing.sm, fontSize: 15 },
   vacioTexto: { ...typography.bodySmall, color: colors.textMuted },
   listaIngredientes: { marginTop: spacing.sm },
