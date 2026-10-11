@@ -1,8 +1,8 @@
 // app/resenas/[id].tsx
 // "Reseñas y comentarios" de una receta: resumen con promedio, calificar, reseñas de otras personas y comentarios.
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+  ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { useBarraSobreTeclado } from '../../lib/teclado';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -68,6 +68,9 @@ export default function ResenasScreen() {
   const [resenas, setResenas] = useState<Resena[]>([]);
   const [promedio, setPromedio] = useState(0);
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
+  const [menuC, setMenuC] = useState<Comentario | null>(null); // comentario con el menú (⋯) abierto
+  const [editandoC, setEditandoC] = useState<Comentario | null>(null);
+  const campoRef = useRef<TextInput>(null);
   const [cargando, setCargando] = useState(true);
   const [fallo, setFallo] = useState(false);
   const [verTodas, setVerTodas] = useState(false);
@@ -110,16 +113,45 @@ export default function ResenasScreen() {
     if (!texto || enviando) return;
     setEnviando(true);
     try {
+      if (editandoC) {
+        await api.put(`/recetas/${id}/comentarios/${editandoC.id}`, { contenido: texto });
+        setEditandoC(null);
+        setNuevo('');
+        Keyboard.dismiss();
+        const { data: lista } = await api.get(`/recetas/${id}/comentarios`);
+        setComentarios(lista);
+        mostrarAviso('Comentario actualizado');
+        return;
+      }
       await api.post(`/recetas/${id}/comentarios`, { contenido: texto });
       setNuevo('');
       const { data } = await api.get(`/recetas/${id}/comentarios`);
       setComentarios(data);
       mostrarAviso('Comentario publicado');
     } catch (error: any) {
-      Alert.alert('No se pudo publicar', error?.response?.data?.mensaje || 'No pudimos publicar tu comentario. Inténtalo de nuevo.');
+      Alert.alert(editandoC ? 'No se pudo editar' : 'No se pudo publicar', error?.response?.data?.mensaje || 'Inténtalo de nuevo en un momento.');
     } finally {
       setEnviando(false);
     }
+  }
+
+  function iniciarEdicion(c: Comentario) {
+    setEditandoC(c);
+    setNuevo(c.contenido);
+    setTimeout(() => campoRef.current?.focus(), 150);
+  }
+
+  function cancelarEdicion() {
+    setEditandoC(null);
+    setNuevo('');
+    Keyboard.dismiss();
+  }
+
+  function confirmarEliminar(c: Comentario) {
+    Alert.alert('Eliminar comentario', '¿Seguro que quieres eliminar tu comentario?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Eliminar', style: 'destructive', onPress: () => eliminarComentario(c.id) },
+    ]);
   }
 
   async function eliminarComentario(comentarioId: number) {
@@ -266,9 +298,9 @@ export default function ResenasScreen() {
                       <Text style={st.autor} numberOfLines={1}>{c.usuario.nombre}</Text>
                       <Text style={st.fecha}>{hace(c.creadoEn)}</Text>
                     </View>
-                    {c.usuario.correo === usuario?.correo ? (
-                      <Pressable onPress={() => eliminarComentario(c.id)} hitSlop={10} accessibilityLabel="Eliminar comentario">
-                        <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                    {c.usuario.correo?.toLowerCase() === usuario?.correo?.toLowerCase() ? (
+                      <Pressable onPress={() => setMenuC(c)} hitSlop={10} style={st.puntos} accessibilityLabel="Opciones del comentario">
+                        <Ionicons name="ellipsis-horizontal" size={20} color={colors.text} />
                       </Pressable>
                     ) : null}
                   </View>
@@ -282,10 +314,19 @@ export default function ResenasScreen() {
 
       {/* Barra para comentar */}
       <View ref={barraRef} collapsable={false} style={[st.barra, { paddingBottom: tecladoAbierto ? 10 : insets.bottom + 10, marginBottom: margenBarra }]}>
+        {editandoC ? (
+          <View style={st.editandoBarra}>
+            <Text style={st.editandoTexto}>Editando tu comentario</Text>
+            <Pressable onPress={cancelarEdicion} hitSlop={8}>
+              <Ionicons name="close" size={18} color={colors.textMuted} />
+            </Pressable>
+          </View>
+        ) : null}
         <View style={st.entrada}>
           <TextInput
+            ref={campoRef}
             style={st.entradaTexto}
-            placeholder="Escribe un comentario..."
+            placeholder={editandoC ? 'Edita tu comentario...' : 'Escribe un comentario...'}
             placeholderTextColor={colors.textMuted}
             value={nuevo}
             onChangeText={setNuevo}
@@ -315,11 +356,54 @@ export default function ResenasScreen() {
           />
         </View>
       </Modal>
+      {/* Menú de opciones (⋯) de mis comentarios */}
+      <Modal visible={!!menuC} transparent animationType="fade" onRequestClose={() => setMenuC(null)}>
+        <Pressable style={st.menuFondo} onPress={() => setMenuC(null)}>
+          <Pressable style={[st.menuHoja, { paddingBottom: insets.bottom + 16 }]} onPress={() => {}}>
+            <View style={st.menuAgarre} />
+            <Pressable
+              style={st.menuOpcion}
+              onPress={() => {
+                const c = menuC;
+                setMenuC(null);
+                if (c) iniciarEdicion(c);
+              }}
+            >
+              <View style={[st.menuIcono, { backgroundColor: colors.accent }]}>
+                <Ionicons name="pencil" size={18} color={colors.text} />
+              </View>
+              <Text style={st.menuTexto}>Editar comentario</Text>
+            </Pressable>
+            <Pressable
+              style={st.menuOpcion}
+              onPress={() => {
+                const c = menuC;
+                setMenuC(null);
+                if (c) setTimeout(() => confirmarEliminar(c), 200);
+              }}
+            >
+              <View style={[st.menuIcono, { backgroundColor: '#FDE7E7' }]}>
+                <Ionicons name="trash-outline" size={18} color={colors.danger} />
+              </View>
+              <Text style={[st.menuTexto, { color: colors.danger }]}>Eliminar comentario</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
 
 const st = StyleSheet.create({
+  puntos: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' },
+  editandoBarra: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingBottom: 8 },
+  editandoTexto: { fontFamily: fonts.bodyMedium, fontSize: 13, color: colors.textMuted },
+  menuFondo: { flex: 1, backgroundColor: 'rgba(43,18,32,0.4)', justifyContent: 'flex-end' },
+  menuHoja: { backgroundColor: colors.white, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 10, gap: 6 },
+  menuAgarre: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: '#E8D5DA', marginBottom: 10 },
+  menuOpcion: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10 },
+  menuIcono: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  menuTexto: { fontFamily: fonts.heading, fontSize: 16, color: colors.text },
   cabecera: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   atras: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
   nombreReceta: { flex: 1, fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.textMuted },

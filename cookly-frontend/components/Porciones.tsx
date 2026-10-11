@@ -166,7 +166,7 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
-  segmentoTexto: { fontFamily: fonts.bodyBold, fontSize: 12.5, color: colors.text },
+  segmentoTexto: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.text },
   segmentoTextoOn: { color: colors.white },
   aviso: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted, marginTop: spacing.sm },
 });

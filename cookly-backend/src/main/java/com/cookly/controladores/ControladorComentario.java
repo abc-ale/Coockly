@@ -24,6 +24,12 @@ public class ControladorComentario {
         return servicio.crear(recetaId, autenticacion.getName(), s.contenido());
     }
 
+    @PutMapping("/{comentarioId}")
+    public RespuestaComentario editar(@PathVariable Long recetaId, @PathVariable Long comentarioId,
+                                      @Valid @RequestBody SolicitudComentario s, Authentication autenticacion) {
+        return servicio.editar(comentarioId, autenticacion.getName(), s.contenido());
+    }
+
     @DeleteMapping("/{comentarioId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminar(@PathVariable Long recetaId, @PathVariable Long comentarioId, Authentication autenticacion) {

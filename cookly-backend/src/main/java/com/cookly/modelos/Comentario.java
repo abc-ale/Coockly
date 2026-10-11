@@ -21,4 +21,5 @@ public class Comentario {
     public Usuario getUsuario() { return usuario; }
     public String getContenido() { return contenido; }
     public Instant getCreadoEn() { return creadoEn; }
+    public void setContenido(String contenido) { this.contenido = contenido; }
 }

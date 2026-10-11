@@ -38,6 +38,16 @@ public class ServicioComentario {
         return aRespuesta(comentarios.save(new Comentario(receta, usuario, contenido)));
     }
 
+    /** Solo la persona que escribió el comentario puede editarlo (sin límite de tiempo). */
+    @Transactional
+    public RespuestaComentario editar(Long comentarioId, String correoSolicitante, String contenido) {
+        var c = comentarios.findById(comentarioId).orElseThrow(() -> new IllegalArgumentException("Comentario no encontrado"));
+        if (!c.getUsuario().getCorreo().equalsIgnoreCase(correoSolicitante))
+            throw new IllegalArgumentException("No puedes editar el comentario de otro usuario");
+        c.setContenido(contenido.trim());
+        return aRespuesta(comentarios.save(c));
+    }
+
     @Transactional
     public void eliminar(Long comentarioId, String correoSolicitante, boolean esModeradorOAdmin) {
         var c = comentarios.findById(comentarioId).orElseThrow(() -> new IllegalArgumentException("Comentario no encontrado"));
