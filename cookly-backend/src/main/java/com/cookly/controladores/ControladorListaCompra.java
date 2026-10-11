@@ -47,5 +47,22 @@ public class ControladorListaCompra {
 
     @DeleteMapping("/{listaId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminar(@PathVariable Long listaId) { servicio.eliminarLista(listaId); }
+    public void eliminar(@PathVariable Long listaId, Authentication autenticacion) {
+        servicio.eliminarLista(autenticacion.getName(), listaId);
+    }
+
+    /** Quita un elemento suelto de una lista. */
+    @DeleteMapping("/elementos/{itemId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void quitarElemento(@PathVariable Long itemId, Authentication autenticacion) {
+        servicio.quitarItem(autenticacion.getName(), itemId);
+    }
+
+    /** Vacía la lista: soloComprados=true quita únicamente lo ya comprado. */
+    @DeleteMapping("/{listaId}/elementos")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void vaciar(@PathVariable Long listaId, @RequestParam(defaultValue = "false") boolean soloComprados,
+                       Authentication autenticacion) {
+        servicio.vaciarLista(autenticacion.getName(), listaId, soloComprados);
+    }
 }

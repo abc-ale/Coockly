@@ -137,7 +137,31 @@ export default function ListaCompraScreen() {
     }
   }
 
-  // El servidor no tiene "borrar ítem": se borra el bloc y se vuelve a crear solo con lo que se conserva.
+  /** Quita elementos del bloc con el servidor nuevo; si el servidor aún es el viejo, usa el método de reconstruir. */
+  async function quitarDelBloc(que: 'todo' | 'comprados' | ElementoLista) {
+    if (!bloc || limpiando) return;
+    setLimpiando(true);
+    try {
+      if (typeof que === 'object') await api.delete(`/listas-compra/elementos/${que.id}`);
+      else await api.delete(`/listas-compra/${bloc.id}/elementos`, { params: { soloComprados: que === 'comprados' } });
+      exito();
+      await cargar(true);
+      setLimpiando(false);
+    } catch (error: any) {
+      const estado = error?.response?.status;
+      setLimpiando(false);
+      if (estado === 404 || estado === 405) {
+        // Servidor sin la función nueva: método anterior.
+        if (que === 'todo') return reconstruirBloc([]);
+        if (que === 'comprados') return reconstruirBloc(itemsBloc.filter((e) => !e.comprado));
+        return reconstruirBloc(itemsBloc.filter((e) => e.id !== que.id));
+      }
+      await cargar(true);
+      Alert.alert('No se pudo limpiar', error?.response?.data?.mensaje || 'Inténtalo de nuevo en un momento.');
+    }
+  }
+
+  // Método anterior (servidor sin "quitar ítem"): se borra el bloc y se vuelve a crear solo con lo que se conserva.
   async function reconstruirBloc(conservar: ElementoLista[]) {
     if (!bloc || limpiando) return;
     setLimpiando(true);
@@ -169,9 +193,9 @@ export default function ListaCompraScreen() {
     const hechos = itemsBloc.filter((e) => e.comprado);
     const botones: any[] = [];
     if (hechos.length > 0 && hechos.length < itemsBloc.length) {
-      botones.push({ text: 'Quitar los comprados', onPress: () => reconstruirBloc(itemsBloc.filter((e) => !e.comprado)) });
+      botones.push({ text: 'Quitar los comprados', onPress: () => quitarDelBloc('comprados') });
     }
-    botones.push({ text: 'Borrar todo', style: 'destructive', onPress: () => reconstruirBloc([]) });
+    botones.push({ text: 'Borrar todo', style: 'destructive', onPress: () => quitarDelBloc('todo') });
     botones.push({ text: 'Cancelar', style: 'cancel' });
     Alert.alert('Limpiar el bloc', '¿Qué quieres hacer?', botones);
   }
@@ -179,7 +203,7 @@ export default function ListaCompraScreen() {
   function quitarItem(item: ElementoLista) {
     Alert.alert('Quitar de la lista', `¿Quitar "${item.nombreMostrado}"?`, [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Quitar', style: 'destructive', onPress: () => reconstruirBloc(itemsBloc.filter((e) => e.id !== item.id)) },
+      { text: 'Quitar', style: 'destructive', onPress: () => quitarDelBloc(item) },
     ]);
   }
 

@@ -166,7 +166,7 @@ export default function ListaCompraDetalleScreen() {
             await api.delete(`/listas-compra/${id}`);
             router.back();
           } catch (error: any) {
-            Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudo eliminar la lista.');
+            Alert.alert('No se pudo eliminar', error?.response?.data?.mensaje || 'Inténtalo de nuevo en un momento.');
           }
         },
       },

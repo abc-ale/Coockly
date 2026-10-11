@@ -94,6 +94,38 @@ public class ServicioListaCompra {
         elementos.save(item);
     }
 
+    /** Devuelve la lista solo si es de esa persona (así nadie borra ni toca las listas de otra). */
+    private ListaCompra listaPropia(String correo, Long listaId) {
+        var usuario = usuarios.findByCorreo(correo).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        var lista = listas.findById(listaId).orElseThrow(() -> new IllegalArgumentException("Lista no encontrada"));
+        if (!lista.getUsuario().getId().equals(usuario.getId()))
+            throw new IllegalArgumentException("Esa lista no te pertenece");
+        return lista;
+    }
+
+    /** Elimina la lista con todos sus elementos (primero los elementos, para no chocar con la llave foránea). */
     @Transactional
-    public void eliminarLista(Long listaId) { listas.deleteById(listaId); }
+    public void eliminarLista(String correo, Long listaId) {
+        if (listas.findById(listaId).isEmpty()) return; // ya no existe: nada que borrar
+        listaPropia(correo, listaId);
+        elementos.borrarDeLista(listaId);
+        listas.deleteById(listaId);
+    }
+
+    /** Quita un solo elemento de una lista. */
+    @Transactional
+    public void quitarItem(String correo, Long itemId) {
+        var item = elementos.findById(itemId).orElse(null);
+        if (item == null) return;
+        listaPropia(correo, item.getLista().getId());
+        elementos.deleteById(itemId);
+    }
+
+    /** Vacía la lista (todo, o solo lo comprado) sin borrar la lista. */
+    @Transactional
+    public void vaciarLista(String correo, Long listaId, boolean soloComprados) {
+        listaPropia(correo, listaId);
+        if (soloComprados) elementos.borrarCompradosDeLista(listaId);
+        else elementos.borrarDeLista(listaId);
+    }
 }

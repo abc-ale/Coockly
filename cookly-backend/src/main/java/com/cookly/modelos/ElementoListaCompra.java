@@ -29,6 +29,7 @@ public class ElementoListaCompra {
         return ingrediente != null ? ingrediente.getNombre() : nombrePersonalizado;
     }
 
+    public ListaCompra getLista() { return lista; }
     public Long getId() { return id; }
     public Ingrediente getIngrediente() { return ingrediente; }
     public String getNombrePersonalizado() { return nombrePersonalizado; }
