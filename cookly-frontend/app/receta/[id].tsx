@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   },
   botonListaTexto: { fontFamily: fonts.heading, fontSize: 15, flexShrink: 1, color: colors.white },
   botonCocinar: {
-    flex: 1.4, height: 62, borderRadius: 31, backgroundColor: colors.primary, paddingLeft: 24, paddingRight: 8, gap: 10,
+    flex: 1, height: 62, borderRadius: 31, backgroundColor: colors.primary, paddingLeft: 24, paddingRight: 8, gap: 10,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     shadowColor: colors.primary, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },

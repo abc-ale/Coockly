@@ -206,7 +206,7 @@ export default function ResenaFinal({ recetaId, nombre, imagen, puntuacionInicia
           <Presionable escalaAlPresionar={0.97} style={[st.publicar, puntuacion === 0 && { opacity: 0.55 }]} onPress={publicar} disabled={enviando}>
             <Text style={st.publicarTexto}>{yaTieneResena ?? puntuacionInicial > 0 ? 'Actualizar reseña' : 'Publicar reseña'}</Text>
             <View style={st.circulo}>
-              {enviando ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="paper-plane" size={20} color={colors.primary} />}
+              {enviando ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="arrow-forward" size={22} color={colors.primary} />}
             </View>
           </Presionable>
 
