@@ -1,6 +1,6 @@
 // app/cambiar-nombre.tsx
 // Cambiar nombre según el mockup: avatar con la inicial, campo con contador y botón "Guardar nombre".
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -10,6 +10,8 @@ import { useAuth } from '../context/AuthContext';
 import { Presionable, Rebote } from '../components/Animaciones';
 import { mostrarAviso } from '../components/Aviso';
 import { exito } from '../lib/vibracion';
+import AvatarPerfil from '../components/AvatarPerfil';
+import { cargarAvatar, type Avatar } from '../lib/avatar';
 
 const LIMITE = 30;
 
@@ -20,6 +22,10 @@ export default function CambiarNombreScreen() {
   const [enfocado, setEnfocado] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const campoRef = useRef<TextInput>(null);
+  const [miAvatar, setMiAvatar] = useState<Avatar | null>(null);
+  useEffect(() => {
+    cargarAvatar(usuario?.correo).then(setMiAvatar);
+  }, [usuario?.correo]);
 
   const limpio = nombre.trim();
   const inicial = limpio.charAt(0).toUpperCase() || 'C';
@@ -68,9 +74,18 @@ export default function CambiarNombreScreen() {
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={st.cuerpo} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <Rebote>
-          <View style={st.avatar}>
-            <Text style={st.avatarLetra}>{inicial}</Text>
-          </View>
+          {miAvatar ? (
+            <AvatarPerfil
+              avatar={miAvatar}
+              tam={104}
+              borde={4}
+              style={{ alignSelf: 'center', marginBottom: 28, shadowColor: miAvatar.fondo, shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 7 }}
+            />
+          ) : (
+            <View style={st.avatar}>
+              <Text style={st.avatarLetra}>{inicial}</Text>
+            </View>
+          )}
         </Rebote>
 
         <Text style={st.etiqueta}>Tu nombre</Text>

@@ -19,6 +19,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Presionable } from '../components/Animaciones';
 import { colors, fonts, spacing } from '../constants/theme';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
+import AvatarPerfil from '../components/AvatarPerfil';
+import { cargarAvatar, type Avatar } from '../lib/avatar';
 
 // Tipos que acepta el bucket "posts-images" de Supabase.
 const EXTENSION_POR_TIPO: Record<string, string> = {
@@ -41,6 +44,11 @@ function colorDe(id: string) {
 
 export default function CreatePostScreen() {
   const insets = useSafeAreaInsets();
+  const { usuario } = useAuth();
+  const [miAvatar, setMiAvatar] = useState<Avatar | null>(null);
+  useEffect(() => {
+    cargarAvatar(usuario?.correo).then(setMiAvatar);
+  }, [usuario?.correo]);
   const [autor, setAutor] = useState<{ nombre: string; id: string } | null>(null);
   const [contenido, setContenido] = useState('');
   const [imagen, setImagen] = useState<ImagePicker.ImagePickerAsset | null>(null);
@@ -165,9 +173,13 @@ export default function CreatePostScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.autorFila}>
-          <View style={[styles.avatar, { backgroundColor: autor ? colorDe(autor.id) : colors.primaryLight }]}>
-            <Text style={styles.avatarLetra}>{nombre.charAt(0).toUpperCase()}</Text>
-          </View>
+          {miAvatar ? (
+            <AvatarPerfil avatar={miAvatar} tam={46} />
+          ) : (
+            <View style={[styles.avatar, { backgroundColor: autor ? colorDe(autor.id) : colors.primaryLight }]}>
+              <Text style={styles.avatarLetra}>{nombre.charAt(0).toUpperCase()}</Text>
+            </View>
+          )}
           <View>
             <Text style={styles.autorNombre}>{nombre}</Text>
             <Text style={styles.autorSub}>Comparte con la comunidad</Text>

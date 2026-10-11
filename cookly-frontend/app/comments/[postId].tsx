@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Modal,
+  Pressable,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -69,6 +71,9 @@ export default function CommentsScreen() {
       b.remove();
     };
   }, []);
+  const [menuDe, setMenuDe] = useState<Comentario | null>(null); // comentario cuyo menú (⋯) está abierto
+  const [editando, setEditando] = useState<Comentario | null>(null);
+  const campoRef = useRef<TextInput>(null);
   const [miId, setMiId] = useState<string | null>(null); // para mostrar "eliminar" solo en mis comentarios
   const [abiertos, setAbiertos] = useState<Set<string>>(new Set()); // comentarios con respuestas desplegadas
   const { postId } = useLocalSearchParams<{ postId: string }>();
@@ -136,6 +141,26 @@ export default function CommentsScreen() {
       return;
     }
 
+    // Editando un comentario propio: se guarda el texto nuevo en vez de crear otro.
+    if (editando) {
+      setEnviando(true);
+      const { data: guardado, error: errorEditar } = await supabase
+        .from('comments')
+        .update({ contenido: texto.trim() })
+        .eq('id', editando.id)
+        .select('id');
+      setEnviando(false);
+      if (errorEditar || !guardado || guardado.length === 0) {
+        Alert.alert('No se pudo editar', 'Inténtalo de nuevo en unos segundos.');
+        return;
+      }
+      setEditando(null);
+      setTexto('');
+      Keyboard.dismiss();
+      cargarComentarios();
+      return;
+    }
+
     setEnviando(true);
     const { error: errorEnvio } = await supabase.from('comments').insert({
       post_id: postId,
@@ -187,6 +212,7 @@ export default function CommentsScreen() {
       router.push('/login');
       return;
     }
+    setEditando(null);
     setRespondiendoA({
       id: comentario.id,
       nombre: comentario.profiles?.nombre_completo || comentario.profiles?.username || 'Usuario',
@@ -202,6 +228,19 @@ export default function CommentsScreen() {
     });
 
   const totalComentarios = comentarios.reduce((n, c) => n + 1 + (c.respuestas?.length || 0), 0);
+
+  function iniciarEdicion(item: Comentario) {
+    setRespondiendoA(null);
+    setEditando(item);
+    setTexto(item.contenido);
+    setTimeout(() => campoRef.current?.focus(), 150);
+  }
+
+  function cancelarEdicion() {
+    setEditando(null);
+    setTexto('');
+    Keyboard.dismiss();
+  }
 
   function confirmarEliminar(item: Comentario) {
     const conRespuestas = !item.parent_comment_id && (item.respuestas?.length || 0) > 0;
@@ -242,6 +281,11 @@ export default function CommentsScreen() {
             <Text style={styles.autorNombre} numberOfLines={1}>{nombre}</Text>
             {item.created_at ? <Text style={styles.hora}>{tiempoRelativo(item.created_at)}</Text> : null}
           </View>
+          {miId && item.user_id === miId ? (
+            <TouchableOpacity onPress={() => setMenuDe(item)} style={styles.puntosBoton} hitSlop={8} accessibilityLabel="Opciones del comentario">
+              <Ionicons name="ellipsis-horizontal" size={20} color={colors.text} />
+            </TouchableOpacity>
+          ) : null}
         </View>
         <Text style={styles.comentarioTexto}>{item.contenido}</Text>
         <View style={styles.accionesRow}>
@@ -262,16 +306,6 @@ export default function CommentsScreen() {
               <Text style={styles.responderTexto}>Responder</Text>
             </TouchableOpacity>
           )}
-          {miId && item.user_id === miId ? (
-            <TouchableOpacity
-              onPress={() => confirmarEliminar(item)}
-              style={styles.eliminarBoton}
-              hitSlop={8}
-              accessibilityLabel="Eliminar comentario"
-            >
-              <Ionicons name="trash-outline" size={18} color={colors.danger} />
-            </TouchableOpacity>
-          ) : null}
         </View>
       </View>
     );
@@ -351,6 +385,15 @@ export default function CommentsScreen() {
         />
       )}
 
+      {editando && (
+        <View style={styles.respondiendoBar}>
+          <Text style={styles.respondiendoTexto}>Editando tu comentario</Text>
+          <TouchableOpacity onPress={cancelarEdicion}>
+            <Ionicons name="close" size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+      )}
+
       {respondiendoA && (
         <View style={styles.respondiendoBar}>
           <Text style={styles.respondiendoTexto}>Respondiendo a {respondiendoA.nombre}</Text>
@@ -362,8 +405,9 @@ export default function CommentsScreen() {
 
       <View style={[styles.inputRow, { paddingBottom: tecladoAbierto ? 12 : insets.bottom + 12 }]}>
         <TextInput
+          ref={campoRef}
           style={styles.input}
-          placeholder={respondiendoA ? 'Escribe tu respuesta...' : 'Escribe un comentario...'}
+          placeholder={editando ? 'Edita tu comentario...' : respondiendoA ? 'Escribe tu respuesta...' : 'Escribe un comentario...'}
           placeholderTextColor="#A8959D"
           value={texto}
           onChangeText={setTexto}
@@ -378,6 +422,40 @@ export default function CommentsScreen() {
           <Ionicons name="send" size={20} color={colors.white} />
         </TouchableOpacity>
       </View>
+      {/* Menú de opciones (⋯) de mis comentarios */}
+      <Modal visible={!!menuDe} transparent animationType="fade" onRequestClose={() => setMenuDe(null)}>
+        <Pressable style={styles.menuFondo} onPress={() => setMenuDe(null)}>
+          <Pressable style={[styles.menuHoja, { paddingBottom: insets.bottom + 16 }]} onPress={() => {}}>
+            <View style={styles.menuAgarre} />
+            <TouchableOpacity
+              style={styles.menuOpcion}
+              onPress={() => {
+                const c = menuDe;
+                setMenuDe(null);
+                if (c) iniciarEdicion(c);
+              }}
+            >
+              <View style={[styles.menuIcono, { backgroundColor: colors.accent }]}>
+                <Ionicons name="pencil" size={18} color={colors.text} />
+              </View>
+              <Text style={styles.menuTexto}>Editar comentario</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.menuOpcion}
+              onPress={() => {
+                const c = menuDe;
+                setMenuDe(null);
+                if (c) setTimeout(() => confirmarEliminar(c), 200);
+              }}
+            >
+              <View style={[styles.menuIcono, { backgroundColor: '#FDE7E7' }]}>
+                <Ionicons name="trash-outline" size={18} color={colors.danger} />
+              </View>
+              <Text style={[styles.menuTexto, { color: colors.danger }]}>Eliminar comentario</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -396,7 +474,13 @@ const styles = StyleSheet.create({
   contadorTexto: { fontFamily: fonts.heading, fontSize: 13, color: colors.primary },
   tarjeta: { backgroundColor: colors.white, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 14, ...SOMBRA },
   tarjetaRespuesta: { borderRadius: 22, paddingHorizontal: 14, paddingVertical: 12 },
-  eliminarBoton: { marginLeft: 'auto', width: 36, height: 36, borderRadius: 18, backgroundColor: '#FDE7E7', alignItems: 'center', justifyContent: 'center' },
+  puntosBoton: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' },
+  menuFondo: { flex: 1, backgroundColor: 'rgba(43,18,32,0.4)', justifyContent: 'flex-end' },
+  menuHoja: { backgroundColor: colors.white, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 10, gap: 6 },
+  menuAgarre: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: '#E8D5DA', marginBottom: 10 },
+  menuOpcion: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10 },
+  menuIcono: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  menuTexto: { fontFamily: fonts.heading, fontSize: 16, color: colors.text },
   autorFila: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   avatar: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   avatarChico: { width: 32, height: 32, borderRadius: 16 },

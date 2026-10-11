@@ -144,42 +144,38 @@ export default function ListaCompraDetalleScreen() {
     }
   }
 
-  // Al comprar TODO, se muestra el festejo un momento y la lista se quita sola (si desmarcas algo, se cancela).
-  const listaRef = useRef<typeof lista>(null);
-  const temporizadorFin = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    listaRef.current = lista;
-  }, [lista]);
-  useEffect(() => () => {
-    if (temporizadorFin.current) clearTimeout(temporizadorFin.current);
-  }, []);
-
-  function revisarListaCompleta() {
-    if (temporizadorFin.current) clearTimeout(temporizadorFin.current);
-    temporizadorFin.current = setTimeout(async () => {
-      const actual = listaRef.current;
-      if (!actual || actual.elementos.length === 0 || actual.elementos.some((e) => !e.comprado)) return;
-      try {
-        await api.delete(`/listas-compra/${id}`);
-        exito();
-        mostrarAviso(`Lista completa: ${actual.nombre}`, 'exito');
-        router.back();
-      } catch {
-        /* si no se pudo quitar, la lista queda ahí */
-      }
-    }, 2200);
-  }
-
+  // Al comprar TODO, se muestra el festejo un instante y la lista se quita sola (sin esperar al servidor).
   async function alternarComprado(item: Elemento) {
-    try {
-      await api.put(`/listas-compra/elementos/${item.id}/comprado`, null, { params: { valor: !item.comprado } });
+    const nuevo = !item.comprado;
+    const aplicar = (valor: boolean) =>
       setLista((prev) =>
-        prev
-          ? { ...prev, elementos: prev.elementos.map((e) => (e.id === item.id ? { ...e, comprado: !e.comprado } : e)) }
-          : prev
+        prev ? { ...prev, elementos: prev.elementos.map((e) => (e.id === item.id ? { ...e, comprado: valor } : e)) } : prev
       );
-      revisarListaCompleta();
+    aplicar(nuevo);
+
+    const completaAhora =
+      !!lista && nuevo && lista.elementos.length > 0 && lista.elementos.every((e) => (e.id === item.id ? true : e.comprado));
+    const peticion = api.put(`/listas-compra/elementos/${item.id}/comprado`, null, { params: { valor: nuevo } });
+
+    if (completaAhora && lista) {
+      setTimeout(() => {
+        exito();
+        mostrarAviso(`Lista completa: ${lista.nombre}`, 'exito');
+        router.back();
+      }, 600);
+      try {
+        await peticion;
+        await api.delete(`/listas-compra/${id}`);
+      } catch {
+        /* si no se pudo quitar, la lista queda ahí y se puede borrar a mano */
+      }
+      return;
+    }
+
+    try {
+      await peticion;
     } catch (error: any) {
+      aplicar(item.comprado);
       Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudo actualizar el ítem.');
     }
   }

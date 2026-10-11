@@ -74,33 +74,11 @@ export default function ListaCompraScreen() {
   const [anotando, setAnotando] = useState(false);
   const [limpiando, setLimpiando] = useState(false);
 
-  // Cuando se compra TODO lo de una receta, la lista se quita sola (con un respiro para poder desmarcar).
+  // Cuando se compra TODO lo de una receta, la lista se quita sola al instante (la pantalla no espera al servidor).
   const listasRef = useRef<ListaCompra[]>([]);
-  const temporizadoresFin = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   useEffect(() => {
     listasRef.current = listas;
   }, [listas]);
-  useEffect(() => {
-    const t = temporizadoresFin.current;
-    return () => Object.values(t).forEach(clearTimeout);
-  }, []);
-
-  function revisarListaCompleta(listaId: number) {
-    clearTimeout(temporizadoresFin.current[listaId]);
-    temporizadoresFin.current[listaId] = setTimeout(async () => {
-      const lista = listasRef.current.find((l) => l.id === listaId);
-      if (!lista || lista.nombre === NOMBRE_BLOC) return; // el bloc de mercado no se borra solo
-      if (lista.elementos.length === 0 || lista.elementos.some((e) => !e.comprado)) return;
-      try {
-        await api.delete(`/listas-compra/${listaId}`);
-        setListas((prev) => prev.filter((l) => l.id !== listaId));
-        exito();
-        mostrarAviso(`Lista completa: ${lista.nombre}`, 'exito');
-      } catch {
-        /* si no se pudo quitar, la lista queda ahí y se puede borrar a mano */
-      }
-    }, 1600);
-  }
 
   const cargar = useCallback(async (silencioso = false) => {
     if (!silencioso) setCargando(true);
@@ -129,10 +107,37 @@ export default function ListaCompraScreen() {
             : l
         )
       );
-    poner(!item.comprado);
+    const nuevo = !item.comprado;
+    poner(nuevo);
+
+    const lista = listasRef.current.find((l) => l.id === listaId);
+    const completaAhora =
+      !!lista &&
+      lista.nombre !== NOMBRE_BLOC && // el bloc de mercado no se borra solo
+      nuevo &&
+      lista.elementos.length > 0 &&
+      lista.elementos.every((e) => (e.id === item.id ? true : e.comprado));
+
+    const peticion = api.put(`/listas-compra/elementos/${item.id}/comprado`, null, { params: { valor: nuevo } });
+
+    if (completaAhora && lista) {
+      // Se ve de inmediato (apenas un instante para notar el último check) y el servidor se pone al día por detrás.
+      setTimeout(() => {
+        setListas((prev) => prev.filter((l) => l.id !== listaId));
+        exito();
+        mostrarAviso(`Lista completa: ${lista.nombre}`, 'exito');
+      }, 350);
+      try {
+        await peticion;
+        await api.delete(`/listas-compra/${listaId}`);
+      } catch {
+        await cargar(true); // si algo falló, la lista vuelve a mostrarse tal como está en el servidor
+      }
+      return;
+    }
+
     try {
-      await api.put(`/listas-compra/elementos/${item.id}/comprado`, null, { params: { valor: !item.comprado } });
-      revisarListaCompleta(listaId);
+      await peticion;
     } catch (error: any) {
       poner(item.comprado);
       Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudo actualizar el ítem.');
