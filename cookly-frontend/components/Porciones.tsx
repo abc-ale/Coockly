@@ -17,8 +17,7 @@ type Props = {
 
 const MODOS: { valor: Modo; etiqueta: string }[] = [
   { valor: 'original', etiqueta: 'Original' },
-  { valor: 'peso', etiqueta: 'Gramos/Kilos' },
-  { valor: 'medidas', etiqueta: 'Tazas/Cucharas' },
+  { valor: 'medidas', etiqueta: 'Cucharas/Tazas' },
 ];
 
 export default function Porciones({ personas, modo, onPersonas, onModo }: Props) {
@@ -118,7 +117,7 @@ export default function Porciones({ personas, modo, onPersonas, onModo }: Props)
               }}
               style={[s.segmento, activo && s.segmentoOn]}
             >
-              <Text style={[s.segmentoTexto, activo && s.segmentoTextoOn]} numberOfLines={1}>{m.etiqueta}</Text>
+              <Text style={[s.segmentoTexto, activo && s.segmentoTextoOn]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{m.etiqueta}</Text>
             </Pressable>
           );
         })}
@@ -157,7 +156,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: 4,
   },
   segmentoOn: {
     backgroundColor: colors.primary,

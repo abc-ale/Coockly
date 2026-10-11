@@ -269,7 +269,7 @@ export default function ChatbotScreen() {
             {},
             porVoz
           );
-          setChips([]);
+          setChips(ctx.receta ? chipsDeReceta() : chipsIniciales());
           return;
         }
         ctx.mostradas.add(siguiente.id);
@@ -360,7 +360,7 @@ export default function ChatbotScreen() {
     seleccion();
     agregar({ esUsuario: true, texto: 'Cambiar un ingrediente' });
     decir('Claro. Dime cuál no tienes y qué tienes en su lugar. Por ejemplo: "no tengo zanahoria, tengo papa".');
-    setChips([]);
+    setChips(chipsDeReceta());
   };
 
   /** Procesa lo que dijo el usuario. `yaMostrado`: el mensaje del usuario ya está en pantalla (botones). */
@@ -435,6 +435,8 @@ export default function ChatbotScreen() {
       }
     } finally {
       setCargando(false);
+      // Los botones nunca se quedan sin aparecer: si ninguna rama puso otros, vuelven los que tocan.
+      setChips((prev) => (prev.length > 0 ? prev : ctx.receta ? chipsDeReceta() : chipsIniciales()));
     }
   }
 
@@ -486,7 +488,7 @@ export default function ChatbotScreen() {
         showsVerticalScrollIndicator={false}
         onContentSizeChange={bajar}
         renderItem={({ item }) => (
-          <EntradaSuave distancia={8} style={{ alignSelf: item.esUsuario ? 'flex-end' : 'flex-start', maxWidth: '86%' }}>
+          <EntradaSuave distancia={8} style={item.receta ? { alignSelf: 'flex-start', width: '88%' } : { alignSelf: item.esUsuario ? 'flex-end' : 'flex-start', maxWidth: '86%' }}>
             {item.receta ? (
               <View style={st.tarjetaReceta}>
                 <ImagenReceta uri={item.receta.portada} ancho={240} tamanoIcono={26} style={st.tarjetaFoto} />

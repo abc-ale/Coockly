@@ -145,20 +145,27 @@ const FRACCIONES: [number, string][] = [
   [3 / 4, '¾'],
 ];
 
-/** 0.5 → "½", 1.25 → "1 ¼", 250 → "250", 1500 → "1.500". */
+/** Cantidades "de cocina": se redondea a la fracción más cercana (¼, ⅓, ½, ⅔, ¾). 4,17 → "4 ¼", 0,5 → "½", 250 → "250". */
 export function formatoCantidad(v: number): string {
   if (v >= 100) return String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  if (v >= 10) return String(Math.round(v * 10) / 10).replace('.', ',');
+  if (v >= 10) {
+    const medio = Math.round(v * 2) / 2;
+    const ent = Math.floor(medio);
+    return medio - ent >= 0.5 ? `${ent} ½` : String(ent);
+  }
 
-  let entero = Math.floor(v);
+  // Fracciones permitidas (con ⅛ solo para cantidades menores a 1).
+  const pasos: [number, string][] = [[0, ''], [1 / 4, '¼'], [1 / 3, '⅓'], [1 / 2, '½'], [2 / 3, '⅔'], [3 / 4, '¾'], [1, '']];
+  if (v < 1) pasos.splice(1, 0, [1 / 8, '⅛']);
+
+  const entero = Math.floor(v);
   const dec = v - entero;
-  if (dec < 0.04) return String(entero);
-  if (dec > 0.96) return String(entero + 1);
+  let mejor = pasos[0];
+  for (const p of pasos) if (Math.abs(dec - p[0]) < Math.abs(dec - mejor[0])) mejor = p;
 
-  const cercana = FRACCIONES.find(([f]) => Math.abs(dec - f) < 0.04);
-  if (cercana) return entero > 0 ? `${entero} ${cercana[1]}` : cercana[1];
-
-  return String(Math.round(v * 100) / 100).replace('.', ',');
+  if (mejor[0] === 1) return String(entero + 1);
+  if (mejor[0] === 0) return entero === 0 ? '⅛' : String(entero);
+  return entero > 0 ? `${entero} ${mejor[1]}` : mejor[1];
 }
 
 const SIN_PLURAL = new Set(['g', 'kg', 'ml', 'l', 'oz', 'lb', '']);

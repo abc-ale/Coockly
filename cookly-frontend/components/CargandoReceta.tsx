@@ -7,7 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import ImagenReceta from './ImagenReceta';
 import Button from './Button';
-import { colors, radius, spacing, typography } from '../constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, fonts, radius, spacing } from '../constants/theme';
 
 type Props = {
   portada?: string;
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export default function CargandoReceta({ portada, nombre, minutos, fallo, onReintentar }: Props) {
+  const insets = useSafeAreaInsets();
   const pulso = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const bucle = Animated.loop(
@@ -36,8 +38,8 @@ export default function CargandoReceta({ portada, nombre, minutos, fallo, onRein
     <View style={st.pantalla}>
       <View style={st.fotoMarco}>
         <ImagenReceta uri={portada} ancho={900} tamanoIcono={48} style={st.foto} />
-        <Pressable style={st.atras} onPress={() => router.back()} hitSlop={8}>
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
+        <Pressable style={[st.atras, { top: Math.max(insets.top, 12) + 8 }]} onPress={() => router.back()} hitSlop={8}>
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </Pressable>
       </View>
 
@@ -53,21 +55,22 @@ export default function CargandoReceta({ portada, nombre, minutos, fallo, onRein
         ) : (
           <Animated.View style={{ opacity: opacidad }}>
             <View style={st.fila}>
-              <View style={[st.bloque, { width: 86, height: 30, borderRadius: 15 }]} />
+              <View style={[st.bloque, { width: 120, height: 34, borderRadius: 17, backgroundColor: colors.accent, opacity: 0.55 }]} />
               {minutos ? (
-                <View style={st.pastilla}>
-                  <Ionicons name="time-outline" size={14} color={colors.primary} />
+                <View style={[st.pastilla, { backgroundColor: colors.primaryLight }]}>
                   <Text style={st.pastillaTexto}>{minutos} min</Text>
                 </View>
               ) : (
-                <View style={[st.bloque, { width: 70, height: 30, borderRadius: 15 }]} />
+                <View style={[st.bloque, { width: 70, height: 34, borderRadius: 17 }]} />
               )}
+              <View style={[st.bloque, { width: 54, height: 34, borderRadius: 17, backgroundColor: colors.magic, opacity: 0.55 }]} />
             </View>
-            <View style={[st.bloque, { width: '95%', marginTop: spacing.md }]} />
-            <View style={[st.bloque, { width: '75%', marginTop: 8 }]} />
-            <View style={[st.bloque, { height: 62, borderRadius: radius.lg, marginTop: spacing.md, backgroundColor: colors.primaryLight }]} />
-            <View style={[st.bloque, { width: '40%', height: 20, marginTop: spacing.lg }]} />
-            <View style={[st.bloque, { height: 120, borderRadius: radius.lg, marginTop: spacing.sm, backgroundColor: colors.primaryLight }]} />
+            <View style={[st.bloque, { width: '45%', height: 22, marginTop: spacing.lg }]} />
+            <View style={[st.bloque, { height: 44, borderRadius: 22, marginTop: spacing.md }]} />
+            <View style={[st.bloque, { width: '90%', marginTop: spacing.md }]} />
+            <View style={[st.bloque, { width: '80%', marginTop: spacing.md }]} />
+            <View style={[st.bloque, { width: '40%', height: 22, marginTop: spacing.lg }]} />
+            <View style={[st.bloque, { height: 84, borderRadius: 28, marginTop: spacing.sm }]} />
           </Animated.View>
         )}
       </View>
@@ -77,20 +80,21 @@ export default function CargandoReceta({ portada, nombre, minutos, fallo, onRein
 
 const st = StyleSheet.create({
   pantalla: { flex: 1, backgroundColor: colors.background },
-  // Mismo marco que la foto de la pantalla de receta, para que al terminar de cargar no se mueva nada.
-  fotoMarco: { width: '100%', height: 300, padding: 12, backgroundColor: colors.primaryLight, borderBottomLeftRadius: 40, borderBottomRightRadius: 40 },
-  foto: { width: '100%', height: '100%', borderRadius: 30, backgroundColor: colors.surface },
+  // Igual que la foto de la pantalla de receta (sin marco, esquinas de abajo muy redondeadas): al cargar no se mueve nada.
+  // El fondo es rosado (no blanco), así mientras llega la foto no se ve un destello blanco.
+  fotoMarco: { width: '100%', height: 330, borderBottomLeftRadius: 44, borderBottomRightRadius: 44, overflow: 'hidden', backgroundColor: colors.primaryLight },
+  foto: { width: '100%', height: '100%' },
   atras: {
-    position: 'absolute', top: spacing.lg + 12, left: spacing.md + 12,
-    width: 42, height: 42, borderRadius: radius.pill, backgroundColor: colors.white,
+    position: 'absolute', left: 16,
+    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.white,
     alignItems: 'center', justifyContent: 'center',
   },
-  cuerpo: { padding: spacing.md },
-  titulo: { ...typography.h1, color: colors.text },
-  fila: { flexDirection: 'row', gap: 8, marginTop: spacing.sm },
+  cuerpo: { paddingHorizontal: 20, paddingTop: spacing.lg },
+  titulo: { fontFamily: fonts.displayBold, fontSize: 30, lineHeight: 36, color: colors.text },
+  fila: { flexDirection: 'row', gap: 8, marginTop: spacing.md },
   bloque: { height: 14, borderRadius: 7, backgroundColor: colors.primaryLight },
-  pastilla: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.surface, borderRadius: radius.pill, paddingHorizontal: 12, height: 30, borderWidth: 1, borderColor: colors.border },
-  pastillaTexto: { ...typography.caption, color: colors.text, fontSize: 13 },
+  pastilla: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: radius.pill, paddingHorizontal: 14, height: 34 },
+  pastillaTexto: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.text },
   fallo: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xl },
-  falloTexto: { ...typography.body, color: colors.textMuted, textAlign: 'center', marginBottom: spacing.sm },
+  falloTexto: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22, color: colors.textMuted, textAlign: 'center', marginBottom: spacing.sm },
 });

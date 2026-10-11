@@ -63,7 +63,7 @@ function dividirPaso(texto: string, orden: number): { titulo: string; detalle: s
   const limpio = (texto ?? '').trim();
   const m = limpio.match(/^(.{3,60}?)[.:]\s+([\s\S]+)$/);
   if (m) return { titulo: m[1].trim(), detalle: m[2].trim() };
-  return { titulo: `Paso ${orden}`, detalle: limpio };
+  return { titulo: '', detalle: limpio };
 }
 
 export default function RecetaDetalleScreen() {
@@ -91,7 +91,6 @@ export default function RecetaDetalleScreen() {
   const [modo, setModo] = useState<Modo>('original');
   const [retomar, setRetomar] = useState(false);
   const [pasoGuardado, setPasoGuardado] = useState<number | null>(null);
-  const [verTodosPasos, setVerTodosPasos] = useState(false);
   const [enviandoLista, setEnviandoLista] = useState(false);
   const [tecladoVisible, setTecladoVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -271,7 +270,6 @@ export default function RecetaDetalleScreen() {
   }
 
   const pasosOrdenados = [...receta.pasos].sort((a, b) => a.orden - b.orden);
-  const pasosVisibles = verTodosPasos ? pasosOrdenados : pasosOrdenados.slice(0, 1);
   const tienePasos = pasosOrdenados.length > 0;
   const textoResenas = resenas.length === 0 ? 'Sin reseñas' : `${promedio.toFixed(1)} · ${resenas.length} ${resenas.length === 1 ? 'reseña' : 'reseñas'}`;
   const mostrarBarra = !tecladoVisible;
@@ -354,16 +352,11 @@ export default function RecetaDetalleScreen() {
           <View style={styles.seccion}>
             <View style={styles.seccionCabecera}>
               <Text style={styles.seccionTitulo}>Preparación</Text>
-              {pasosOrdenados.length > 1 ? (
-                <Pressable onPress={() => { toque(); setVerTodosPasos((v) => !v); }} hitSlop={10}>
-                  <Text style={styles.enlace}>{verTodosPasos ? 'Ver menos' : `Ver los ${pasosOrdenados.length} pasos`}</Text>
-                </Pressable>
-              ) : null}
             </View>
             {!tienePasos ? (
               <Text style={styles.vacioTexto}>Sin pasos registrados.</Text>
             ) : (
-              pasosVisibles.map((paso) => {
+              pasosOrdenados.map((paso) => {
                 const d = dividirPaso(paso.instruccion, paso.orden);
                 return (
                   <View key={paso.id} style={styles.pasoTarjeta}>
@@ -371,8 +364,8 @@ export default function RecetaDetalleScreen() {
                       <Text style={styles.pasoNumeroTexto}>{paso.orden}</Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.pasoTitulo}>{d.titulo}</Text>
-                      {d.detalle ? <Text style={styles.pasoTexto}>{d.detalle}</Text> : null}
+                      {d.titulo ? <Text style={styles.pasoTitulo}>{d.titulo}</Text> : null}
+                      {d.detalle ? <Text style={d.titulo ? styles.pasoTexto : styles.pasoTextoSolo}>{d.detalle}</Text> : null}
                     </View>
                   </View>
                 );
@@ -506,6 +499,7 @@ const styles = StyleSheet.create({
   pasoNumero: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   pasoNumeroTexto: { fontFamily: fonts.displayBold, fontSize: 20, color: colors.white },
   pasoTitulo: { fontFamily: fonts.heading, fontSize: 17, color: colors.text },
+  pasoTextoSolo: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22, color: colors.text },
   pasoTexto: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.textMuted, marginTop: 2 },
   tarjeta: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, marginTop: spacing.md, ...shadow.card },
   filaAutor: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xs },
@@ -518,20 +512,20 @@ const styles = StyleSheet.create({
   },
   botonEnviar: { backgroundColor: colors.primary, width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
   barra: {
-    position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: 12,
+    position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: 10,
     paddingHorizontal: 16, paddingTop: 12, backgroundColor: colors.background,
     borderTopWidth: 1, borderTopColor: colors.border,
   },
   botonLista: {
-    height: 58, borderRadius: 29, backgroundColor: colors.text, paddingHorizontal: 20,
+    flex: 1.15, height: 58, borderRadius: 29, backgroundColor: colors.text, paddingHorizontal: 12,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
   },
-  botonListaTexto: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.white },
+  botonListaTexto: { fontFamily: fonts.bodyBold, fontSize: 13, flexShrink: 1, color: colors.white },
   botonCocinar: {
-    flex: 1, height: 58, borderRadius: 29, backgroundColor: colors.primary, paddingLeft: 24, paddingRight: 8,
+    flex: 1, height: 58, borderRadius: 29, backgroundColor: colors.primary, paddingLeft: 22, paddingRight: 7,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     shadowColor: colors.primary, shadowOpacity: 0.35, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 5,
   },
-  botonCocinarTexto: { fontFamily: fonts.bodyBold, fontSize: 17, color: colors.white },
+  botonCocinarTexto: { fontFamily: fonts.bodyBold, fontSize: 16, marginRight: 8, color: colors.white },
   circuloPlay: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
 });
