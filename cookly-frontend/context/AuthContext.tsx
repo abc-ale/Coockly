@@ -22,6 +22,7 @@ type AuthContextType = {
   loginConGoogle: () => Promise<void>;
   loginConFacebook: () => Promise<void>;
   logout: () => Promise<void>;
+  actualizarNombre: (nombre: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -218,9 +219,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await Promise.all([AsyncStorage.multiRemove(['cookly_token', 'cookly_user']), supabase.auth.signOut()]);
   }, []);
 
+  // Cambia el nombre en el servidor, en la comunidad (Supabase) y en el celular.
+  const actualizarNombre = useCallback(
+    async (nombre: string) => {
+      const { data } = await api.put('/perfil/nombre', { nombre });
+      const nuevo = (data?.nombre ?? nombre) as string;
+      setUsuario((prev) => {
+        if (!prev) return prev;
+        const actualizado = { ...prev, nombre: nuevo };
+        AsyncStorage.setItem('cookly_user', JSON.stringify(actualizado)).catch(() => {});
+        return actualizado;
+      });
+      // La comunidad muestra el nombre del perfil de Supabase; si falla no pasa nada grave.
+      try {
+        const { data: sesion } = await supabase.auth.getSession();
+        const id = sesion.session?.user.id;
+        if (id) await supabase.from('profiles').update({ nombre_completo: nuevo }).eq('id', id);
+      } catch {
+        /* sin comunidad, el nombre igual quedó guardado en la app */
+      }
+    },
+    []
+  );
+
   const valor = useMemo(
-    () => ({ usuario, token, cargando, login, registrar, loginConGoogle, loginConFacebook, logout }),
-    [usuario, token, cargando, login, registrar, loginConGoogle, loginConFacebook, logout]
+    () => ({ usuario, token, cargando, login, registrar, loginConGoogle, loginConFacebook, logout, actualizarNombre }),
+    [usuario, token, cargando, login, registrar, loginConGoogle, loginConFacebook, logout, actualizarNombre]
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;

@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { colors, radius, spacing, typography, fonts } from '../../constants/theme';
@@ -57,17 +58,24 @@ type Post = {
   commentsCount: number;
 };
 
-/** Trae UNA página de posts. Los contadores vienen agregados (count) en vez de listas completas. */
-async function traerPagina(desde: number, pestana: Pestana): Promise<Post[]> {
-  const { data: sesion } = await supabase.auth.getSession();
-  const userId = sesion.session?.user.id;
+// Última página vista de cada pestaña: al volver a entrar (o al abrir la app) se muestra al instante
+// y se actualiza por detrás, en vez de dejar al usuario mirando un spinner.
+const cachePosts: Partial<Record<Pestana, Post[]>> = {};
+const CLAVE_CACHE = 'cookly_comunidad_recientes_v1';
 
-  if (pestana === 'mios' && !userId) return [];
+/** Trae UNA página de posts. Los contadores vienen agregados (count) y solo se piden las columnas necesarias. */
+async function traerPagina(desde: number, pestana: Pestana): Promise<Post[]> {
+  let userId: string | undefined;
+  if (pestana === 'mios') {
+    const { data: sesion } = await supabase.auth.getSession();
+    userId = sesion.session?.user.id;
+    if (!userId) return [];
+  }
 
   let consulta = supabase
     .from('posts')
     .select(
-      '*, profiles!posts_user_id_fkey(username, nombre_completo), likes(count), comments(count)'
+      'id, contenido, imagen_url, created_at, user_id, profiles!posts_user_id_fkey(username, nombre_completo), likes(count), comments(count)'
     );
   if (pestana === 'mios') consulta = consulta.eq('user_id', userId as string);
   const tamano = pestana === 'populares' ? TAM_POPULARES : POR_PAGINA;
@@ -78,28 +86,32 @@ async function traerPagina(desde: number, pestana: Pestana): Promise<Post[]> {
   if (error) throw error;
   const lista: any[] = data ?? [];
 
-  // Solo pedimos MIS likes de los posts de esta página (una consulta pequeña).
-  let propios = new Set<string>();
-  if (userId && lista.length) {
-    const { data: misLikes } = await supabase
-      .from('likes')
-      .select('post_id')
-      .eq('user_id', userId)
-      .in('post_id', lista.map((p) => p.id));
-    propios = new Set((misLikes ?? []).map((l: any) => l.post_id));
-  }
-
   const posts = lista.map((p) => {
     const { likes, comments, ...resto } = p;
     return {
       ...resto,
       likesCount: likes?.[0]?.count ?? 0,
       commentsCount: comments?.[0]?.count ?? 0,
-      yaLeDiLike: propios.has(p.id),
+      yaLeDiLike: false, // se completa enseguida con misLikesDe(), sin hacer esperar a la lista
     } as Post;
   });
   if (pestana === 'populares') posts.sort((a, b) => b.likesCount - a.likesCount || (a.created_at < b.created_at ? 1 : -1));
+
+  // Las fotos de las primeras tarjetas se descargan desde ya.
+  posts.slice(0, 4).forEach((p) => {
+    if (p.imagen_url) Image.prefetch(p.imagen_url).catch(() => {});
+  });
   return posts;
+}
+
+/** Cuáles de estos posts ya tienen MI like (consulta pequeña que corre después de mostrar la lista). */
+async function misLikesDe(ids: string[]): Promise<Set<string>> {
+  if (ids.length === 0) return new Set();
+  const { data: sesion } = await supabase.auth.getSession();
+  const userId = sesion.session?.user.id;
+  if (!userId) return new Set();
+  const { data } = await supabase.from('likes').select('post_id').eq('user_id', userId).in('post_id', ids);
+  return new Set((data ?? []).map((l: any) => l.post_id as string));
 }
 
 // Tarjeta memoizada: al dar like solo se vuelve a dibujar ESA tarjeta, no toda la lista.
@@ -157,8 +169,8 @@ const PostCard = memo(function PostCard({
 });
 
 export default function CommunityScreen() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [cargando, setCargando] = useState(true);
+  const [posts, setPosts] = useState<Post[]>(cachePosts.recientes ?? []);
+  const [cargando, setCargando] = useState(!(cachePosts.recientes && cachePosts.recientes.length));
   const [refrescando, setRefrescando] = useState(false);
   const [cargandoMas, setCargandoMas] = useState(false);
   const [hayMas, setHayMas] = useState(true);
@@ -179,10 +191,24 @@ export default function CommunityScreen() {
       setError(null);
       setHayMas(modo !== 'populares' && primera.length === POR_PAGINA);
       setPosts((prev) => {
-        if (reemplazar || prev.length === 0 || modo === 'populares') return primera;
-        const ids = new Set(primera.map((p) => p.id));
-        return [...primera, ...prev.filter((p) => !ids.has(p.id))];
+        // Se conserva MI like de lo que ya estaba en pantalla mientras llega la consulta de likes.
+        const mios = new Set(prev.filter((p) => p.yaLeDiLike).map((p) => p.id));
+        const nueva = primera.map((p) => (mios.has(p.id) ? { ...p, yaLeDiLike: true } : p));
+        if (reemplazar || prev.length === 0 || modo === 'populares') return nueva;
+        const ids = new Set(nueva.map((p) => p.id));
+        return [...nueva, ...prev.filter((p) => !ids.has(p.id))];
       });
+      // Segunda fase: marca los corazones propios sin haber hecho esperar a la lista.
+      misLikesDe(primera.map((p) => p.id))
+        .then((mios) => {
+          if (modo !== pestanaRef.current) return;
+          setPosts((prev) => prev.map((p) => (mios.has(p.id) && !p.yaLeDiLike ? { ...p, yaLeDiLike: true } : p)));
+        })
+        .catch(() => {});
+      if (modo === 'recientes') {
+        cachePosts.recientes = primera;
+        AsyncStorage.setItem(CLAVE_CACHE, JSON.stringify(primera)).catch(() => {});
+      }
     } catch (e: any) {
       console.log('ERROR AL CARGAR POSTS:', e?.message);
       setError('No se pudieron cargar las publicaciones.');
@@ -191,6 +217,24 @@ export default function CommunityScreen() {
       setCargando(false);
       setRefrescando(false);
     }
+  }, []);
+
+  // Al abrir la app: si no hay nada en memoria, se muestra lo último guardado en el celular (al instante).
+  useEffect(() => {
+    if (cachePosts.recientes?.length) return;
+    AsyncStorage.getItem(CLAVE_CACHE)
+      .then((txt) => {
+        if (!txt || pestanaRef.current !== 'recientes') return;
+        const guardados: Post[] = JSON.parse(txt);
+        if (!Array.isArray(guardados) || guardados.length === 0) return;
+        setPosts((prev) => {
+          if (prev.length > 0) return prev; // ya llegó la información fresca
+          cachePosts.recientes = guardados;
+          setCargando(false);
+          return guardados;
+        });
+      })
+      .catch(() => {});
   }, []);
 
   useFocusEffect(
@@ -213,6 +257,9 @@ export default function CommunityScreen() {
         const ids = new Set(prev.map((p) => p.id));
         return [...prev, ...siguiente.filter((p) => !ids.has(p.id))];
       });
+      misLikesDe(siguiente.map((p) => p.id))
+        .then((mios) => setPosts((prev) => prev.map((p) => (mios.has(p.id) && !p.yaLeDiLike ? { ...p, yaLeDiLike: true } : p))))
+        .catch(() => {});
     } catch (e: any) {
       console.log('ERROR AL CARGAR MÁS POSTS:', e?.message);
       setHayMas(false); // se reactiva al hacer "tirar para refrescar"

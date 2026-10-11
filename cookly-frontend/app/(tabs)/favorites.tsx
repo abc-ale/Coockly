@@ -4,9 +4,19 @@ import { View, Text, ScrollView, StyleSheet, Alert, RefreshControl } from 'react
 import { router, useFocusEffect } from 'expo-router';
 import RecipeCard, { TarjetaReceta } from '../../components/RecipeCard';
 import { EsqueletoTarjetas } from '../../components/Esqueleto';
-import EstadoVacio from '../../components/EstadoVacio';
-import { colors, spacing, typography } from '../../constants/theme';
+import FavoritosVacio from '../../components/FavoritosVacio';
+import { colors, fonts, spacing } from '../../constants/theme';
 import { api } from '../../lib/api';
+
+// Fotos fijas (Cloudinary) que decoran la pantalla vacía: así siempre se ven distintas entre sí.
+const PORTADAS_VACIO = [
+  'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791698897/Notificaciones-1.png',
+  'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791697698/Notificaciones-2.png',
+  'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791697699/Notificaciones-3.png',
+  'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791697699/Notificaciones-4.png',
+  'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791697700/Notificaciones-5.png',
+  'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791697699/Notificaciones-6.png',
+];
 
 export default function FavoritesScreen() {
   const [recetas, setRecetas] = useState<TarjetaReceta[]>([]);
@@ -58,6 +68,7 @@ export default function FavoritesScreen() {
         <RefreshControl refreshing={refrescando} onRefresh={refrescar} colors={[colors.primary]} tintColor={colors.primary} />
       }
     >
+      {recetas.length === 0 && !cargando && <Text style={styles.kicker}>Tus recetas guardadas</Text>}
       <Text style={styles.title}>Favoritos</Text>
 
       {cargando && recetas.length === 0 ? (
@@ -65,13 +76,7 @@ export default function FavoritesScreen() {
           <EsqueletoTarjetas cantidad={2} />
         </View>
       ) : recetas.length === 0 ? (
-        <EstadoVacio
-          icono="heart-outline"
-          titulo="Aún no tienes favoritos"
-          texto="Toca el corazón en una receta para guardarla aquí."
-          etiquetaBoton="Explorar recetas"
-          onBoton={() => router.push('/(tabs)/home')}
-        />
+        <FavoritosVacio portadas={PORTADAS_VACIO} onExplorar={() => router.push('/(tabs)/home')} />
       ) : (
         <View style={styles.grid}>
           {recetas.map((receta, i) => (
@@ -91,7 +96,8 @@ export default function FavoritesScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background, padding: spacing.md, paddingTop: spacing.xl },
-  title: { ...typography.h1, color: colors.text, marginBottom: spacing.md },
+  kicker: { fontFamily: fonts.body, fontSize: 14, color: colors.textMuted },
+  title: { fontFamily: fonts.display, fontSize: 32, lineHeight: 38, color: colors.text, marginBottom: spacing.md },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

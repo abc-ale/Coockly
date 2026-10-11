@@ -1,16 +1,36 @@
 // app/(tabs)/profile.tsx
-import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+// Perfil según el mockup: cabecera rosada con avatar, estadísticas, Menú express, historial y cuenta.
+import React, { useCallback, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import Button from '../../components/Button';
-import { colors, radius, spacing, typography, shadow } from '../../constants/theme';
+import { router, useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, fonts, spacing } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../lib/api';
 import { mostrarAlerta } from '../../components/Dialogo';
 import { Aparecer, Rebote, Presionable } from '../../components/Animaciones';
 
+const SOMBRA = {
+  shadowColor: colors.text, shadowOpacity: 0.07, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 3,
+} as const;
+
 export default function ProfileScreen() {
   const { usuario, logout } = useAuth();
+  const insets = useSafeAreaInsets();
+  const esAdmin = usuario?.rol === 'ADMINISTRADOR';
+
+  const [favoritas, setFavoritas] = useState<number | null>(null);
+  const [listas, setListas] = useState<number | null>(null);
+
+  // Estadísticas: se actualizan cada vez que se abre la pestaña.
+  useFocusEffect(
+    useCallback(() => {
+      if (esAdmin) return;
+      api.get('/recetas/favoritos').then((r) => setFavoritas(Array.isArray(r.data) ? r.data.length : 0)).catch(() => {});
+      api.get('/listas-compra').then((r) => setListas(Array.isArray(r.data) ? r.data.length : 0)).catch(() => {});
+    }, [esAdmin])
+  );
 
   function confirmarCerrarSesion() {
     mostrarAlerta('Cerrar sesión', '¿Seguro que quieres salir?', [
@@ -26,84 +46,157 @@ export default function ProfileScreen() {
     ]);
   }
 
+  const abrirEditar = () => router.push('/cambiar-nombre');
+
+  const nombre = usuario?.nombre ?? 'Usuario';
+  const inicial = nombre.trim().charAt(0).toUpperCase() || 'C';
+
   return (
-    <View style={styles.screen}>
-      <Rebote>
-        <View style={styles.avatar}>
-          <Ionicons name="person" size={36} color={colors.white} />
-        </View>
-      </Rebote>
+    <ScrollView style={st.screen} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+      {/* Cabecera: sube hasta arriba del todo, por detrás de la barra de estado */}
+      <View style={[st.cabecera, { marginTop: -(insets.top + spacing.sm), paddingTop: insets.top + 20 }]}>
+        <View style={st.decoAmarilla} />
+        <View style={st.decoVerde} />
+        <Text style={st.titulo}>Mi perfil</Text>
 
-      <Aparecer delay={120}>
-        <Text style={styles.name}>{usuario?.nombre ?? 'Usuario'}</Text>
-      </Aparecer>
-      <Aparecer delay={200}>
-        <Text style={styles.email}>{usuario?.correo}</Text>
-      </Aparecer>
-      <Aparecer delay={260}>
-        <View style={styles.roleChip}>
-          <Text style={styles.roleText}>{usuario?.rol}</Text>
-        </View>
-      </Aparecer>
+        <Rebote>
+          <View style={st.avatarCaja}>
+            <View style={st.avatar}>
+              <Text style={st.avatarLetra}>{inicial}</Text>
+            </View>
+            <Pressable onPress={abrirEditar} style={st.lapiz} accessibilityLabel="Editar nombre" hitSlop={6}>
+              <Ionicons name="pencil" size={16} color={colors.text} />
+            </Pressable>
+          </View>
+        </Rebote>
 
-      <View style={styles.seccionOpciones}>
-        <Aparecer delay={320}>
-          <Presionable escalaAlPresionar={0.97} style={styles.opcionFila} onPress={() => router.push('/menu-express')}>
-          <Ionicons name="flash-outline" size={20} color={colors.primary} />
-          <Text style={styles.opcionTexto}>Menú express</Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-        </Presionable>
+        <Aparecer delay={120}>
+          <Text style={st.nombre}>{nombre}</Text>
+        </Aparecer>
+        <Aparecer delay={180}>
+          <Text style={st.correo}>{usuario?.correo}</Text>
+        </Aparecer>
+      </View>
+
+      <View style={st.cuerpo}>
+        {!esAdmin && (
+          <Aparecer delay={220}>
+            <View style={st.statsFila}>
+              <View style={[st.stat, { backgroundColor: colors.accent }]}>
+                <Text style={st.statNumero}>{favoritas ?? '–'}</Text>
+                <Text style={st.statTexto}>Recetas favoritas</Text>
+              </View>
+              <View style={[st.stat, { backgroundColor: colors.magic }]}>
+                <Text style={st.statNumero}>{listas ?? '–'}</Text>
+                <Text style={st.statTexto}>Listas activas</Text>
+              </View>
+            </View>
+          </Aparecer>
+        )}
+
+        <Aparecer delay={280}>
+          <Presionable escalaAlPresionar={0.97} style={st.express} onPress={() => router.push('/menu-express')}>
+            <View style={st.expressIcono}>
+              <Ionicons name="flash" size={22} color={colors.accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={st.expressTitulo}>Menú express</Text>
+              <Text style={st.expressSub}>Ideas listas en 15 minutos</Text>
+            </View>
+            <View style={st.nuevo}>
+              <Text style={st.nuevoTexto}>Nuevo</Text>
+            </View>
+          </Presionable>
+        </Aparecer>
+
+        <Aparecer delay={340}>
+          <Presionable escalaAlPresionar={0.97} style={st.fila} onPress={() => router.push('/historial')}>
+            <View style={[st.filaIcono, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="time-outline" size={22} color={colors.primary} />
+            </View>
+            <Text style={st.filaTexto}>Historial de recetas</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+          </Presionable>
         </Aparecer>
 
         <Aparecer delay={400}>
-          <Presionable escalaAlPresionar={0.97} style={styles.opcionFila} onPress={() => router.push('/menu-semanal')}>
-          <Ionicons name="calendar-outline" size={20} color={colors.primary} />
-          <Text style={styles.opcionTexto}>Menú semanal</Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-        </Presionable>
+          <Presionable escalaAlPresionar={0.97} style={st.fila} onPress={abrirEditar}>
+            <View style={[st.filaIcono, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="pencil" size={20} color={colors.primary} />
+            </View>
+            <Text style={st.filaTexto}>Cambiar nombre</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+          </Presionable>
         </Aparecer>
 
-        <Aparecer delay={480}>
-          <Presionable escalaAlPresionar={0.97} style={styles.opcionFila} onPress={() => router.push('/historial')}>
-          <Ionicons name="time-outline" size={20} color={colors.primary} />
-          <Text style={styles.opcionTexto}>Historial de recetas</Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-        </Presionable>
+        <Aparecer delay={430}>
+          <Presionable escalaAlPresionar={0.97} style={st.fila} onPress={() => router.push('/cambiar-contrasena')}>
+            <View style={[st.filaIcono, { backgroundColor: colors.magic }]}>
+              <Ionicons name="lock-closed" size={20} color={colors.text} />
+            </View>
+            <Text style={st.filaTexto}>Cambiar contraseña</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+          </Presionable>
         </Aparecer>
 
-        <Aparecer delay={560}>
-          <Presionable escalaAlPresionar={0.97} style={styles.opcionFila} onPress={() => router.push('/cambiar-contrasena')}>
-          <Ionicons name="lock-closed-outline" size={20} color={colors.primary} />
-          <Text style={styles.opcionTexto}>Cambiar contraseña</Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-        </Presionable>
+        <Aparecer delay={460}>
+          <Presionable escalaAlPresionar={0.97} style={st.salir} onPress={confirmarCerrarSesion}>
+            <Ionicons name="log-out-outline" size={22} color={colors.primary} />
+            <Text style={st.salirTexto}>Cerrar sesión</Text>
+          </Presionable>
         </Aparecer>
       </View>
 
-      <View style={{ marginTop: spacing.lg, width: '100%' }}>
-        <Button label="Cerrar sesión" variant="outline" onPress={confirmarCerrarSesion} />
-      </View>
-    </View>
+    </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background, alignItems: 'center', padding: spacing.lg, paddingTop: spacing.xl * 1.5 },
+const st = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
+  cabecera: {
+    alignItems: 'center', backgroundColor: colors.primaryLight, borderBottomLeftRadius: 44, borderBottomRightRadius: 44,
+    paddingBottom: 22, overflow: 'hidden',
+  },
+  decoAmarilla: { position: 'absolute', top: 60, right: -34, width: 84, height: 84, borderRadius: 42, backgroundColor: colors.accent },
+  decoVerde: { position: 'absolute', top: 90, left: 28, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.magic },
+  titulo: { fontFamily: fonts.heading, fontSize: 18, color: colors.text, marginBottom: 18 },
+  avatarCaja: { width: 112, height: 112, marginBottom: 12 },
   avatar: {
-    width: 88, height: 88, borderRadius: radius.pill, backgroundColor: colors.primary,
-    alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md,
+    width: 112, height: 112, borderRadius: 38, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 4, borderColor: colors.white,
+    shadowColor: colors.primary, shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 8,
   },
-  name: { ...typography.h2, color: colors.text },
-  email: { ...typography.body, color: colors.textMuted, marginTop: 2 },
-  roleChip: {
-    backgroundColor: colors.primaryLight, borderRadius: radius.pill,
-    paddingHorizontal: spacing.md, paddingVertical: 4, marginTop: spacing.sm,
+  avatarLetra: { fontFamily: fonts.display, fontSize: 54, lineHeight: 64, color: colors.white },
+  lapiz: {
+    position: 'absolute', right: -6, bottom: -6, width: 36, height: 36, borderRadius: 18, backgroundColor: colors.accent,
+    alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: colors.white,
   },
-  roleText: { ...typography.caption, color: colors.primaryDark },
-  seccionOpciones: { width: '100%', marginTop: spacing.xl, gap: spacing.sm },
-  opcionFila: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surface,
-    borderRadius: radius.md, padding: spacing.md, ...shadow.card,
+  nombre: { fontFamily: fonts.display, fontSize: 28, lineHeight: 34, color: colors.text },
+  correo: { fontFamily: fonts.body, fontSize: 14, color: colors.textMuted, marginTop: 2 },
+  cuerpo: { paddingHorizontal: 20, paddingTop: 18, gap: 12 },
+  statsFila: { flexDirection: 'row', gap: 12 },
+  stat: { flex: 1, borderRadius: 26, paddingVertical: 16, paddingHorizontal: 18, justifyContent: 'center' },
+  statNumero: { fontFamily: fonts.display, fontSize: 34, lineHeight: 40, color: colors.text },
+  statTexto: { fontFamily: fonts.heading, fontSize: 14, color: colors.text, marginTop: 2 },
+  express: {
+    flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.accent, borderRadius: 28,
+    paddingVertical: 14, paddingHorizontal: 16,
+    shadowColor: colors.accent, shadowOpacity: 0.5, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5,
   },
-  opcionTexto: { ...typography.body, color: colors.text, flex: 1 },
+  expressIcono: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center' },
+  expressTitulo: { fontFamily: fonts.heading, fontSize: 18, color: colors.text },
+  expressSub: { fontFamily: fonts.body, fontSize: 13, color: colors.text, opacity: 0.8, marginTop: 1 },
+  nuevo: { backgroundColor: colors.primary, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 6 },
+  nuevoTexto: { fontFamily: fonts.heading, fontSize: 12, color: colors.white },
+  fila: {
+    flexDirection: 'row', alignItems: 'center', gap: 14, height: 68, backgroundColor: colors.white, borderRadius: 26,
+    paddingHorizontal: 14, ...SOMBRA,
+  },
+  filaIcono: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  filaTexto: { flex: 1, fontFamily: fonts.heading, fontSize: 17, color: colors.text },
+  salir: {
+    height: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 30,
+    borderWidth: 2, borderColor: colors.primary, backgroundColor: colors.background, marginTop: 4,
+  },
+  salirTexto: { fontFamily: fonts.heading, fontSize: 17, color: colors.primary },
 });

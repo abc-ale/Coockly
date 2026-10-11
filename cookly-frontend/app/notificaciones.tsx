@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EntradaSuave } from '../components/RecipeCard';
 import Estrellas from '../components/Estrellas';
 import EstadoVacio from '../components/EstadoVacio';
+import NotificacionesVacio from '../components/NotificacionesVacio';
 import { toque } from '../lib/vibracion';
 import { colors, fonts, spacing } from '../constants/theme';
 import { api } from '../lib/api';
@@ -224,11 +225,7 @@ export default function NotificacionesScreen() {
               onBoton={cargar}
             />
           ) : lista.length === 0 ? (
-            <EstadoVacio
-              icono="notifications-off-outline"
-              titulo="Todo al día"
-              texto="Cuando haya recetas nuevas o novedades de tus reportes, las verás aquí."
-            />
+            <NotificacionesVacio />
           ) : (
             grupos.map((g) => (
               <View key={g.nombre} style={{ marginBottom: 6 }}>

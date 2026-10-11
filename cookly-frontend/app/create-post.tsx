@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { colors, radius, spacing, typography } from '../constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Presionable } from '../components/Animaciones';
+import { colors, fonts, spacing } from '../constants/theme';
 import { supabase } from '../lib/supabase';
 
 // Tipos que acepta el bucket "posts-images" de Supabase.
@@ -27,10 +30,37 @@ const EXTENSION_POR_TIPO: Record<string, string> = {
   'image/heif': 'heif',
 };
 
+const COLORES_AVATAR = ['#BEE3A5', '#FFD866', '#F3D9DC', '#FFB3C7', '#CFE8FF'];
+const LIMITE = 1000;
+
+function colorDe(id: string) {
+  let n = 0;
+  for (let i = 0; i < id.length; i++) n = (n + id.charCodeAt(i)) % 997;
+  return COLORES_AVATAR[n % COLORES_AVATAR.length];
+}
+
 export default function CreatePostScreen() {
+  const insets = useSafeAreaInsets();
+  const [autor, setAutor] = useState<{ nombre: string; id: string } | null>(null);
   const [contenido, setContenido] = useState('');
   const [imagen, setImagen] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [publicando, setPublicando] = useState(false);
+
+  // Nombre y avatar de quien publica (solo decorativo; si falla, se muestra "Tú").
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: sesion } = await supabase.auth.getSession();
+        const id = sesion.session?.user.id;
+        if (!id) return;
+        const { data } = await supabase.from('profiles').select('username, nombre_completo').eq('id', id).maybeSingle();
+        const nombre = (data?.nombre_completo || data?.username || 'Tú').replace(/_[0-9a-f]{6,}$/i, '');
+        setAutor({ nombre, id });
+      } catch {
+        /* sin nombre, no pasa nada */
+      }
+    })();
+  }, []);
 
   const elegirImagen = async () => {
     const permiso = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -112,51 +142,76 @@ export default function CreatePostScreen() {
     }
   };
 
+  const nombre = autor?.nombre ?? 'Tú';
+  const puedePublicar = (contenido.trim().length > 0 || !!imagen) && !publicando;
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="close" size={26} color={colors.text} />
-        </TouchableOpacity>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+        <Presionable onPress={() => router.back()} style={styles.botonCerrar} accessibilityLabel="Cerrar">
+          <Ionicons name="close" size={22} color={colors.text} />
+        </Presionable>
         <Text style={styles.headerTitulo}>Nueva publicación</Text>
-        <View style={{ width: 26 }} />
+        <View style={{ width: 44 }} />
       </View>
 
-      <View style={styles.content}>
-        <TextInput
-          style={styles.input}
-          placeholder="¿Qué cocinaste hoy? Comparte tu receta o consejo..."
-          placeholderTextColor={colors.textMuted}
-          value={contenido}
-          onChangeText={setContenido}
-          multiline
-          textAlignVertical="top"
-          maxLength={1000}
-        />
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.autorFila}>
+          <View style={[styles.avatar, { backgroundColor: autor ? colorDe(autor.id) : colors.primaryLight }]}>
+            <Text style={styles.avatarLetra}>{nombre.charAt(0).toUpperCase()}</Text>
+          </View>
+          <View>
+            <Text style={styles.autorNombre}>{nombre}</Text>
+            <Text style={styles.autorSub}>Comparte con la comunidad</Text>
+          </View>
+        </View>
+
+        <View style={styles.tarjetaTexto}>
+          <TextInput
+            style={styles.input}
+            placeholder="¿Qué cocinaste hoy? Comparte tu receta o consejo..."
+            placeholderTextColor="#A8959D"
+            value={contenido}
+            onChangeText={setContenido}
+            multiline
+            textAlignVertical="top"
+            maxLength={LIMITE}
+          />
+          <Text style={styles.contador}>{contenido.length} / {LIMITE}</Text>
+        </View>
 
         {imagen ? (
           <View>
             <Image source={{ uri: imagen.uri }} style={styles.previewImagen} />
-            <TouchableOpacity style={styles.quitarImagen} onPress={() => setImagen(null)}>
-              <Ionicons name="close-circle" size={26} color={colors.white} />
+            <TouchableOpacity style={styles.quitarImagen} onPress={() => setImagen(null)} accessibilityLabel="Quitar foto">
+              <Ionicons name="close" size={20} color={colors.white} />
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity style={styles.botonImagen} onPress={elegirImagen}>
-            <Ionicons name="image-outline" size={22} color={colors.primary} />
-            <Text style={styles.botonImagenTexto}>Agregar foto</Text>
-          </TouchableOpacity>
+          <Presionable onPress={elegirImagen} style={styles.zonaFoto} escalaAlPresionar={0.97}>
+            <View style={styles.zonaFotoCirculo}>
+              <Ionicons name="image-outline" size={28} color={colors.white} />
+            </View>
+            <Text style={styles.zonaFotoTitulo}>Agregar foto</Text>
+            <Text style={styles.zonaFotoSub}>Una buena foto hace que se antojen</Text>
+          </Presionable>
         )}
-      </View>
+      </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
         <TouchableOpacity
-          style={[styles.botonPublicar, publicando && { opacity: 0.6 }]}
+          style={[styles.botonPublicar, !puedePublicar && { opacity: 0.55 }]}
           onPress={publicar}
           disabled={publicando}
+          activeOpacity={0.85}
         >
           {publicando ? (
             <ActivityIndicator color={colors.white} />
@@ -175,44 +230,44 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingHorizontal: 20,
+    paddingBottom: spacing.sm,
   },
-  headerTitulo: { ...typography.h3, color: colors.text },
-  content: { flex: 1, padding: spacing.md, gap: spacing.md },
-  input: { minHeight: 100, ...typography.body, color: colors.text },
-  botonImagen: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    justifyContent: 'center',
+  botonCerrar: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center',
+    shadowColor: colors.text, shadowOpacity: 0.1, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3,
   },
-  botonImagenTexto: { color: colors.primary, fontWeight: '600', fontSize: 14 },
-  previewImagen: {
-    width: '100%',
-    height: 240,
-    borderRadius: radius.md,
-    backgroundColor: colors.border,
+  headerTitulo: { fontFamily: fonts.display, fontSize: 24, lineHeight: 30, color: colors.text },
+  content: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 24, gap: 14 },
+  autorFila: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  avatar: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
+  avatarLetra: { fontFamily: fonts.display, fontSize: 20, color: colors.text },
+  autorNombre: { fontFamily: fonts.heading, fontSize: 16, color: colors.text },
+  autorSub: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
+  tarjetaTexto: {
+    backgroundColor: colors.white, borderRadius: 28, paddingHorizontal: 18, paddingTop: 14, paddingBottom: 12, minHeight: 150,
+    shadowColor: colors.text, shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 2,
   },
+  input: { flex: 1, minHeight: 100, fontFamily: fonts.body, fontSize: 17, lineHeight: 25, color: colors.text, padding: 0 },
+  contador: { alignSelf: 'flex-end', fontFamily: fonts.body, fontSize: 12, color: '#A8959D', marginTop: 4 },
+  zonaFoto: {
+    height: 210, borderRadius: 28, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.primary,
+    backgroundColor: '#FFEEF0', alignItems: 'center', justifyContent: 'center', gap: 4,
+  },
+  zonaFotoCirculo: {
+    width: 60, height: 60, borderRadius: 30, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginBottom: 8,
+  },
+  zonaFotoTitulo: { fontFamily: fonts.heading, fontSize: 16, color: colors.primary },
+  zonaFotoSub: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
+  previewImagen: { width: '100%', height: 260, borderRadius: 28, backgroundColor: colors.primaryLight },
   quitarImagen: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 13,
+    position: 'absolute', top: 12, right: 12, width: 34, height: 34, borderRadius: 17,
+    backgroundColor: 'rgba(43,18,32,0.6)', alignItems: 'center', justifyContent: 'center',
   },
-  footer: { padding: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
+  footer: { paddingHorizontal: 20, paddingTop: 14, borderTopWidth: 1, borderTopColor: colors.primaryLight, backgroundColor: colors.background },
   botonPublicar: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: colors.primary, borderRadius: 28, height: 56, justifyContent: 'center', alignItems: 'center',
+    shadowColor: colors.primary, shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 6,
   },
-  botonPublicarTexto: { color: colors.white, fontWeight: '700', fontSize: 16 },
+  botonPublicarTexto: { fontFamily: fonts.heading, fontSize: 17, color: colors.white },
 });

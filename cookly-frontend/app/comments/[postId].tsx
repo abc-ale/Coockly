@@ -13,7 +13,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { colors, radius, spacing, typography } from '../../constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Presionable } from '../../components/Animaciones';
+import { colors, fonts, spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 
 type Comentario = {
@@ -24,9 +26,37 @@ type Comentario = {
   likesCount: number;
   yaLeDiLike: boolean;
   respuestas: Comentario[];
+  user_id: string;
+  created_at?: string;
 };
 
+const COLORES_AVATAR = ['#BEE3A5', '#FFD866', '#F3D9DC', '#FFB3C7', '#CFE8FF'];
+
+function colorDe(id: string) {
+  let n = 0;
+  for (let i = 0; i < (id || '').length; i++) n = (n + id.charCodeAt(i)) % 997;
+  return COLORES_AVATAR[n % COLORES_AVATAR.length];
+}
+
+function nombreDe(c: Comentario) {
+  return (c.profiles?.nombre_completo || c.profiles?.username || 'Usuario').replace(/_[0-9a-f]{6,}$/i, '');
+}
+
+function tiempoRelativo(iso?: string) {
+  if (!iso) return '';
+  const min = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (min < 1) return 'ahora';
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `hace ${d} d`;
+  return new Date(iso).toLocaleDateString('es-PE');
+}
+
 export default function CommentsScreen() {
+  const insets = useSafeAreaInsets();
+  const [abiertos, setAbiertos] = useState<Set<string>>(new Set()); // comentarios con respuestas desplegadas
   const { postId } = useLocalSearchParams<{ postId: string }>();
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [texto, setTexto] = useState('');
@@ -103,6 +133,7 @@ export default function CommentsScreen() {
       return;
     }
 
+    if (respondiendoA) setAbiertos((prev) => new Set(prev).add(respondiendoA.id)); // que se vea la respuesta recién enviada
     setTexto('');
     setRespondiendoA(null);
     cargarComentarios();
@@ -144,44 +175,94 @@ export default function CommentsScreen() {
     });
   };
 
-  const renderComentario = (item: Comentario, esRespuesta: boolean = false) => (
-    <View style={[styles.comentarioCard, esRespuesta && styles.respuestaCard]} key={item.id}>
-      <Text style={styles.autorNombre}>
-        {item.profiles?.nombre_completo || item.profiles?.username || 'Usuario'}
-      </Text>
-      <Text style={styles.comentarioTexto}>{item.contenido}</Text>
+  const alternarRespuestas = (id: string) =>
+    setAbiertos((prev) => {
+      const sig = new Set(prev);
+      if (sig.has(id)) sig.delete(id);
+      else sig.add(id);
+      return sig;
+    });
 
-      <View style={styles.accionesRow}>
-        <TouchableOpacity style={styles.accionBoton} onPress={() => alternarLikeComentario(item)}>
-          <Ionicons
-            name={item.yaLeDiLike ? 'heart' : 'heart-outline'}
-            size={16}
-            color={item.yaLeDiLike ? colors.primary : colors.textMuted}
-          />
-          <Text style={styles.accionTexto}>{item.likesCount}</Text>
-        </TouchableOpacity>
-        {!esRespuesta && (
-          <TouchableOpacity onPress={() => iniciarRespuesta(item)}>
-            <Text style={styles.responderTexto}>Responder</Text>
+  const totalComentarios = comentarios.reduce((n, c) => n + 1 + (c.respuestas?.length || 0), 0);
+
+  const renderTarjeta = (item: Comentario, esRespuesta: boolean) => {
+    const nombre = nombreDe(item);
+    return (
+      <View style={[styles.tarjeta, esRespuesta && styles.tarjetaRespuesta]}>
+        <View style={styles.autorFila}>
+          <View style={[styles.avatar, esRespuesta && styles.avatarChico, { backgroundColor: colorDe(item.user_id) }]}>
+            <Text style={[styles.avatarLetra, esRespuesta && { fontSize: 14 }]}>{nombre.charAt(0).toUpperCase()}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.autorNombre} numberOfLines={1}>{nombre}</Text>
+            {item.created_at ? <Text style={styles.hora}>{tiempoRelativo(item.created_at)}</Text> : null}
+          </View>
+        </View>
+        <Text style={styles.comentarioTexto}>{item.contenido}</Text>
+        <View style={styles.accionesRow}>
+          <TouchableOpacity
+            style={[styles.pastillaLike, item.yaLeDiLike && styles.pastillaLikeActiva]}
+            onPress={() => alternarLikeComentario(item)}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name={item.yaLeDiLike ? 'heart' : 'heart-outline'}
+              size={16}
+              color={item.yaLeDiLike ? colors.primary : colors.text}
+            />
+            <Text style={[styles.pastillaLikeTexto, item.yaLeDiLike && { color: colors.primary }]}>{item.likesCount}</Text>
+          </TouchableOpacity>
+          {!esRespuesta && (
+            <TouchableOpacity onPress={() => iniciarRespuesta(item)} style={styles.responderBoton}>
+              <Text style={styles.responderTexto}>Responder</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    );
+  };
+
+  const renderComentario = (item: Comentario) => {
+    const n = item.respuestas?.length || 0;
+    const abierto = abiertos.has(item.id);
+    return (
+      <View style={{ gap: 8 }}>
+        {renderTarjeta(item, false)}
+        {n > 0 && (
+          <TouchableOpacity style={styles.verRespuestas} onPress={() => alternarRespuestas(item.id)} activeOpacity={0.7}>
+            <View style={styles.verRespuestasLinea} />
+            <Text style={styles.verRespuestasTexto}>
+              {abierto ? 'Ocultar respuestas' : n === 1 ? 'Ver 1 respuesta' : `Ver ${n} respuestas`}
+            </Text>
+            <Ionicons name={abierto ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textMuted} />
           </TouchableOpacity>
         )}
+        {abierto && n > 0 && (
+          <View style={styles.respuestasBloque}>
+            {item.respuestas.map((r) => (
+              <View key={r.id}>{renderTarjeta(r, true)}</View>
+            ))}
+          </View>
+        )}
       </View>
-
-      {item.respuestas?.map((r) => renderComentario(r, true))}
-    </View>
-  );
+    );
+  };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+        <Presionable onPress={() => router.back()} style={styles.botonVolver} accessibilityLabel="Volver">
+          <Ionicons name="chevron-back" size={22} color={colors.text} />
+        </Presionable>
         <Text style={styles.headerTitulo}>Comentarios</Text>
-        <View style={{ width: 24 }} />
+        {totalComentarios > 0 ? (
+          <View style={styles.contador}>
+            <Text style={styles.contadorTexto}>{totalComentarios}</Text>
+          </View>
+        ) : null}
       </View>
 
       {cargando ? (
@@ -190,7 +271,9 @@ export default function CommentsScreen() {
         <FlatList
           data={comentarios}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24, gap: 12 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => renderComentario(item)}
           ListEmptyComponent={
             error ? (
@@ -207,7 +290,7 @@ export default function CommentsScreen() {
                 </TouchableOpacity>
               </View>
             ) : (
-              <Text style={styles.vacioTexto}>Sé la primera en comentar 💬</Text>
+              <Text style={styles.vacioTexto}>Aún no hay comentarios. Sé la primera en opinar.</Text>
             )
           }
         />
@@ -222,98 +305,81 @@ export default function CommentsScreen() {
         </View>
       )}
 
-      <View style={styles.inputRow}>
+      <View style={[styles.inputRow, { paddingBottom: insets.bottom + 12 }]}>
         <TextInput
           style={styles.input}
           placeholder={respondiendoA ? 'Escribe tu respuesta...' : 'Escribe un comentario...'}
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor="#A8959D"
           value={texto}
           onChangeText={setTexto}
           maxLength={500}
         />
         <TouchableOpacity
-          style={[styles.enviarBoton, enviando && { opacity: 0.5 }]}
+          style={[styles.enviarBoton, (enviando || !texto.trim()) && { opacity: 0.55 }]}
           onPress={enviarComentario}
           disabled={enviando}
+          activeOpacity={0.85}
         >
-          <Ionicons name="send" size={18} color={colors.white} />
+          <Ionicons name="send" size={20} color={colors.white} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
+const SOMBRA = { shadowColor: colors.text, shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 2 } as const;
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingBottom: spacing.sm },
+  botonVolver: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center',
+    shadowColor: colors.text, shadowOpacity: 0.1, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3,
   },
-  headerTitulo: { ...typography.h3, color: colors.text },
-  comentarioCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.sm + 4,
-    gap: spacing.xs,
+  headerTitulo: { fontFamily: fonts.display, fontSize: 30, lineHeight: 36, color: colors.text },
+  contador: { marginLeft: 'auto', backgroundColor: '#FFE3EB', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 6 },
+  contadorTexto: { fontFamily: fonts.heading, fontSize: 13, color: colors.primary },
+  tarjeta: { backgroundColor: colors.white, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 14, ...SOMBRA },
+  tarjetaRespuesta: { borderRadius: 22, paddingHorizontal: 14, paddingVertical: 12 },
+  autorFila: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  avatar: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+  avatarChico: { width: 32, height: 32, borderRadius: 16 },
+  avatarLetra: { fontFamily: fonts.display, fontSize: 17, color: colors.text },
+  autorNombre: { fontFamily: fonts.heading, fontSize: 15, color: colors.text },
+  hora: { fontFamily: fonts.body, fontSize: 12, color: '#A8959D' },
+  comentarioTexto: { fontFamily: fonts.body, fontSize: 16, lineHeight: 23, color: colors.text, marginTop: 10 },
+  accionesRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 },
+  pastillaLike: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.background, borderWidth: 1.5,
+    borderColor: colors.primaryLight, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 5,
   },
-  respuestaCard: {
-    marginLeft: 20,
-    marginTop: spacing.xs,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  autorNombre: { ...typography.bodySmall, fontWeight: '600', color: colors.text },
-  comentarioTexto: { ...typography.body, color: colors.text },
-  accionesRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  accionBoton: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  accionTexto: { ...typography.caption, color: colors.textMuted },
-  responderTexto: { ...typography.caption, color: colors.primary, fontWeight: '600' },
-  vacioTexto: { textAlign: 'center', color: colors.textMuted, marginTop: 30, ...typography.body },
-  botonReintentar: {
-    marginTop: spacing.md,
-    backgroundColor: colors.primary,
-    borderRadius: radius.pill,
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.lg,
-  },
-  botonReintentarTexto: { ...typography.body, color: colors.white, fontWeight: '600' },
+  pastillaLikeActiva: { backgroundColor: '#FFE3EB', borderColor: '#FFE3EB' },
+  pastillaLikeTexto: { fontFamily: fonts.heading, fontSize: 13, color: colors.text },
+  responderBoton: { paddingHorizontal: 8, paddingVertical: 6 },
+  responderTexto: { fontFamily: fonts.heading, fontSize: 13, color: colors.primary },
+  verRespuestas: { flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 28, paddingVertical: 2 },
+  verRespuestasLinea: { width: 24, height: 2, borderRadius: 1, backgroundColor: colors.primaryLight },
+  verRespuestasTexto: { fontFamily: fonts.heading, fontSize: 14, color: colors.textMuted },
+  respuestasBloque: { marginLeft: 28, paddingLeft: 14, borderLeftWidth: 3, borderLeftColor: colors.primaryLight, gap: 8 },
+  vacioTexto: { textAlign: 'center', color: colors.textMuted, marginTop: 30, fontFamily: fonts.body, fontSize: 15, lineHeight: 22 },
+  botonReintentar: { marginTop: spacing.md, backgroundColor: colors.primary, borderRadius: 24, paddingVertical: 12, paddingHorizontal: spacing.lg },
+  botonReintentarTexto: { fontFamily: fonts.heading, fontSize: 15, color: colors.white },
   respondiendoBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.surface,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 20, paddingVertical: spacing.sm, backgroundColor: '#FFEEF0',
   },
-  respondiendoTexto: { ...typography.caption, color: colors.textMuted, fontStyle: 'italic' },
+  respondiendoTexto: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.sm + 4,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    gap: spacing.sm,
+    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 12, gap: 10,
+    borderTopWidth: 1, borderTopColor: colors.primaryLight, backgroundColor: colors.background,
   },
   input: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    height: 44,
-    ...typography.bodySmall,
-    color: colors.text,
+    flex: 1, height: 52, backgroundColor: colors.white, borderRadius: 26, paddingHorizontal: 20,
+    fontFamily: fonts.body, fontSize: 16, color: colors.text,
+    shadowColor: colors.text, shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2,
   },
   enviarBoton: {
-    backgroundColor: colors.primary,
-    width: 44,
-    height: 44,
-    borderRadius: radius.pill,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 52, height: 52, borderRadius: 26, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
+    shadowColor: colors.primary, shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 6,
   },
 });
