@@ -30,6 +30,12 @@ Cuándo usar cada acción:
 - "enviar_lista": quiere mandar los ingredientes de la receta a su lista de compras.
 - "ninguna": cualquier otra cosa (saludos, dudas de cocina, consejos, sustituciones). Ahí "texto" es tu respuesta completa.
 
+REGLAS ESTRICTAS (muy importante):
+- NUNCA escribas recetas, pasos, listas numeradas, cantidades ni ingredientes con medidas en "texto". Eso lo muestra la app con su tarjeta. Tu "texto" son como máximo 2 frases cortas (menos de 200 caracteres), sin saltos de línea.
+- Si el usuario menciona ingredientes que tiene (aunque sea "tengo pollo y arroz"), la acción es SIEMPRE "buscar_receta" con esos ingredientes, nunca "ninguna".
+- Si pide una receta completa o los pasos, responde con "buscar_receta" (o "otra_receta" si ya hay una propuesta) y dile que la verá en la tarjeta.
+- Mantén esta forma de responder igual de breve durante TODA la conversación, aunque los mensajes anteriores sean largos.
+
 Para las acciones distintas de "ninguna", "texto" es solo una frase corta de acompañamiento; la app añadirá el nombre de la receta y los detalles. No menciones nombres de recetas concretas en "texto".`;
 
 function extraerJson(crudo) {
@@ -45,6 +51,15 @@ function extraerJson(crudo) {
     }
   }
   return null;
+}
+
+/** Deja una respuesta corta: sin saltos de línea ni pasos numerados, máximo `max` caracteres (cortando en una frase). */
+function resumirTexto(t, max = 220) {
+  let limpio = String(t || '').replace(/\s*\n+\s*/g, ' ').replace(/\s+\d+\.\s+.*/, '').trim();
+  if (limpio.length <= max) return limpio;
+  const corte = limpio.slice(0, max);
+  const punto = Math.max(corte.lastIndexOf('. '), corte.lastIndexOf('! '), corte.lastIndexOf('? '));
+  return (punto > 40 ? corte.slice(0, punto + 1) : corte.replace(/\s+\S*$/, '') + '…').trim();
 }
 
 const ACCIONES = ['ninguna', 'buscar_receta', 'otra_receta', 'cambiar_ingrediente', 'porciones', 'enviar_lista'];
@@ -70,9 +85,10 @@ app.post('/chat', async (req, res) => {
 
     const messages = [
       { role: 'system', content: INSTRUCCION_SISTEMA + ctx },
-      ...mensajes.slice(-10).map((m) => ({
+      // Solo lo reciente, y las respuestas largas del asistente se recortan para que no "contagien" el estilo.
+      ...mensajes.slice(-6).map((m) => ({
         role: m.esUsuario ? 'user' : 'assistant',
-        content: String(m.texto ?? ''),
+        content: m.esUsuario ? String(m.texto ?? '').slice(0, 400) : resumirTexto(String(m.texto ?? ''), 160),
       })),
     ];
 
@@ -86,7 +102,7 @@ app.post('/chat', async (req, res) => {
         model: 'openai/gpt-oss-120b',
         messages,
         temperature: 0.5,
-        max_tokens: 700,
+        max_tokens: 1200,
         reasoning_effort: 'low',
         response_format: { type: 'json_object' },
       }),
@@ -103,12 +119,12 @@ app.post('/chat', async (req, res) => {
     const json = extraerJson(crudo);
     if (!json) {
       // Si no vino JSON, se devuelve como charla normal.
-      return res.json({ texto: crudo.trim(), accion: 'ninguna', ingredientes: [], excluir: [], porciones: null });
+      return res.json({ texto: resumirTexto(crudo), accion: 'ninguna', ingredientes: [], excluir: [], porciones: null });
     }
 
     const porciones = Number(json.porciones);
     res.json({
-      texto: String(json.texto ?? '').trim(),
+      texto: resumirTexto(json.texto),
       accion: ACCIONES.includes(json.accion) ? json.accion : 'ninguna',
       ingredientes: lista(json.ingredientes),
       excluir: lista(json.excluir),

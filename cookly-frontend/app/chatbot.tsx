@@ -400,6 +400,16 @@ export default function ChatbotScreen() {
         return;
       }
 
+      // Si el modelo se equivocó y dejó una frase tipo "tengo pollo y arroz" como charla, igual se busca la receta.
+      if (a.accion === 'ninguna' && /\btengo\b/i.test(limpio)) {
+        const ing = ingredientesDe(limpio);
+        if (ing.length > 0) {
+          ctx.ingredientes = ing;
+          ctx.mostradas.clear();
+          return await proponer(esPorVoz);
+        }
+      }
+
       switch (a.accion) {
         case 'buscar_receta':
           ctx.ingredientes = a.ingredientes.length ? a.ingredientes : ctx.ingredientes;
@@ -505,14 +515,14 @@ export default function ChatbotScreen() {
       />
 
       {chips.length > 0 && !cargando ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={st.chips}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 0 }} contentContainerStyle={st.chips}>
           {chips.map((c) => (
             <Pressable
               key={c.texto}
               onPress={() => { seleccion(); c.alTocar(); }}
               style={({ pressed }) => [st.chip, { backgroundColor: c.color }, pressed && { opacity: 0.85 }]}
             >
-              <Text style={st.chipTexto}>{c.texto}</Text>
+              <Text style={st.chipTexto} numberOfLines={1}>{c.texto}</Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -577,8 +587,8 @@ const st = StyleSheet.create({
   verRecetaTexto: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.white },
 
   chips: { paddingHorizontal: 20, paddingVertical: 8, gap: 8 },
-  chip: { borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9 },
-  chipTexto: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.text },
+  chip: { borderRadius: 999, paddingHorizontal: 16, minHeight: 40, alignItems: 'center', justifyContent: 'center' },
+  chipTexto: { fontFamily: fonts.bodyBold, fontSize: 14, lineHeight: 20, color: colors.text, includeFontPadding: false },
 
   barra: { paddingHorizontal: 16, paddingTop: 6 },
   entrada: {
