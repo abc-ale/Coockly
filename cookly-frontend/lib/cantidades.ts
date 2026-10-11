@@ -7,7 +7,8 @@ export const PORCIONES_BASE = 4;
 export const MIN_PERSONAS = 1;
 export const MAX_PERSONAS = 500;
 
-export type Modo = 'original' | 'gramos' | 'kilos' | 'tazas' | 'cucharadas';
+/** 'peso' = gramos y pasa solo a kilos cuando son muchos; 'medidas' = tazas y cucharas. */
+export type Modo = 'original' | 'gramos' | 'kilos' | 'tazas' | 'cucharadas' | 'peso' | 'medidas';
 
 type Canonica = 'taza' | 'cucharada' | 'cucharadita' | 'ml' | 'l' | 'g' | 'kg' | 'oz' | 'lb' | 'otra';
 
@@ -71,6 +72,12 @@ export function escalar(
   personas: number,
   modo: Modo,
 ): Escalado {
+  if (modo === 'peso') {
+    const e = escalar(cantidad, unidad, nombreIngrediente, personas, 'gramos');
+    return e.unidad === 'g' && e.valor >= 1000 ? { ...e, valor: e.valor / 1000, unidad: 'kg' } : e;
+  }
+  if (modo === 'medidas') return escalar(cantidad, unidad, nombreIngrediente, personas, 'tazas');
+
   let valor = cantidad * (personas / PORCIONES_BASE);
   const canon = normalizar(unidad);
   let etiqueta = canon === 'otra' ? (unidad ?? '').trim() : NOMBRE[canon];
@@ -175,4 +182,22 @@ export function textoIngrediente(
   const cant = formatoCantidad(e.valor);
   const un = e.unidad ? ` ${unidadConPlural(e.unidad, e.valor)}` : '';
   return `${e.aproximado ? '≈ ' : ''}${cant}${un} de ${nombreIngrediente}`;
+}
+
+
+/** Para listas con el nombre a un lado y la cantidad al otro: { nombre: "Arroz", cantidad: "2 tazas" }. */
+export function partesIngrediente(
+  cantidad: number,
+  unidad: string,
+  nombreIngrediente: string,
+  personas: number,
+  modo: Modo,
+): { nombre: string; cantidad: string } {
+  const e = escalar(cantidad, unidad, nombreIngrediente, personas, modo);
+  const un = e.unidad ? ` ${unidadConPlural(e.unidad, e.valor)}` : '';
+  const nombre = nombreIngrediente.trim();
+  return {
+    nombre: nombre.charAt(0).toUpperCase() + nombre.slice(1),
+    cantidad: `${e.aproximado ? '≈ ' : ''}${formatoCantidad(e.valor)}${un}`,
+  };
 }

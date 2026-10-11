@@ -2,28 +2,26 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, Pressable, TextInput,
-  Alert, KeyboardAvoidingView, Platform,
+  Alert, KeyboardAvoidingView, Keyboard, Platform, ActivityIndicator,
 } from 'react-native';
-import { Aparecer, Presionable, Pulso } from '../../components/Animaciones';
-import Degradado from '../../components/Degradado';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Aparecer, Presionable } from '../../components/Animaciones';
 import ImagenReceta from '../../components/ImagenReceta';
 import CargandoReceta from '../../components/CargandoReceta';
 import { mostrarAviso } from '../../components/Aviso';
-import { toque } from '../../lib/vibracion';
+import { toque, exito } from '../../lib/vibracion';
 import { leerProgreso } from '../../lib/progresoCocina';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import { colors, fonts, radius, spacing, typography, shadow } from '../../constants/theme';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
-import Stars from '../../components/Stars';
 import Estrellas from '../../components/Estrellas';
-import Button from '../../components/Button';
 import EtiquetasReceta from '../../components/EtiquetasReceta';
 import CocinaGuiada from '../../components/CocinaGuiada';
 import Porciones from '../../components/Porciones';
 import { FormularioResena, ResumenResenas, TarjetaResena } from '../../components/Resenas';
-import { Modo, PORCIONES_BASE, textoIngrediente } from '../../lib/cantidades';
+import { Modo, PORCIONES_BASE, partesIngrediente } from '../../lib/cantidades';
 
 
 type Ingrediente = {
@@ -58,11 +56,22 @@ type Resena = {
   usuario: { nombre: string; correo: string };
 };
 
+const ALTO_FOTO = 330;
+
+/** "Sazona el pollo. Sal, ajo y comino." -> título "Sazona el pollo" y detalle "Sal, ajo y comino." */
+function dividirPaso(texto: string, orden: number): { titulo: string; detalle: string } {
+  const limpio = (texto ?? '').trim();
+  const m = limpio.match(/^(.{3,60}?)[.:]\s+([\s\S]+)$/);
+  if (m) return { titulo: m[1].trim(), detalle: m[2].trim() };
+  return { titulo: `Paso ${orden}`, detalle: limpio };
+}
+
 export default function RecetaDetalleScreen() {
   // nombre, portada y minutos llegan desde la tarjeta que se tocó: así la pantalla ya muestra algo mientras carga el resto.
   const { id, continuar, nombre: nombreParam, portada: portadaParam, minutos: minutosParam } =
     useLocalSearchParams<{ id: string; continuar?: string; nombre?: string; portada?: string; minutos?: string }>();
   const { usuario } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const [receta, setReceta] = useState<RecetaDetalle | null>(null);
   const [imagenUrl, setImagenUrl] = useState<string | null>(null);
@@ -82,6 +91,19 @@ export default function RecetaDetalleScreen() {
   const [modo, setModo] = useState<Modo>('original');
   const [retomar, setRetomar] = useState(false);
   const [pasoGuardado, setPasoGuardado] = useState<number | null>(null);
+  const [verTodosPasos, setVerTodosPasos] = useState(false);
+  const [enviandoLista, setEnviandoLista] = useState(false);
+  const [tecladoVisible, setTecladoVisible] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const yResenas = useRef(0);
+  const yComentarios = useRef(0);
+
+  // Con el teclado abierto se esconde la barra de abajo (así no tapa lo que escribes).
+  useEffect(() => {
+    const a = Keyboard.addListener('keyboardDidShow', () => setTecladoVisible(true));
+    const b = Keyboard.addListener('keyboardDidHide', () => setTecladoVisible(false));
+    return () => { a.remove(); b.remove(); };
+  }, []);
 
   const cargarTodo = useCallback(async () => {
     setFallo(false);
@@ -196,6 +218,45 @@ export default function RecetaDetalleScreen() {
     }
   }
 
+  // Crea una lista de compras con los ingredientes, ya ajustados a las personas elegidas.
+  async function enviarALaLista() {
+    if (!receta || enviandoLista || receta.detallesIngredientes.length === 0) return;
+    setEnviandoLista(true);
+    toque();
+    try {
+      const { data: lista } = await api.post('/listas-compra', {
+        nombre: `${receta.nombre} (${personas} ${personas === 1 ? 'persona' : 'personas'})`.slice(0, 80),
+      });
+      const factor = personas / PORCIONES_BASE;
+      await Promise.all(
+        receta.detallesIngredientes.map((i) =>
+          api.post(`/listas-compra/${lista.id}/elementos`, {
+            ingredienteId: i.ingrediente.id,
+            cantidad: Math.round(i.cantidad * factor * 100) / 100,
+            unidad: i.unidad,
+          })
+        )
+      );
+      exito();
+      mostrarAviso('Ingredientes enviados a tu lista');
+    } catch (error: any) {
+      Alert.alert('No se pudo enviar', error?.response?.data?.mensaje || 'No pudimos enviar los ingredientes a tu lista. Inténtalo de nuevo.');
+    } finally {
+      setEnviandoLista(false);
+    }
+  }
+
+  function irA(y: number) {
+    toque();
+    scrollRef.current?.scrollTo({ y: Math.max(0, y - 12), animated: true });
+  }
+
+  function cocinar() {
+    toque();
+    setRetomar(pasoGuardado !== null);
+    setCocinando(true);
+  }
+
   // Mientras llegan los datos: foto y nombre al instante + bloques que laten (sin pantalla en blanco ni saltos).
   if (cargando || !receta) {
     return (
@@ -209,170 +270,199 @@ export default function RecetaDetalleScreen() {
     );
   }
 
-  return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: spacing.xl }}>
-        <View style={styles.imagenContainer}>
-          <ImagenReceta uri={imagenUrl ?? (portadaParam || null)} ancho={900} tamanoIcono={48} style={styles.imagen} />
+  const pasosOrdenados = [...receta.pasos].sort((a, b) => a.orden - b.orden);
+  const pasosVisibles = verTodosPasos ? pasosOrdenados : pasosOrdenados.slice(0, 1);
+  const tienePasos = pasosOrdenados.length > 0;
+  const textoResenas = resenas.length === 0 ? 'Sin reseñas' : `${promedio.toFixed(1)} · ${resenas.length} ${resenas.length === 1 ? 'reseña' : 'reseñas'}`;
+  const mostrarBarra = !tecladoVisible;
 
-          <Pressable style={styles.botonAtras} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={22} color={colors.text} />
+  return (
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.screen}
+        contentContainerStyle={{ paddingBottom: mostrarBarra ? 120 + insets.bottom : spacing.xl }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Foto grande con esquinas de abajo muy redondeadas */}
+        <View style={styles.fotoCaja}>
+          <ImagenReceta uri={imagenUrl ?? (portadaParam || null)} ancho={900} tamanoIcono={48} style={styles.foto} />
+
+          <Pressable style={[styles.botonRedondo, { top: Math.max(insets.top, 12) + 8, left: 16 }]} onPress={() => router.back()} accessibilityLabel="Volver">
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
           </Pressable>
 
-          <Pressable style={styles.botonFavorito} onPress={alternarFavorito}>
-            <Ionicons
-              name={esFavorito ? 'heart' : 'heart-outline'}
-              size={20}
-              color={esFavorito ? colors.primary : colors.textMuted}
-            />
+          <Pressable
+            style={[styles.botonRedondo, { top: Math.max(insets.top, 12) + 8, right: 16 }, esFavorito && styles.botonFavoritoOn]}
+            onPress={alternarFavorito}
+            accessibilityLabel="Favorito"
+          >
+            <Ionicons name={esFavorito ? 'heart' : 'heart-outline'} size={21} color={esFavorito ? colors.white : colors.text} />
           </Pressable>
         </View>
 
         <Aparecer distancia={18} style={styles.contenido}>
           <Text style={styles.titulo}>{receta.nombre}</Text>
-          
-          {/* Componente de Etiquetas agregado aquí debajo del título */}
-          <EtiquetasReceta recetaId={Number(id)} />
 
           <View style={styles.metaRow}>
-            <View style={styles.pastilla}>
-              <Estrellas valor={promedio} tamano={14} />
-              <Text style={styles.pastillaTexto}>{promedio.toFixed(1)} ({resenas.length})</Text>
-            </View>
+            <Pressable style={[styles.pastilla, { backgroundColor: colors.accent }]} onPress={() => irA(ALTO_FOTO + yResenas.current)}>
+              <Ionicons name="star" size={14} color={colors.text} />
+              <Text style={styles.pastillaTexto}>{textoResenas}</Text>
+            </Pressable>
             {receta.minutosPreparacion ? (
-              <View style={styles.pastilla}>
-                <Ionicons name="time-outline" size={14} color={colors.primary} />
+              <View style={[styles.pastilla, { backgroundColor: colors.primaryLight }]}>
                 <Text style={styles.pastillaTexto}>{receta.minutosPreparacion} min</Text>
               </View>
             ) : null}
-            {receta.pasos.length > 0 ? (
-              <View style={styles.pastilla}>
-                <Ionicons name="list-outline" size={14} color={colors.primary} />
-                <Text style={styles.pastillaTexto}>{receta.pasos.length} pasos</Text>
-              </View>
-            ) : null}
-          </View>
-
-          {receta.descripcion ? <Text style={styles.descripcion}>{receta.descripcion}</Text> : null}
-
-          {receta.pasos.length > 0 && (
-            <Pulso intensidad={1.02}>
-            <Presionable
-              escalaAlPresionar={0.97}
-              style={styles.cocinaGuiadaSombra}
-              onPress={() => {
-                setRetomar(pasoGuardado !== null);
-                setCocinando(true);
-              }}
-            >
-              <Degradado colores={[colors.primary, '#FF7A9E']} style={styles.botonCocinaGuiada}>
-                <Ionicons name="timer-outline" size={26} color={colors.white} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cocinaGuiadaTitulo}>
-                    {pasoGuardado !== null ? 'Continuar cocinando' : 'Empezar a cocinar'}
-                  </Text>
-                  <Text style={styles.cocinaGuiadaSub}>
-                    {pasoGuardado !== null
-                      ? `Paso ${pasoGuardado + 1} de ${receta.pasos.length}`
-                      : `${receta.pasos.length} pasos${receta.minutosPreparacion ? ` · ${receta.minutosPreparacion} min` : ''} · con cronómetro`}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.white} />
-              </Degradado>
-            </Presionable>
-            </Pulso>
-          )}
-
-          <Text style={styles.seccionTitulo}>Ingredientes</Text>
-          {receta.detallesIngredientes.length > 0 && (
-            <Porciones personas={personas} modo={modo} onPersonas={setPersonas} onModo={setModo} />
-          )}
-          {receta.detallesIngredientes.length === 0 ? (
-            <Text style={styles.vacioTexto}>Sin ingredientes registrados.</Text>
-          ) : (
-            <View style={styles.panelIngredientes}>
-            {receta.detallesIngredientes.map((item, idx) => (
-              <Aparecer key={idx} delay={Math.min(idx, 10) * 60} distancia={12}>
-                <View style={styles.ingredienteRow}>
-                  <View style={styles.puntoIngrediente} />
-                  <Text style={styles.ingredienteTexto}>
-                    {textoIngrediente(item.cantidad, item.unidad, item.ingrediente.nombre, personas, modo)}
-                  </Text>
-                </View>
-              </Aparecer>
-            ))}
-            </View>
-          )}
-
-          <Text style={styles.seccionTitulo}>Preparación</Text>
-          {receta.pasos.length === 0 ? (
-            <Text style={styles.vacioTexto}>Sin pasos registrados.</Text>
-          ) : (
-            [...receta.pasos]
-              .sort((a, b) => a.orden - b.orden)
-              .map((paso) => (
-                <View key={paso.id} style={styles.pasoTarjeta}>
-                  <View style={styles.pasoNumero}>
-                    <Text style={styles.pasoNumeroTexto}>{paso.orden}</Text>
-                  </View>
-                  <Text style={styles.pasoTexto}>{paso.instruccion}</Text>
-                </View>
-              ))
-          )}
-
-          <Text style={styles.seccionTitulo}>Reseñas</Text>
-          <ResumenResenas resenas={resenas} promedio={promedio} />
-          <FormularioResena
-            puntuacion={miPuntuacion}
-            comentario={miComentarioResena}
-            onPuntuacion={setMiPuntuacion}
-            onComentario={setMiComentarioResena}
-            onEnviar={enviarResena}
-            enviando={enviandoResena}
-            yaTieneResena={resenas.some((r) => r.usuario.correo === usuario?.correo)}
-          />
-
-          {resenas.filter((r) => r.usuario.correo !== usuario?.correo).length > 0 && (
-            <>
-              <Text style={styles.subTitulo}>Otras reseñas</Text>
-              {resenas
-                .filter((r) => r.usuario.correo !== usuario?.correo)
-                .map((r, i) => (
-                  <TarjetaResena key={r.id} resena={r} indice={i} />
-                ))}
-            </>
-          )}
-
-          <Text style={styles.seccionTitulo}>Comentarios ({comentarios.length})</Text>
-
-          <View style={styles.filaInputComentario}>
-            <TextInput
-              placeholder="Escribe un comentario..."
-              placeholderTextColor={colors.textMuted}
-              value={nuevoComentario}
-              onChangeText={setNuevoComentario}
-              style={styles.inputComentario}
-            />
-            <Pressable style={styles.botonEnviar} onPress={enviarComentario} disabled={enviandoComentario}>
-              <Ionicons name="send" size={16} color={colors.white} />
+            <Pressable style={[styles.pastilla, { backgroundColor: colors.magic }]} onPress={() => irA(ALTO_FOTO + yComentarios.current)}>
+              <Ionicons name="chatbubble-outline" size={13} color={colors.text} />
+              <Text style={styles.pastillaTexto}>{comentarios.length}</Text>
             </Pressable>
           </View>
 
-          {comentarios.map((c) => (
-            <View key={c.id} style={styles.tarjeta}>
-              <View style={styles.filaAutor}>
-                <Text style={styles.autorNombre}>{c.usuario.nombre}</Text>
-                {c.usuario.correo === usuario?.correo && (
-                  <Pressable onPress={() => eliminarComentario(c.id)}>
-                    <Ionicons name="trash-outline" size={16} color={colors.danger} />
-                  </Pressable>
-                )}
-              </View>
-              <Text style={styles.comentarioTexto}>{c.contenido}</Text>
+          <EtiquetasReceta recetaId={Number(id)} />
+
+          {receta.descripcion ? <Text style={styles.descripcion}>{receta.descripcion}</Text> : null}
+
+          {/* Ingredientes */}
+          <View style={styles.seccion}>
+            {receta.detallesIngredientes.length === 0 ? (
+              <>
+                <Text style={styles.seccionTitulo}>Ingredientes</Text>
+                <Text style={styles.vacioTexto}>Sin ingredientes registrados.</Text>
+              </>
+            ) : (
+              <>
+                <Porciones personas={personas} modo={modo} onPersonas={setPersonas} onModo={setModo} />
+                <View style={styles.listaIngredientes}>
+                  {receta.detallesIngredientes.map((item, idx) => {
+                    const p = partesIngrediente(item.cantidad, item.unidad, item.ingrediente.nombre, personas, modo);
+                    return (
+                      <View key={idx} style={[styles.ingredienteRow, idx > 0 && styles.ingredienteLinea]}>
+                        <Text style={styles.ingredienteNombre} numberOfLines={2}>{p.nombre}</Text>
+                        <Text style={styles.ingredienteCantidad}>{p.cantidad}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+          </View>
+
+          {/* Preparación */}
+          <View style={styles.seccion}>
+            <View style={styles.seccionCabecera}>
+              <Text style={styles.seccionTitulo}>Preparación</Text>
+              {pasosOrdenados.length > 1 ? (
+                <Pressable onPress={() => { toque(); setVerTodosPasos((v) => !v); }} hitSlop={10}>
+                  <Text style={styles.enlace}>{verTodosPasos ? 'Ver menos' : `Ver los ${pasosOrdenados.length} pasos`}</Text>
+                </Pressable>
+              ) : null}
             </View>
-          ))}
+            {!tienePasos ? (
+              <Text style={styles.vacioTexto}>Sin pasos registrados.</Text>
+            ) : (
+              pasosVisibles.map((paso) => {
+                const d = dividirPaso(paso.instruccion, paso.orden);
+                return (
+                  <View key={paso.id} style={styles.pasoTarjeta}>
+                    <View style={styles.pasoNumero}>
+                      <Text style={styles.pasoNumeroTexto}>{paso.orden}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.pasoTitulo}>{d.titulo}</Text>
+                      {d.detalle ? <Text style={styles.pasoTexto}>{d.detalle}</Text> : null}
+                    </View>
+                  </View>
+                );
+              })
+            )}
+          </View>
+
+          {/* Reseñas */}
+          <View onLayout={(e) => { yResenas.current = e.nativeEvent.layout.y; }}>
+            <Text style={[styles.seccionTitulo, { marginTop: spacing.lg }]}>Reseñas</Text>
+            <ResumenResenas resenas={resenas} promedio={promedio} />
+            <FormularioResena
+              puntuacion={miPuntuacion}
+              comentario={miComentarioResena}
+              onPuntuacion={setMiPuntuacion}
+              onComentario={setMiComentarioResena}
+              onEnviar={enviarResena}
+              enviando={enviandoResena}
+              yaTieneResena={resenas.some((r) => r.usuario.correo === usuario?.correo)}
+            />
+
+            {resenas.filter((r) => r.usuario.correo !== usuario?.correo).length > 0 && (
+              <>
+                <Text style={styles.subTitulo}>Otras reseñas</Text>
+                {resenas
+                  .filter((r) => r.usuario.correo !== usuario?.correo)
+                  .map((r, i) => (
+                    <TarjetaResena key={r.id} resena={r} indice={i} />
+                  ))}
+              </>
+            )}
+          </View>
+
+          {/* Comentarios */}
+          <View onLayout={(e) => { yComentarios.current = e.nativeEvent.layout.y; }}>
+            <Text style={[styles.seccionTitulo, { marginTop: spacing.lg }]}>Comentarios ({comentarios.length})</Text>
+
+            <View style={styles.filaInputComentario}>
+              <TextInput
+                placeholder="Escribe un comentario..."
+                placeholderTextColor={colors.textMuted}
+                value={nuevoComentario}
+                onChangeText={setNuevoComentario}
+                style={styles.inputComentario}
+              />
+              <Pressable style={styles.botonEnviar} onPress={enviarComentario} disabled={enviandoComentario}>
+                <Ionicons name="send" size={16} color={colors.white} />
+              </Pressable>
+            </View>
+
+            {comentarios.map((c) => (
+              <View key={c.id} style={styles.tarjeta}>
+                <View style={styles.filaAutor}>
+                  <Text style={styles.autorNombre}>{c.usuario.nombre}</Text>
+                  {c.usuario.correo === usuario?.correo && (
+                    <Pressable onPress={() => eliminarComentario(c.id)}>
+                      <Ionicons name="trash-outline" size={16} color={colors.danger} />
+                    </Pressable>
+                  )}
+                </View>
+                <Text style={styles.comentarioTexto}>{c.contenido}</Text>
+              </View>
+            ))}
+          </View>
         </Aparecer>
       </ScrollView>
+
+      {/* Barra fija de abajo: Enviar a mi lista + Cocinar */}
+      {mostrarBarra && (
+        <View style={[styles.barra, { paddingBottom: insets.bottom + 12 }]}>
+          {receta.detallesIngredientes.length > 0 && (
+            <Presionable escalaAlPresionar={0.96} style={styles.botonLista} onPress={enviarALaLista} disabled={enviandoLista}>
+              {enviandoLista ? (
+                <ActivityIndicator size="small" color={colors.accent} />
+              ) : (
+                <Ionicons name="cart" size={20} color={colors.accent} />
+              )}
+              <Text style={styles.botonListaTexto}>Enviar a mi lista</Text>
+            </Presionable>
+          )}
+          {tienePasos && (
+            <Presionable escalaAlPresionar={0.97} style={styles.botonCocinar} onPress={cocinar}>
+              <Text style={styles.botonCocinarTexto}>{pasoGuardado !== null ? 'Continuar' : 'Cocinar'}</Text>
+              <View style={styles.circuloPlay}>
+                <Ionicons name="play" size={16} color={colors.primary} style={{ marginLeft: 2 }} />
+              </View>
+            </Presionable>
+          )}
+        </View>
+      )}
 
       <CocinaGuiada
         visible={cocinando}
@@ -388,56 +478,36 @@ export default function RecetaDetalleScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  centrado: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
-  imagenContainer: { width: '100%', height: 300, padding: 12, backgroundColor: colors.primaryLight, borderBottomLeftRadius: 40, borderBottomRightRadius: 40 },
-  imagen: { width: '100%', height: '100%', borderRadius: 30 },
-  imagenPlaceholder: { backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  botonAtras: {
-    position: 'absolute', top: spacing.lg + 12, left: spacing.md + 12,
-    width: 42, height: 42, borderRadius: radius.pill, backgroundColor: colors.white,
+  fotoCaja: { width: '100%', height: ALTO_FOTO, borderBottomLeftRadius: 44, borderBottomRightRadius: 44, overflow: 'hidden', backgroundColor: colors.primaryLight },
+  foto: { width: '100%', height: '100%' },
+  botonRedondo: {
+    position: 'absolute', width: 44, height: 44, borderRadius: 22, backgroundColor: colors.white,
     alignItems: 'center', justifyContent: 'center',
   },
-  botonFavorito: {
-    position: 'absolute', top: spacing.lg + 12, right: spacing.md + 12,
-    width: 42, height: 42, borderRadius: radius.pill, backgroundColor: colors.white,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  contenido: { padding: spacing.md },
-  titulo: { ...typography.h1, color: colors.text },
-  metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: spacing.sm, gap: 8 },
-  pastilla: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.surface, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: colors.border },
+  botonFavoritoOn: { backgroundColor: colors.primary },
+  contenido: { paddingHorizontal: 20, paddingTop: spacing.lg },
+  titulo: { fontFamily: fonts.displayBold, fontSize: 30, lineHeight: 36, color: colors.text },
+  metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: spacing.md, gap: 8 },
+  pastilla: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 8 },
   pastillaTexto: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.text },
-  panelIngredientes: { backgroundColor: colors.primaryLight, borderRadius: radius.lg, padding: spacing.md, gap: 4 },
-  pasoTarjeta: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: colors.surface, borderRadius: radius.md, padding: 14, marginTop: spacing.sm, ...shadow.card },
-  metaTexto: { ...typography.bodySmall, color: colors.textMuted },
-  descripcion: { ...typography.body, color: colors.text, marginTop: spacing.sm },
-  cocinaGuiadaSombra: { marginTop: spacing.md, borderRadius: radius.lg, ...shadow.card },
-  botonCocinaGuiada: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    borderRadius: radius.lg, paddingVertical: 16, paddingHorizontal: spacing.md,
-  },
-  cocinaGuiadaTitulo: { ...typography.button, color: colors.white, fontSize: 16 },
-  cocinaGuiadaSub: { ...typography.bodySmall, color: colors.onPrimary },
-  seccionTitulo: { ...typography.h2, color: colors.text, marginTop: spacing.lg, marginBottom: spacing.sm },
+  descripcion: { ...typography.body, color: colors.textMuted, marginTop: spacing.md },
+  seccion: { marginTop: spacing.lg },
+  seccionCabecera: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
+  seccionTitulo: { fontFamily: fonts.heading, fontSize: 22, color: colors.text },
+  enlace: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.primary },
   subTitulo: { ...typography.h3, color: colors.text, marginTop: spacing.md, marginBottom: spacing.sm, fontSize: 15 },
   vacioTexto: { ...typography.bodySmall, color: colors.textMuted },
-  ingredienteRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xs },
-  puntoIngrediente: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary, marginRight: spacing.sm },
-  ingredienteTexto: { ...typography.body, color: colors.text },
-  pasoRow: { flexDirection: 'row', marginTop: spacing.md },
-  pasoNumero: {
-    width: 30, height: 30, borderRadius: 15, backgroundColor: colors.primaryLight,
-    alignItems: 'center', justifyContent: 'center', marginRight: spacing.md,
-  },
-  pasoNumeroTexto: { ...typography.bodySmall, color: colors.primary, fontWeight: 'bold' },
-  pasoTexto: { ...typography.body, color: colors.text, flex: 1 },
-  tarjeta: {
-    backgroundColor: colors.surface, 
-    borderRadius: radius.md, 
-    padding: spacing.md,
-    marginTop: spacing.md, 
-    ...shadow.card,
-  },
+  listaIngredientes: { marginTop: spacing.sm },
+  ingredienteRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, gap: spacing.md },
+  ingredienteLinea: { borderTopWidth: 1, borderTopColor: colors.border },
+  ingredienteNombre: { fontFamily: fonts.body, fontSize: 16, color: colors.text, flex: 1 },
+  ingredienteCantidad: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.text },
+  pasoTarjeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.primaryLight, borderRadius: 28, padding: 16, marginTop: spacing.sm },
+  pasoNumero: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  pasoNumeroTexto: { fontFamily: fonts.displayBold, fontSize: 20, color: colors.white },
+  pasoTitulo: { fontFamily: fonts.heading, fontSize: 17, color: colors.text },
+  pasoTexto: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.textMuted, marginTop: 2 },
+  tarjeta: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, marginTop: spacing.md, ...shadow.card },
   filaAutor: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xs },
   autorNombre: { ...typography.body, fontWeight: 'bold', color: colors.text },
   comentarioTexto: { ...typography.body, color: colors.text },
@@ -446,13 +516,22 @@ const styles = StyleSheet.create({
     flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
     borderRadius: radius.md, paddingHorizontal: spacing.md, height: 44, color: colors.text,
   },
-  botonEnviar: {
-    backgroundColor: colors.primary, width: 44, height: 44, borderRadius: radius.md,
-    alignItems: 'center', justifyContent: 'center',
+  botonEnviar: { backgroundColor: colors.primary, width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+  barra: {
+    position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: 12,
+    paddingHorizontal: 16, paddingTop: 12, backgroundColor: colors.background,
+    borderTopWidth: 1, borderTopColor: colors.border,
   },
-  inputResena: {
-    backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border,
-    borderRadius: radius.md, padding: spacing.md, height: 80, color: colors.text,
-    textAlignVertical: 'top', marginVertical: spacing.sm,
+  botonLista: {
+    height: 58, borderRadius: 29, backgroundColor: colors.text, paddingHorizontal: 20,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
   },
+  botonListaTexto: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.white },
+  botonCocinar: {
+    flex: 1, height: 58, borderRadius: 29, backgroundColor: colors.primary, paddingLeft: 24, paddingRight: 8,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    shadowColor: colors.primary, shadowOpacity: 0.35, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 5,
+  },
+  botonCocinarTexto: { fontFamily: fonts.bodyBold, fontSize: 17, color: colors.white },
+  circuloPlay: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
 });
