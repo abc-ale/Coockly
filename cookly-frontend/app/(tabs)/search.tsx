@@ -13,12 +13,14 @@ import EstadoVacio from '../../components/EstadoVacio';
 import { Aparecer } from '../../components/Animaciones';
 import { colors, fonts, radius, spacing, typography } from '../../constants/theme';
 import { api } from '../../lib/api';
+import { useConPromedios } from '../../lib/promedios';
 
 export default function SearchScreen() {
   const [busqueda, setBusqueda] = useState('');
   const [textoActivo, setTextoActivo] = useState(''); // el texto ya "calmado" (espera 350 ms al escribir)
   const [etiqueta, setEtiqueta] = useState<number | null>(null);
-  const [recetas, setRecetas] = useState<TarjetaReceta[]>([]);
+  const [recetasBase, setRecetas] = useState<TarjetaReceta[]>([]);
+  const recetas = useConPromedios(recetasBase);
   const [cargando, setCargando] = useState(true);
   const peticion = useRef(0); // para ignorar respuestas viejas si el usuario sigue escribiendo
 
@@ -131,6 +133,7 @@ export default function SearchScreen() {
                   nombre={receta.nombre}
                   portada={receta.portada}
                   minutos={receta.minutosPreparacion}
+                  promedio={receta.promedio}
                   onPress={() => router.push(`/receta/${receta.id}`)}
                 />
               ))}

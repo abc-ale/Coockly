@@ -7,10 +7,11 @@ import { EsqueletoTarjetas } from '../../components/Esqueleto';
 import FavoritosVacio from '../../components/FavoritosVacio';
 import { colors, fonts, spacing } from '../../constants/theme';
 import { api } from '../../lib/api';
+import { useConPromedios } from '../../lib/promedios';
 
 // Fotos fijas (Cloudinary) que decoran la pantalla vacía: así siempre se ven distintas entre sí.
 const PORTADAS_VACIO = [
-  'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791698897/Notificaciones-1.png',
+  'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791697703/Notificaciones-1.png',
   'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791697698/Notificaciones-2.png',
   'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791697699/Notificaciones-3.png',
   'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791697699/Notificaciones-4.png',
@@ -19,7 +20,8 @@ const PORTADAS_VACIO = [
 ];
 
 export default function FavoritesScreen() {
-  const [recetas, setRecetas] = useState<TarjetaReceta[]>([]);
+  const [recetasBase, setRecetas] = useState<TarjetaReceta[]>([]);
+  const recetas = useConPromedios(recetasBase);
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
 

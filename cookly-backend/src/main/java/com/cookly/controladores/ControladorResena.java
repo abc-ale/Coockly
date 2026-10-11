@@ -1,7 +1,7 @@
 package com.cookly.controladores;
 
-import com.cookly.dto.RespuestaResena;
 import com.cookly.dto.SolicitudResena;
+import com.cookly.modelos.Resena;
 import com.cookly.servicios.ServicioResena;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
@@ -16,12 +16,18 @@ public class ControladorResena {
 
     @GetMapping
     public Map<String, Object> listar(@PathVariable Long recetaId) {
-        return servicio.listarConPromedio(recetaId);
+        return Map.of("resenas", servicio.listar(recetaId), "promedio", servicio.promedio(recetaId));
     }
 
     /** Crea la reseña propia, o la reemplaza si ya existía una del mismo usuario en esta receta. */
     @PutMapping
-    public RespuestaResena guardar(@PathVariable Long recetaId, @Valid @RequestBody SolicitudResena s, Authentication autenticacion) {
+    public Resena guardar(@PathVariable Long recetaId, @Valid @RequestBody SolicitudResena s, Authentication autenticacion) {
         return servicio.guardar(recetaId, autenticacion.getName(), s.puntuacion(), s.comentario());
+    }
+
+    /** Elimina la reseña propia de esta receta (sin límite de tiempo). */
+    @DeleteMapping
+    public void eliminar(@PathVariable Long recetaId, Authentication autenticacion) {
+        servicio.eliminar(recetaId, autenticacion.getName());
     }
 }

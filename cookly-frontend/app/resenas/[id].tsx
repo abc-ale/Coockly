@@ -79,7 +79,9 @@ export default function ResenasScreen() {
   const [escribiendo, setEscribiendo] = useState(false);
   const [estrellaElegida, setEstrellaElegida] = useState(0);
 
-  const miResena = resenas.find((r) => r.usuario.correo === usuario?.correo);
+  const esMio = (correo?: string) => !!correo && !!usuario?.correo && correo.toLowerCase() === usuario.correo.toLowerCase();
+  const miResena = resenas.find((r) => esMio(r.usuario.correo));
+  const [menuR, setMenuR] = useState(false);
 
   const cargar = useCallback(async () => {
     try {
@@ -161,6 +163,24 @@ export default function ResenasScreen() {
     } catch (error: any) {
       Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudo eliminar el comentario.');
     }
+  }
+
+  async function eliminarResena() {
+    try {
+      await api.delete(`/recetas/${id}/resenas`);
+      setResenas((prev) => prev.filter((r) => !esMio(r.usuario.correo)));
+      mostrarAviso('Reseña eliminada');
+      cargar();
+    } catch (error: any) {
+      Alert.alert('No se pudo eliminar', error?.response?.data?.mensaje || 'Inténtalo de nuevo en un momento.');
+    }
+  }
+
+  function confirmarEliminarResena() {
+    Alert.alert('Eliminar reseña', '¿Seguro que quieres eliminar tu reseña?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Eliminar', style: 'destructive', onPress: eliminarResena },
+    ]);
   }
 
   function abrirResena(estrellas = 0) {
@@ -261,13 +281,18 @@ export default function ResenasScreen() {
                     <Avatar nombre={r.usuario.nombre} indice={i} />
                     <View style={{ flex: 1 }}>
                       <Text style={st.autor} numberOfLines={1}>
-                        {r.usuario.nombre}{r.usuario.correo === usuario?.correo ? '  (tú)' : ''}
+                        {r.usuario.nombre}{esMio(r.usuario.correo) ? '  (tú)' : ''}
                       </Text>
                       <View style={st.estrellasFecha}>
                         <Estrellas valor={r.puntuacion} tam={13} />
                         <Text style={st.fecha}>{hace(r.creadoEn)}</Text>
                       </View>
                     </View>
+                    {esMio(r.usuario.correo) ? (
+                      <Pressable onPress={() => setMenuR(true)} hitSlop={10} style={st.puntos} accessibilityLabel="Opciones de tu reseña">
+                        <Ionicons name="ellipsis-horizontal" size={20} color={colors.text} />
+                      </Pressable>
+                    ) : null}
                   </View>
                   {r.comentario ? <Text style={st.texto}>{r.comentario}</Text> : null}
                 </View>
@@ -298,7 +323,7 @@ export default function ResenasScreen() {
                       <Text style={st.autor} numberOfLines={1}>{c.usuario.nombre}</Text>
                       <Text style={st.fecha}>{hace(c.creadoEn)}</Text>
                     </View>
-                    {c.usuario.correo?.toLowerCase() === usuario?.correo?.toLowerCase() ? (
+                    {esMio(c.usuario.correo) ? (
                       <Pressable onPress={() => setMenuC(c)} hitSlop={10} style={st.puntos} accessibilityLabel="Opciones del comentario">
                         <Ionicons name="ellipsis-horizontal" size={20} color={colors.text} />
                       </Pressable>
@@ -355,6 +380,26 @@ export default function ResenasScreen() {
             onCerrar={() => setEscribiendo(false)}
           />
         </View>
+      </Modal>
+      {/* Menú de opciones (⋯) de mi reseña */}
+      <Modal visible={menuR} transparent animationType="fade" onRequestClose={() => setMenuR(false)}>
+        <Pressable style={st.menuFondo} onPress={() => setMenuR(false)}>
+          <Pressable style={[st.menuHoja, { paddingBottom: insets.bottom + 16 }]} onPress={() => {}}>
+            <View style={st.menuAgarre} />
+            <Pressable style={st.menuOpcion} onPress={() => { setMenuR(false); abrirResena(miNota); }}>
+              <View style={[st.menuIcono, { backgroundColor: colors.accent }]}>
+                <Ionicons name="create-outline" size={20} color={colors.text} />
+              </View>
+              <Text style={st.menuTexto}>Editar reseña</Text>
+            </Pressable>
+            <Pressable style={st.menuOpcion} onPress={() => { setMenuR(false); confirmarEliminarResena(); }}>
+              <View style={[st.menuIcono, { backgroundColor: '#FDE7E7' }]}>
+                <Ionicons name="trash-outline" size={20} color={colors.danger} />
+              </View>
+              <Text style={[st.menuTexto, { color: colors.danger }]}>Eliminar reseña</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
       </Modal>
       {/* Menú de opciones (⋯) de mis comentarios */}
       <Modal visible={!!menuC} transparent animationType="fade" onRequestClose={() => setMenuC(null)}>

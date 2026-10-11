@@ -7,6 +7,7 @@ import { colors, radius, fonts } from '../constants/theme';
 import { Presionable } from './Animaciones';
 import { EntradaSuave } from './RecipeCard';
 import ImagenReceta from './ImagenReceta';
+import Estrellas from './Estrellas';
 
 // Los fondos se turnan: rosa, mantequilla, pistacho.
 const FONDOS = [colors.primaryLight, colors.accent, colors.magic];
@@ -16,11 +17,12 @@ type Props = {
   nombre: string;
   portada?: string;
   minutos?: number;
+  promedio?: number;
   indice: number;
   onPress: () => void;
 };
 
-function TarjetaBusqueda({ nombre, portada, minutos, indice, onPress }: Props) {
+function TarjetaBusqueda({ nombre, portada, minutos, promedio, indice, onPress }: Props) {
   const fondo = FONDOS_SUAVES[indice % FONDOS.length];
   return (
     <EntradaSuave delay={Math.min(indice, 8) * 60} distancia={14} style={styles.envoltura}>
@@ -37,6 +39,9 @@ function TarjetaBusqueda({ nombre, portada, minutos, indice, onPress }: Props) {
                 <Text style={styles.minutosTexto}>{minutos} min</Text>
               </View>
             )}
+            <View style={{ marginTop: 3 }}>
+              <Estrellas valor={Number(promedio ?? 0)} tamano={13} gap={1} />
+            </View>
           </View>
           <View style={styles.flecha}>
             <Ionicons name="arrow-forward" size={18} color={colors.white} />

@@ -66,6 +66,9 @@ function dividirPaso(texto: string, orden: number): { titulo: string; detalle: s
   return { titulo: '', detalle: limpio };
 }
 
+// Recetas ya abiertas en esta sesión (para mostrarlas al instante la próxima vez).
+const CACHE_RECETAS = new Map<string, { receta: any; imagenUrl: string | null }>();
+
 export default function RecetaDetalleScreen() {
   // nombre, portada y minutos llegan desde la tarjeta que se tocó: así la pantalla ya muestra algo mientras carga el resto.
   const { id, continuar, nombre: nombreParam, portada: portadaParam, minutos: minutosParam } =
@@ -103,32 +106,45 @@ export default function RecetaDetalleScreen() {
 
   const cargarTodo = useCallback(async () => {
     setFallo(false);
-    setCargando(true);
+    // Si ya abrimos esta receta antes, se muestra al instante y se refresca por detrás.
+    const guardada = CACHE_RECETAS.get(String(id));
+    if (guardada) {
+      setReceta(guardada.receta);
+      setImagenUrl(guardada.imagenUrl);
+      setCargando(false);
+    } else {
+      setCargando(true);
+    }
     try {
       api.post(`/historial/${id}`).catch(() => {}); // registra la vista, sin bloquear si falla
 
-      const [resReceta, resImagenes, resFavoritos, resComentarios, resResenas] = await Promise.all([
+      // Lo importante (receta + foto) llega primero; lo demás se completa después sin hacer esperar.
+      const pLo2 = [api.get(`/recetas/favoritos`), api.get(`/recetas/${id}/comentarios`), api.get(`/recetas/${id}/resenas`)];
+      const [resReceta, resImagenes] = await Promise.all([
         api.get(`/recetas/${id}`),
-        api.get(`/imagenes/receta/${id}`),
-        api.get('/recetas/favoritos'),
-        api.get(`/recetas/${id}/comentarios`),
-        api.get(`/recetas/${id}/resenas`),
+        api.get(`/imagenes/receta/${id}`).catch(() => ({ data: [] as any[] })),
       ]);
-
+      const url = resImagenes.data?.[0]?.url ?? null;
       setReceta(resReceta.data);
-      setImagenUrl(resImagenes.data?.[0]?.url ?? null);
-      setEsFavorito(resFavoritos.data.some((r: any) => r.id === Number(id)));
-      setComentarios(resComentarios.data);
-      setResenas(resResenas.data.resenas ?? []);
-      setPromedio(resResenas.data.promedio ?? 0);
+      setImagenUrl(url);
+      CACHE_RECETAS.set(String(id), { receta: resReceta.data, imagenUrl: url });
+      setCargando(false);
 
-      const miResena = (resResenas.data.resenas ?? []).find((r: Resena) => r.usuario.correo === usuario?.correo);
-      if (miResena) {
-        setMiPuntuacion(miResena.puntuacion);
-        setMiComentarioResena(miResena.comentario ?? '');
+      const [rFav, rCom, rRes] = await Promise.allSettled(pLo2);
+      if (rFav.status === 'fulfilled') setEsFavorito(rFav.value.data.some((r: any) => r.id === Number(id)));
+      if (rCom.status === 'fulfilled') setComentarios(rCom.value.data);
+      if (rRes.status === 'fulfilled') {
+        const lista = rRes.value.data.resenas ?? [];
+        setResenas(lista);
+        setPromedio(rRes.value.data.promedio ?? 0);
+        const miResena = lista.find((r: Resena) => r.usuario.correo?.toLowerCase() === usuario?.correo?.toLowerCase());
+        if (miResena) {
+          setMiPuntuacion(miResena.puntuacion);
+          setMiComentarioResena(miResena.comentario ?? '');
+        }
       }
     } catch (error: any) {
-      setFallo(true);
+      if (!guardada) setFallo(true);
     } finally {
       setCargando(false);
     }
