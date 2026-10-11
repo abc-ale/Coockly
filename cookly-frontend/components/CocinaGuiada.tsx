@@ -87,6 +87,59 @@ function formato(segundos: number): string {
   return h > 0 ? `${h}:${dos(m)}:${dos(r)}` : `${dos(m)}:${dos(r)}`;
 }
 
+/* ---------- Reloj con aro de progreso ---------- */
+// Un aro que se va llenando y una aguja que gira mientras pasa el tiempo. Solo usa vistas (no necesita módulos nativos nuevos).
+function RelojProgreso({ avance, listo = false, tamano = 58 }: { avance: number; listo?: boolean; tamano?: number }) {
+  const S = tamano;
+  const G = 5; // grosor del aro
+  const p = listo ? 1 : Math.min(1, Math.max(0, avance));
+  const grados = p * 360;
+  const giroDerecha = Math.min(grados, 180) - 180;          // mitad derecha: 0°–180°
+  const giroIzquierda = Math.max(grados, 180) - 180;        // mitad izquierda: 180°–360°
+  const oscuro = colors.text;
+  const pista = 'rgba(43,18,32,0.16)';
+  const aro = { position: 'absolute' as const, width: S, height: S, borderRadius: S / 2, borderWidth: G };
+  // Medio aro de un solo color (sin esquinas en diagonal): gira dentro de una ventana fija y así el corte queda recto.
+  const medioAro = (giro: number) => (
+    <View style={{ position: 'absolute', left: 0, top: 0, width: S, height: S, transform: [{ rotate: `${giro}deg` }] }}>
+      <View style={{ position: 'absolute', left: S / 2, top: 0, width: S / 2, height: S, overflow: 'hidden' }}>
+        <View style={[aro, { left: -S / 2, borderColor: oscuro }]} />
+      </View>
+    </View>
+  );
+
+  return (
+    <View style={{ width: S, height: S }}>
+      {/* Pista (aro claro) */}
+      <View style={[aro, { borderColor: pista }]} />
+
+      {/* Aro de avance: dos ventanas fijas (derecha e izquierda) */}
+      <View style={{ position: 'absolute', left: S / 2, width: S / 2, height: S, overflow: 'hidden' }}>
+        <View style={{ position: 'absolute', left: -S / 2, width: S, height: S }}>{medioAro(giroDerecha)}</View>
+      </View>
+      <View style={{ position: 'absolute', left: 0, width: S / 2, height: S, overflow: 'hidden' }}>
+        <View style={{ position: 'absolute', left: 0, width: S, height: S }}>{medioAro(giroIzquierda)}</View>
+      </View>
+
+      {listo ? (
+        <View style={{ position: 'absolute', width: S, height: S, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name="checkmark" size={S * 0.5} color={oscuro} />
+        </View>
+      ) : (
+        <>
+          {/* Aguja que gira con el tiempo */}
+          <View style={{ position: 'absolute', width: S, height: S, transform: [{ rotate: `${grados}deg` }] }}>
+            <View style={{ position: 'absolute', left: S / 2 - 1.5, top: S / 2 - S * 0.28, width: 3, height: S * 0.28, borderRadius: 2, backgroundColor: oscuro }} />
+          </View>
+          {/* Aguja corta fija y centro, como el ícono de reloj */}
+          <View style={{ position: 'absolute', left: S / 2, top: S / 2 - 1.5, width: S * 0.17, height: 3, borderRadius: 2, backgroundColor: oscuro }} />
+          <View style={{ position: 'absolute', left: S / 2 - 3.5, top: S / 2 - 3.5, width: 7, height: 7, borderRadius: 4, backgroundColor: oscuro }} />
+        </>
+      )}
+    </View>
+  );
+}
+
 /* ---------- Componente ---------- */
 
 /* ---------- Celebración al terminar la receta ---------- */
@@ -384,8 +437,8 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos, recetaId
             {/* Temporizador */}
             {c ? (
               <View style={[styles.tarjetaCrono, c.estado === 'listo' && { backgroundColor: colors.magic }]}>
-                <Pressable style={styles.cronoReloj} onPress={reiniciar} accessibilityLabel="Reiniciar cronómetro" hitSlop={6}>
-                  <Ionicons name={c.estado === 'listo' ? 'checkmark' : 'time-outline'} size={30} color={colors.text} />
+                <Pressable onPress={reiniciar} accessibilityLabel="Reiniciar cronómetro" hitSlop={6}>
+                  <RelojProgreso avance={c.total > 0 ? 1 - restanteDe(c) / c.total : 0} listo={c.estado === 'listo'} />
                 </Pressable>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.cronoTiempo}>{formato(c.estado === 'listo' ? 0 : restanteDe(c))}</Text>
@@ -405,9 +458,7 @@ export default function CocinaGuiada({ visible, onClose, nombre, pasos, recetaId
               </View>
             ) : segundosPaso > 0 ? (
               <Pressable style={styles.tarjetaCrono} onPress={() => iniciar(segundosPaso)}>
-                <View style={styles.cronoReloj}>
-                  <Ionicons name="time-outline" size={30} color={colors.text} />
-                </View>
+                <RelojProgreso avance={0} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.cronoTiempo}>{formato(segundosPaso)}</Text>
                   <Text style={styles.cronoEtiqueta}>{sugerencia ? `${sugerencia.etiqueta} · ` : ''}Toca para poner el temporizador</Text>
@@ -507,7 +558,6 @@ const styles = StyleSheet.create({
 
   // Temporizador mantequilla
   tarjetaCrono: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.accent, borderRadius: 30, padding: 14 },
-  cronoReloj: { width: 56, height: 56, borderRadius: 28, borderWidth: 4, borderColor: colors.text, alignItems: 'center', justifyContent: 'center' },
   cronoTiempo: { fontFamily: fonts.displayBold, fontSize: 32, lineHeight: 38, color: colors.text },
   cronoEtiqueta: { fontFamily: fonts.bodyBold, fontSize: 12, lineHeight: 16, color: colors.text },
   cronoBoton: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center' },

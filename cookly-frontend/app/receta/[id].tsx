@@ -448,7 +448,7 @@ export default function RecetaDetalleScreen() {
           )}
           {tienePasos && (
             <Presionable escalaAlPresionar={0.97} style={styles.botonCocinar} onPress={cocinar}>
-              <Text style={styles.botonCocinarTexto}>{pasoGuardado !== null ? 'Continuar' : 'Cocinar'}</Text>
+              <Text style={styles.botonCocinarTexto} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{pasoGuardado !== null ? 'Continuar' : 'Cocinar'}</Text>
               <View style={styles.circuloPlay}>
                 <Ionicons name="play" size={20} color={colors.primary} style={{ marginLeft: 3 }} />
               </View>
@@ -517,16 +517,16 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: colors.border,
   },
   botonLista: {
-    flex: 1, height: 62, borderRadius: 31, backgroundColor: colors.text, paddingHorizontal: 14,
+    flex: 1, height: 62, borderRadius: 31, backgroundColor: colors.text, paddingHorizontal: 12,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     shadowColor: colors.text, shadowOpacity: 0.28, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },
   botonListaTexto: { fontFamily: fonts.heading, fontSize: 15, flexShrink: 1, color: colors.white },
   botonCocinar: {
-    flex: 1.2, height: 62, borderRadius: 31, backgroundColor: colors.primary, paddingLeft: 30, paddingRight: 8,
+    flex: 1.4, height: 62, borderRadius: 31, backgroundColor: colors.primary, paddingLeft: 24, paddingRight: 8, gap: 10,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     shadowColor: colors.primary, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },
-  botonCocinarTexto: { fontFamily: fonts.heading, fontSize: 18, color: colors.white },
-  circuloPlay: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
+  botonCocinarTexto: { fontFamily: fonts.heading, fontSize: 17, color: colors.white, flexShrink: 1 },
+  circuloPlay: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
 });

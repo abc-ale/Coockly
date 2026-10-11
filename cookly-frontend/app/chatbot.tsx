@@ -53,6 +53,28 @@ type Accion = {
 
 type Chip = { texto: string; color: string; alTocar: () => void };
 
+/** Minúsculas, sin tildes y sin plural simple: "Zanahorias" = "zanahoria". */
+function claveIng(t: string): string {
+  const x = (t ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  return x.length > 3 && x.endsWith('s') ? x.slice(0, -1) : x;
+}
+
+/** ¿La receta usa este ingrediente que dijo el usuario? ("carne" también cuenta para "carne de res"). */
+function recetaUsa(detalle: IngredienteReceta[], ing: string): boolean {
+  const k = claveIng(ing);
+  if (!k) return false;
+  return detalle.some((d) => {
+    const n = claveIng(d.ingrediente.nombre);
+    return n === k || n.split(' ').some((w) => claveIng(w) === k) || k.split(' ').some((w) => claveIng(w) === n);
+  });
+}
+
+/** ["a","b","c"] -> "a, b y c" */
+function unir(lista: string[]): string {
+  if (lista.length <= 1) return lista.join('');
+  return `${lista.slice(0, -1).join(', ')} y ${lista[lista.length - 1]}`;
+}
+
 const SALUDO = '¡Hola! Soy tu chef. Dime qué tienes en la nevera y te armo una receta.';
 
 /** Convierte "**Arroz con pollo**" en negrita. */
@@ -260,8 +282,8 @@ export default function ChatbotScreen() {
         const { data } = await api.post('/recetas/menu-express', { ingredientes: Array.from(new Set(ctx.ingredientes.map((i) => i.trim().toLowerCase()).filter(Boolean))) });
         const todas: Recomendacion[] = data?.recetas ?? [];
         ctx.resultados = todas;
-        const siguiente = todas.find((r) => !ctx.mostradas.has(r.id));
-        if (!siguiente) {
+        const candidatas = todas.filter((r) => !ctx.mostradas.has(r.id));
+        if (candidatas.length === 0) {
           decir(
             todas.length === 0
               ? 'Con eso no encontré una receta en Cookly. Cuéntame qué otros ingredientes tienes y lo intento de nuevo.'
@@ -272,23 +294,57 @@ export default function ChatbotScreen() {
           setChips(ctx.receta ? chipsDeReceta() : chipsIniciales());
           return;
         }
+
+        // Se miran las mejores candidatas y se elige la que de verdad usa lo que el usuario tiene.
+        const quiere = Array.from(new Set(ctx.ingredientes.map((i) => i.trim().toLowerCase()).filter(Boolean)));
+        const revisadas = await Promise.all(
+          candidatas.slice(0, 6).map(async (r) => {
+            try {
+              const { data: det } = await api.get(`/recetas/${r.id}`);
+              const usados = quiere.filter((q) => recetaUsa(det.detallesIngredientes ?? [], q));
+              return { r, det, usados };
+            } catch {
+              return null;
+            }
+          })
+        );
+        const validas = revisadas
+          .filter((x): x is NonNullable<typeof x> => !!x && x.usados.length > 0)
+          .sort((p, q) => q.usados.length - p.usados.length || q.r.porcentajeCoincidencia - p.r.porcentajeCoincidencia);
+
+        if (validas.length === 0) {
+          decir(`No encontré una receta en Cookly que use ${unir(quiere)}. Cuéntame qué otros ingredientes tienes y lo intento de nuevo.`, {}, porVoz);
+          setChips(ctx.receta ? chipsDeReceta() : chipsIniciales());
+          return;
+        }
+
+        const elegida = validas[0];
+        const siguiente = elegida.r;
+        const det = elegida.det;
         ctx.mostradas.add(siguiente.id);
 
-        const [resDetalle, resImg] = await Promise.all([
-          api.get(`/recetas/${siguiente.id}`),
-          api.get(`/imagenes/receta/${siguiente.id}`).catch(() => ({ data: [] as any[] })),
-        ]);
-        const det = resDetalle.data;
+        const resImg = await api.get(`/imagenes/receta/${siguiente.id}`).catch(() => ({ data: [] as any[] }));
         const minutos: number | null = det.minutosPreparacion ?? siguiente.minutosPreparacion ?? null;
         ctx.receta = { id: det.id, nombre: det.nombre, detalle: det.detallesIngredientes ?? [] };
         ctx.personas = PORCIONES_BASE;
 
+        // El mensaje dice la verdad: qué de lo que tienes se usa, qué no, y qué te falta.
         const falta = siguiente.ingredientesFaltantes ?? [];
-        let frase = `¡Perfecto! Te propongo **${det.nombre}**${minutos ? `, listo en ${minutos} minutos` : ''}.`;
-        if (falta.length > 0) {
-          frase += ` Solo te faltaría: ${falta.slice(0, 4).join(', ')}.`;
+        const noUsa = quiere.filter((q) => !elegida.usados.includes(q));
+        const encaja = siguiente.porcentajeCoincidencia >= 60 && noUsa.length === 0;
+        const cuando = minutos ? `, lista en ${minutos} minutos` : '';
+        let frase: string;
+        if (encaja && falta.length === 0) {
+          frase = `¡Perfecto! Con lo que tienes puedes preparar **${det.nombre}**${cuando}.`;
+        } else if (encaja) {
+          frase = `Te propongo **${det.nombre}**${cuando}. ${falta.length <= 2 ? 'Solo te faltaría' : 'Te faltarían'}: ${unir(falta.slice(0, 5))}.`;
+        } else {
+          frase =
+            `No encontré una receta que encaje del todo con lo que tienes. Lo más cercano es **${det.nombre}**, que usa ${unir(elegida.usados)}` +
+            `${noUsa.length ? ` (pero no ${unir(noUsa)})` : ''}` +
+            `${falta.length ? `, y te faltarían: ${unir(falta.slice(0, 5))}` : ''}. ¿Te sirve, o me cuentas qué más tienes?`;
         }
-        decir(frase, { resumen: `Te propongo ${det.nombre}${minutos ? `, listo en ${minutos} minutos` : ''}.` }, porVoz);
+        decir(frase, { resumen: `Te propongo ${det.nombre}${cuando}.` }, porVoz);
         agregar({
           esUsuario: false,
           resumen: `[tarjeta de ${det.nombre}]`,
