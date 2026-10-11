@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { pintarBarraNavegacion } from '../../lib/barraNavegacion';
 import { escucharToques, reprogramarRecordatorios } from '../../lib/recordatorios';
 import { onboardingCompletado } from '../../lib/onboarding';
+import { sincronizarPerfilComunidad } from '../../lib/avatar';
 
 // Pantallas que solo ve cada tipo de cuenta. "profile" la ven las dos.
 const RUTAS_USUARIO = ['home', 'search', 'comunity', 'favorites', 'list'];
@@ -45,6 +46,12 @@ export default function TabsLayout() {
       dejarDeEscuchar();
     };
   }, [cargando, token, esAdmin, router]);
+
+  // Deja al día el nombre y la foto que ve la Comunidad (una vez por cada vez que se abre la app o cambia la cuenta).
+  useEffect(() => {
+    if (cargando || !token || esAdmin || !usuario?.correo) return;
+    sincronizarPerfilComunidad(usuario.correo, usuario.nombre).catch(() => {});
+  }, [cargando, token, esAdmin, usuario?.correo, usuario?.nombre]);
 
   // Primera vez que esta cuenta inicia sesión: términos y alergias antes de entrar a la app.
   useEffect(() => {

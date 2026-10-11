@@ -21,6 +21,7 @@ import EtiquetasReceta from '../../components/EtiquetasReceta';
 import CocinaGuiada from '../../components/CocinaGuiada';
 import Porciones from '../../components/Porciones';
 import { Modo, PORCIONES_BASE, partesIngrediente } from '../../lib/cantidades';
+import { alergiasDeIngrediente, listaEnTexto, useMisAlergias } from '../../lib/alergias';
 
 
 type Ingrediente = {
@@ -77,6 +78,7 @@ export default function RecetaDetalleScreen() {
   const [esFavorito, setEsFavorito] = useState(false);
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [resenas, setResenas] = useState<Resena[]>([]);
+  const misAlergias = useMisAlergias();
   const [promedio, setPromedio] = useState(0);
   const [miPuntuacion, setMiPuntuacion] = useState(0);
   const [miComentarioResena, setMiComentarioResena] = useState('');
@@ -253,6 +255,11 @@ export default function RecetaDetalleScreen() {
   const textoResenas = resenas.length === 0 ? 'Sin reseñas' : `${promedio.toFixed(1)} · ${resenas.length} ${resenas.length === 1 ? 'reseña' : 'reseñas'}`;
   const mostrarBarra = !tecladoVisible;
 
+  // Ingredientes que contienen alguna de MIS alergias (por el nombre del ingrediente).
+  const alertasPorIngrediente = receta.detallesIngredientes.map((d) => alergiasDeIngrediente(d.ingrediente.nombre, misAlergias));
+  const ingredientesConAlergia = alertasPorIngrediente.filter((a) => a.length > 0).length;
+  const nombresAlergias = Array.from(new Set(alertasPorIngrediente.flat().map((a) => a.nombre)));
+
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
@@ -301,6 +308,21 @@ export default function RecetaDetalleScreen() {
 
           {receta.descripcion ? <Text style={styles.descripcion}>{receta.descripcion}</Text> : null}
 
+          {/* Aviso de alergias */}
+          {ingredientesConAlergia > 0 && (
+            <View style={styles.alergiaCaja} accessibilityRole="alert">
+              <View style={styles.alergiaIcono}>
+                <Ionicons name="warning-outline" size={22} color={colors.white} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.alergiaTitulo}>
+                  Contiene {ingredientesConAlergia} {ingredientesConAlergia === 1 ? 'ingrediente' : 'ingredientes'} de tus alergias
+                </Text>
+                <Text style={styles.alergiaSub}>{listaEnTexto(nombresAlergias)}</Text>
+              </View>
+            </View>
+          )}
+
           {/* Ingredientes */}
           <View style={styles.seccion}>
             {receta.detallesIngredientes.length === 0 ? (
@@ -314,10 +336,14 @@ export default function RecetaDetalleScreen() {
                 <View style={styles.listaIngredientes}>
                   {receta.detallesIngredientes.map((item, idx) => {
                     const p = partesIngrediente(item.cantidad, item.unidad, item.ingrediente.nombre, personas, modo);
+                    const peligro = alertasPorIngrediente[idx]?.length > 0;
                     return (
                       <View key={idx} style={[styles.ingredienteRow, idx > 0 && styles.ingredienteLinea]}>
-                        <Text style={styles.ingredienteNombre} numberOfLines={2}>{p.nombre}</Text>
-                        <Text style={styles.ingredienteCantidad}>{p.cantidad}</Text>
+                        <View style={styles.ingredienteNombreFila}>
+                          <Text style={[styles.ingredienteNombre, peligro && styles.ingredientePeligro]} numberOfLines={2}>{p.nombre}</Text>
+                          {peligro ? <Ionicons name="warning-outline" size={16} color={colors.danger} /> : null}
+                        </View>
+                        <Text style={[styles.ingredienteCantidad, peligro && styles.ingredientePeligro]}>{p.cantidad}</Text>
                       </View>
                     );
                   })}
@@ -447,7 +473,16 @@ const styles = StyleSheet.create({
   listaIngredientes: { marginTop: spacing.sm },
   ingredienteRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, gap: spacing.md },
   ingredienteLinea: { borderTopWidth: 1, borderTopColor: colors.border },
-  ingredienteNombre: { fontFamily: fonts.body, fontSize: 16, color: colors.text, flex: 1 },
+  ingredienteNombreFila: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  ingredienteNombre: { fontFamily: fonts.body, fontSize: 16, color: colors.text, flexShrink: 1 },
+  ingredientePeligro: { color: colors.danger, fontFamily: fonts.bodyBold },
+  alergiaCaja: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: spacing.md, padding: 14, borderRadius: 20,
+    backgroundColor: '#FDE7E7', borderWidth: 1, borderColor: '#F2B3B5',
+  },
+  alergiaIcono: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center' },
+  alergiaTitulo: { fontFamily: fonts.heading, fontSize: 15, lineHeight: 20, color: '#A32A2F' },
+  alergiaSub: { fontFamily: fonts.body, fontSize: 13, color: '#A32A2F', marginTop: 2 },
   ingredienteCantidad: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.text },
   pasoTarjeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.primaryLight, borderRadius: 28, padding: 16, marginTop: spacing.sm },
   pasoNumero: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },

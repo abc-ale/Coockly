@@ -69,6 +69,16 @@ export async function guardarAvatar(correo: string, avatar: Avatar): Promise<boo
   return actualizarPerfilSupabase({ avatar: `${avatar.animal}:${avatar.fondo}` });
 }
 
+/** Al abrir la app: manda a la Comunidad el nombre y la foto actuales (así cuentas que ya cambiaron antes quedan al día). */
+export async function sincronizarPerfilComunidad(correo: string, nombre: string): Promise<void> {
+  const avatar = await cargarAvatar(correo);
+  const campos: { nombre_completo?: string; avatar?: string } = {};
+  if (nombre.trim()) campos.nombre_completo = nombre.trim();
+  if (avatar) campos.avatar = `${avatar.animal}:${avatar.fondo}`;
+  if (Object.keys(campos).length === 0) return;
+  await actualizarPerfilSupabase(campos);
+}
+
 /** Convierte "per1:#FF4D80" (como se guarda en Supabase) en un Avatar. */
 export function avatarDesdeTexto(texto?: string | null): Avatar | null {
   if (!texto) return null;

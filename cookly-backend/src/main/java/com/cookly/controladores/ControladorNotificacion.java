@@ -12,7 +12,7 @@ import java.util.Map;
 
 /**
  * Notificaciones de cada usuario (campana de Inicio). Las crean disparadores de la base de datos
- * (receta nueva, reporte revisado); aquí solo se listan, se cuentan y se marcan como leídas.
+ * (receta nueva, reporte revisado, me gusta y comentarios de la comunidad); aquí solo se listan, se cuentan y se marcan como leídas.
  * Usa JdbcTemplate: es una tabla sencilla y no necesita entidad.
  */
 @RestController
@@ -26,7 +26,7 @@ public class ControladorNotificacion {
     @GetMapping
     public List<Map<String, Object>> listar(Authentication autenticacion) {
         return jdbc.queryForList(
-                "SELECT id, titulo, mensaje, tipo, receta_id AS \"recetaId\", leida, creado_en AS \"creadoEn\" "
+                "SELECT id, titulo, mensaje, tipo, receta_id AS \"recetaId\", post_id AS \"postId\", leida, creado_en AS \"creadoEn\" "
                         + "FROM public.notificaciones WHERE usuario_id = ? ORDER BY creado_en DESC, id DESC LIMIT 50",
                 usuarioId(autenticacion));
     }

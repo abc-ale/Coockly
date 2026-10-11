@@ -114,12 +114,12 @@ export default function ProfileScreen() {
           </Presionable>
         </Aparecer>
 
-        <Aparecer delay={310}>
-          <Presionable escalaAlPresionar={0.97} style={st.fila} onPress={() => router.push('/ruleta')}>
-            <View style={[st.filaIcono, { backgroundColor: colors.accent }]}>
-              <Ionicons name="dice-outline" size={22} color={colors.text} />
+        <Aparecer delay={325}>
+          <Presionable escalaAlPresionar={0.97} style={st.fila} onPress={() => router.push('/alergias')}>
+            <View style={[st.filaIcono, { backgroundColor: '#FDE7E7' }]}>
+              <Ionicons name="warning-outline" size={22} color={colors.danger} />
             </View>
-            <Text style={st.filaTexto}>Ruleta del antojo</Text>
+            <Text style={st.filaTexto}>Mis alergias</Text>
             <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
           </Presionable>
         </Aparecer>

@@ -21,6 +21,7 @@ type Notificacion = {
   mensaje: string;
   tipo: string;
   recetaId: number | null;
+  postId?: string | null;
   leida: boolean;
   creadoEn: string;
 };
@@ -105,19 +106,31 @@ function MiniReceta({ recetaId }: { recetaId: number }) {
 
 function Tarjeta({ n, indice }: { n: Notificacion; indice: number }) {
   const esReceta = n.tipo === 'RECETA';
-  const icono: keyof typeof Ionicons.glyphMap = esReceta ? 'restaurant' : n.tipo === 'REPORTE' ? 'flag' : 'notifications';
+  const esLike = n.tipo === 'LIKE' || n.tipo === 'LIKE_COMENTARIO';
+  const esComunidad = !!n.postId;
+  const icono: keyof typeof Ionicons.glyphMap = esReceta
+    ? 'restaurant'
+    : esLike
+      ? 'heart'
+      : esComunidad
+        ? 'chatbubble'
+        : n.tipo === 'REPORTE'
+          ? 'flag'
+          : 'notifications';
   // Colores del cuadrito de ícono: rosa (receta nueva), pistacho (reporte) y rosadito si ya se leyó.
-  const fondoIcono = !n.leida ? (esReceta ? colors.primary : colors.magic) : colors.primaryLight;
-  const colorIcono = !n.leida ? (esReceta ? colors.white : colors.text) : colors.primary;
+  const fondoIcono = !n.leida ? (esReceta || esComunidad ? colors.primary : colors.magic) : colors.primaryLight;
+  const colorIcono = !n.leida ? (esReceta || esComunidad ? colors.white : colors.text) : colors.primary;
 
   return (
     <EntradaSuave delay={Math.min(indice, 8) * 40} distancia={10}>
       <Pressable
-        disabled={!n.recetaId}
+        disabled={!n.recetaId && !n.postId}
         onPress={() => {
-          if (!n.recetaId) return;
+          if (!n.recetaId && !n.postId) return;
           toque();
-          router.push({ pathname: '/receta/[id]', params: { id: String(n.recetaId) } });
+          // Los avisos de la comunidad abren la publicación con sus comentarios; los de receta, la receta.
+          if (n.postId) router.push(`/comments/${n.postId}`);
+          else router.push({ pathname: '/receta/[id]', params: { id: String(n.recetaId) } });
         }}
         style={({ pressed }) => [st.tarjeta, n.leida ? st.tarjetaLeida : st.tarjetaNueva, pressed && { opacity: 0.92 }]}
       >

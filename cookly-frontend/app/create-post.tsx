@@ -53,7 +53,7 @@ export default function CreatePostScreen() {
         const { data: sesion } = await supabase.auth.getSession();
         const id = sesion.session?.user.id;
         if (!id) return;
-        const { data } = await supabase.from('profiles').select('username, nombre_completo').eq('id', id).maybeSingle();
+        const { data } = await supabase.from('profiles').select('username, nombre_completo').eq('user_id', id).maybeSingle();
         const nombre = (data?.nombre_completo || data?.username || 'Tú').replace(/_[0-9a-f]{6,}$/i, '');
         setAutor({ nombre, id });
       } catch {
