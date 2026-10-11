@@ -56,13 +56,7 @@ export default function CargandoReceta({ portada, nombre, minutos, fallo, onRein
           <Animated.View style={{ opacity: opacidad }}>
             <View style={st.fila}>
               <View style={[st.bloque, { width: 120, height: 34, borderRadius: 17, backgroundColor: colors.accent, opacity: 0.55 }]} />
-              {minutos ? (
-                <View style={[st.pastilla, { backgroundColor: colors.primaryLight }]}>
-                  <Text style={st.pastillaTexto}>{minutos} min</Text>
-                </View>
-              ) : (
-                <View style={[st.bloque, { width: 70, height: 34, borderRadius: 17 }]} />
-              )}
+              <View style={[st.bloque, { width: 80, height: 34, borderRadius: 17 }]} />
               <View style={[st.bloque, { width: 54, height: 34, borderRadius: 17, backgroundColor: colors.magic, opacity: 0.55 }]} />
             </View>
             <View style={[st.bloque, { width: '45%', height: 22, marginTop: spacing.lg }]} />

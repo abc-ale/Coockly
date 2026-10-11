@@ -26,9 +26,11 @@ type Props = {
   tipo: 'POST' | 'COMENTARIO';
   contenidoId: string;
   tamano?: number;
+  /** Dibuja la banderita dentro de un círculo rosado claro (tarjetas de Comunidad). */
+  circulo?: boolean;
 };
 
-export default function BotonReportarContenido({ tipo, contenidoId, tamano = 19 }: Props) {
+export default function BotonReportarContenido({ tipo, contenidoId, tamano = 19, circulo = false }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [motivo, setMotivo] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -75,8 +77,8 @@ export default function BotonReportarContenido({ tipo, contenidoId, tamano = 19 
 
   return (
     <>
-      <TouchableOpacity onPress={() => setAbierto(true)} hitSlop={10}>
-        <Ionicons name="flag-outline" size={tamano} color={colors.textMuted} />
+      <TouchableOpacity onPress={() => setAbierto(true)} hitSlop={10} style={circulo ? styles.circulo : undefined}>
+        <Ionicons name="flag-outline" size={tamano} color={circulo ? colors.text : colors.textMuted} />
       </TouchableOpacity>
 
       <Modal visible={abierto} transparent animationType="fade" onRequestClose={cerrar}>
@@ -137,6 +139,7 @@ export default function BotonReportarContenido({ tipo, contenidoId, tamano = 19 
 }
 
 const styles = StyleSheet.create({
+  circulo: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
   fondo: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',

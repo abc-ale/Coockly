@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { api } from '../lib/api';
 import { Presionable } from './Animaciones';
 import { seleccion } from '../lib/vibracion';
-import { colors } from '../constants/theme';
+import { colors, fonts } from '../constants/theme';
 
 type Etiqueta = { id: number; nombre: string };
 
@@ -64,7 +64,7 @@ export default function FiltroEtiquetas({ seleccionada, onCambiar }: Props) {
       }}
       style={[styles.chip, activo && styles.chipActivo]}
     >
-      <Ionicons name={icono} size={16} color={activo ? '#fff' : colors.primaryDark} />
+      <Ionicons name={icono} size={16} color={activo ? '#fff' : colors.text} />
       <Text style={[styles.texto, activo && styles.textoActivo]}>{texto}</Text>
     </Presionable>
   );
@@ -92,10 +92,10 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: colors.primaryLight,
     borderRadius: 999,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
   },
   chipActivo: { backgroundColor: colors.primary },
-  texto: { color: colors.primaryDark, fontSize: 14 },
-  textoActivo: { color: '#fff', fontWeight: '600' },
+  texto: { color: colors.text, fontSize: 14, fontFamily: fonts.heading },
+  textoActivo: { color: '#fff' },
 })
