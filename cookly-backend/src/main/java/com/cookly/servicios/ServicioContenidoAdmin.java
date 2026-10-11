@@ -19,14 +19,12 @@ public class ServicioContenidoAdmin {
 
     private final JdbcTemplate jdbc;
     private final ServicioAuditoria auditoria;
-    private final ServicioCloudinary cloudinary;
     private final String zona;
 
-    public ServicioContenidoAdmin(JdbcTemplate jdbc, ServicioAuditoria auditoria, ServicioCloudinary cloudinary,
+    public ServicioContenidoAdmin(JdbcTemplate jdbc, ServicioAuditoria auditoria,
                                   @Value("${app.zona-horaria:America/Lima}") String zona) {
         this.jdbc = jdbc;
         this.auditoria = auditoria;
-        this.cloudinary = cloudinary;
         this.zona = zona;
     }
 
@@ -60,6 +58,32 @@ public class ServicioContenidoAdmin {
     }
 
     @Transactional(readOnly = true)
+    public List<Map<String, Object>> resenas(String q) {
+        boolean filtra = q != null && !q.isBlank();
+        List<Object> p = new ArrayList<>();
+        p.add(zona);
+        String sql = "SELECT x.id, x.puntuacion AS estrellas, COALESCE(x.comentario, '') AS contenido, "
+                + "to_char(x.creado_en AT TIME ZONE ?, 'YYYY-MM-DD HH24:MI') AS fecha, "
+                + "COALESCE(u.nombre, '(cuenta eliminada)') AS autor, r.nombre AS \"recetaNombre\" "
+                + "FROM resenas x JOIN recetas r ON r.id = x.receta_id LEFT JOIN usuarios u ON u.id = x.usuario_id ";
+        if (filtra) {
+            sql += "WHERE x.comentario ILIKE ? OR u.nombre ILIKE ? OR u.correo ILIKE ? OR r.nombre ILIKE ? ";
+            String t = patron(q);
+            p.add(t); p.add(t); p.add(t); p.add(t);
+        }
+        return jdbc.queryForList(sql + "ORDER BY x.id DESC LIMIT 100", p.toArray());
+    }
+
+    @Transactional
+    public void eliminarResena(Long id, String admin) {
+        List<String> t = jdbc.queryForList("SELECT COALESCE(comentario, '') FROM resenas WHERE id = ?", String.class, id);
+        if (t.isEmpty()) throw new IllegalArgumentException("Reseña no encontrada");
+        jdbc.update("DELETE FROM resenas WHERE id = ?", id);
+        String texto = t.get(0);
+        auditoria.registrar(admin, "RESENA_ELIMINADA", "#" + id + ": " + (texto.length() > 120 ? texto.substring(0, 120) : texto));
+    }
+
+    @Transactional(readOnly = true)
     public List<Map<String, Object>> recetas(String q) {
         boolean filtra = q != null && !q.isBlank();
         List<Object> p = new ArrayList<>();
@@ -81,13 +105,10 @@ public class ServicioContenidoAdmin {
     public void eliminarReceta(Long id, String admin) {
         List<String> n = jdbc.queryForList("SELECT nombre FROM recetas WHERE id = ?", String.class, id);
         if (n.isEmpty()) throw new IllegalArgumentException("Receta no encontrada");
-        List<String> fotos = jdbc.queryForList("SELECT identificador_publico FROM imagenes WHERE receta_id = ?", String.class, id);
         for (String tabla : TABLAS_DE_RECETA) {
             jdbc.update("DELETE FROM " + tabla + " WHERE receta_id = ?", id);
         }
         jdbc.update("DELETE FROM recetas WHERE id = ?", id);
-        // Las fotos también se borran de Cloudinary para no dejar archivos sueltos (si falla, no se detiene el borrado).
-        for (String foto : fotos) cloudinary.destruir(foto);
         auditoria.registrar(admin, "RECETA_ELIMINADA", n.get(0) + " (#" + id + ")");
     }
 }

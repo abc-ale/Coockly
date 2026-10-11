@@ -3,6 +3,8 @@ import com.cookly.dto.*;
 import com.cookly.modelos.*;
 import com.cookly.repositorios.*;
 import com.cookly.servicios.ServicioCloudinary.ImagenSubida;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -21,7 +23,9 @@ public class ServicioReceta {
     private final RepositorioEtiqueta etiquetas;
     private final RepositorioRecetaEtiqueta recetasEtiquetas;
     private final RepositorioImagen imagenes;
-    private final RepositorioResena resenas;
+
+    @PersistenceContext
+    private EntityManager em;
 
     public ServicioReceta(RepositorioReceta recetas, RepositorioUsuario usuarios, RepositorioIngrediente ingredientes,
                            RepositorioIngredienteReceta ingredientesReceta, RepositorioPasoReceta pasosReceta,
@@ -30,7 +34,6 @@ public class ServicioReceta {
         this.recetas = recetas; this.usuarios = usuarios; this.ingredientes = ingredientes;
         this.ingredientesReceta = ingredientesReceta; this.pasosReceta = pasosReceta;
         this.etiquetas = etiquetas; this.recetasEtiquetas = recetasEtiquetas; this.imagenes = imagenes;
-        this.resenas = resenas;
     }
 
     /** Compara ingredientes sin importar mayúsculas, tildes ni plural simple (Limones = limón). */
@@ -97,7 +100,10 @@ public class ServicioReceta {
     private Map<Long, Double> promedios(List<Long> ids) {
         Map<Long, Double> mapa = new HashMap<>();
         if (ids.isEmpty()) return mapa;
-        for (Object[] fila : resenas.promediosPorRecetas(ids)) {
+        List<Object[]> filas = em.createQuery(
+                "select r.receta.id, avg(r.puntuacion) from Resena r where r.receta.id in :ids group by r.receta.id", Object[].class)
+                .setParameter("ids", ids).getResultList();
+        for (Object[] fila : filas) {
             mapa.put((Long) fila[0], ((Number) fila[1]).doubleValue());
         }
         return mapa;

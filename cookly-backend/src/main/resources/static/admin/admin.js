@@ -28,6 +28,7 @@
     reportes: { titulo: 'Reportes de recetas',   sub: 'Recetas señaladas por la comunidad.' },
     'reportes-comunidad': { titulo: 'Reportes de comunidad', sub: 'Publicaciones y comentarios señalados desde Comunidad.' },
     comentarios: { titulo: 'Comentarios',          sub: 'Lo que escribe la comunidad. Elimina lo que no corresponda.' },
+    resenas:  { titulo: 'Reseñas',              sub: 'Calificaciones y opiniones de las recetas. Elimina lo que no corresponda.' },
     recetas:  { titulo: 'Recetas',               sub: 'Todas las recetas publicadas, con su autor.' },
     historial: { titulo: 'Historial de acciones', sub: 'Qué hicieron los administradores y cuándo (últimas 200).' },
     respaldo: { titulo: 'Respaldo y recuperación', sub: 'Copia de seguridad de los datos y cómo recuperarlos.' }
@@ -674,6 +675,9 @@
     comentarios: { ruta: '/administracion/comentarios', cont: 'lista-comentarios', buscar: 'c-buscar', vacio: 'No hay comentarios.',
       cols: [['Fecha', 'fecha'], ['Autor', 'autor'], ['Receta', 'recetaNombre'], ['Comentario', 'contenido']],
       pregunta: '¿Eliminar este comentario?' },
+    resenas: { ruta: '/administracion/resenas', cont: 'lista-resenas', buscar: 'rs-buscar', vacio: 'No hay reseñas.',
+      cols: [['Fecha', 'fecha'], ['Autor', 'autor'], ['Receta', 'recetaNombre'], ['Estrellas', 'estrellas'], ['Opinión', 'contenido']],
+      pregunta: '¿Eliminar esta reseña?' },
     recetas: { ruta: '/administracion/recetas', cont: 'lista-recetas', buscar: 're-buscar', vacio: 'No hay recetas.',
       cols: [['Fecha', 'fecha'], ['Receta', 'nombre'], ['Autor', 'autor'], ['Comentarios', 'comentarios'], ['Favoritos', 'favoritos']],
       pregunta: '¿Eliminar esta receta con todos sus datos? No se puede deshacer.' },
@@ -711,7 +715,7 @@
   }
 
   function iniciarListas() {
-    ['comentarios', 'recetas'].forEach(function (nombre) {
+    ['comentarios', 'resenas', 'recetas'].forEach(function (nombre) {
       var cfg = LISTAS[nombre];
       var espera = null;
       $(cfg.buscar).addEventListener('input', function () {
