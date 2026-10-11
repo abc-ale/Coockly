@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
+import { useBarraSobreTeclado } from '../../lib/teclado';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -59,6 +60,8 @@ export default function ResenasScreen() {
   const { id, nombre: nombreParam } = useLocalSearchParams<{ id: string; nombre?: string }>();
   const insets = useSafeAreaInsets();
   const { usuario } = useAuth();
+  // La barra para escribir sube sobre el teclado (se mide, así no queda tapada ni con doble espacio).
+  const { ref: barraRef, margen: margenBarra, abierto: tecladoAbierto } = useBarraSobreTeclado();
 
   const [nombre, setNombre] = useState(nombreParam ?? '');
   const [imagen, setImagen] = useState<string | null>(null);
@@ -139,19 +142,19 @@ export default function ResenasScreen() {
   const miNota = miResena?.puntuacion ?? 0;
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={undefined}>
+      {/* Cabecera fija: la flecha y el nombre de la receta no se mueven ni se mezclan con la hora al hacer scroll */}
+      <View style={[st.cabecera, { paddingTop: Math.max(insets.top, 12) + 8, paddingHorizontal: 20, paddingBottom: 6, backgroundColor: colors.background }]}>
+        <Pressable style={st.atras} onPress={() => router.back()} accessibilityLabel="Volver">
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
+        </Pressable>
+        <Text style={st.nombreReceta} numberOfLines={1}>{nombre}</Text>
+      </View>
       <ScrollView
-        contentContainerStyle={{ paddingTop: Math.max(insets.top, 12) + 8, paddingHorizontal: 20, paddingBottom: 110 + insets.bottom }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 110 + insets.bottom }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Encabezado */}
-        <View style={st.cabecera}>
-          <Pressable style={st.atras} onPress={() => router.back()} accessibilityLabel="Volver">
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
-          </Pressable>
-          <Text style={st.nombreReceta} numberOfLines={1}>{nombre}</Text>
-        </View>
         <Text style={st.titulo}>Reseñas y comentarios</Text>
 
         {cargando ? (
@@ -278,7 +281,7 @@ export default function ResenasScreen() {
       </ScrollView>
 
       {/* Barra para comentar */}
-      <View style={[st.barra, { paddingBottom: insets.bottom + 10 }]}>
+      <View ref={barraRef} collapsable={false} style={[st.barra, { paddingBottom: tecladoAbierto ? 10 : insets.bottom + 10, marginBottom: margenBarra }]}>
         <View style={st.entrada}>
           <TextInput
             style={st.entradaTexto}
@@ -320,7 +323,7 @@ const st = StyleSheet.create({
   cabecera: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   atras: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
   nombreReceta: { flex: 1, fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.textMuted },
-  titulo: { fontFamily: fonts.displayBold, fontSize: 30, lineHeight: 36, color: colors.text, marginTop: 18, marginBottom: 16 },
+  titulo: { fontFamily: fonts.displayBold, fontSize: 30, lineHeight: 36, color: colors.text, marginTop: 10, marginBottom: 16 },
 
   fallo: { alignItems: 'center', gap: 10, marginTop: 40 },
   falloTexto: { fontFamily: fonts.body, fontSize: 15, color: colors.textMuted, textAlign: 'center' },

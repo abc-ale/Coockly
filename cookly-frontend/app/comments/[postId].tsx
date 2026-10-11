@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Presionable } from '../../components/Animaciones';
+import { useBarraSobreTeclado } from '../../lib/teclado';
 import AvatarPerfil from '../../components/AvatarPerfil';
 import { avatarDesdeTexto } from '../../lib/avatar';
 import { colors, fonts, spacing } from '../../constants/theme';
@@ -61,16 +62,8 @@ function tiempoRelativo(iso?: string) {
 
 export default function CommentsScreen() {
   const insets = useSafeAreaInsets();
-  // Con el teclado abierto, la barra para escribir sube sobre él (y no deja el hueco de los botones de Android).
-  const [tecladoAbierto, setTecladoAbierto] = useState(false);
-  useEffect(() => {
-    const a = Keyboard.addListener('keyboardDidShow', () => setTecladoAbierto(true));
-    const b = Keyboard.addListener('keyboardDidHide', () => setTecladoAbierto(false));
-    return () => {
-      a.remove();
-      b.remove();
-    };
-  }, []);
+  // La barra para escribir sube sobre el teclado (se mide, así no queda tapada ni con doble espacio).
+  const { ref: barraRef, margen: margenBarra, abierto: tecladoAbierto } = useBarraSobreTeclado();
   const [menuDe, setMenuDe] = useState<Comentario | null>(null); // comentario cuyo menú (⋯) está abierto
   const [editando, setEditando] = useState<Comentario | null>(null);
   const campoRef = useRef<TextInput>(null);
@@ -340,7 +333,7 @@ export default function CommentsScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior="padding"
+      behavior={undefined}
     >
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <Presionable onPress={() => router.back()} style={styles.botonVolver} accessibilityLabel="Volver">
@@ -403,7 +396,11 @@ export default function CommentsScreen() {
         </View>
       )}
 
-      <View style={[styles.inputRow, { paddingBottom: tecladoAbierto ? 12 : insets.bottom + 12 }]}>
+      <View
+        ref={barraRef}
+        collapsable={false}
+        style={[styles.inputRow, { paddingBottom: tecladoAbierto ? 12 : insets.bottom + 12, marginBottom: margenBarra }]}
+      >
         <TextInput
           ref={campoRef}
           style={styles.input}
