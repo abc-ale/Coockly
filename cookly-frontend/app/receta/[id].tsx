@@ -377,6 +377,7 @@ export default function RecetaDetalleScreen() {
       {mostrarBarra && (
         <View style={[styles.barra, { paddingBottom: insets.bottom + 12 }]}>
           {receta.detallesIngredientes.length > 0 && (
+            <View style={styles.celdaBoton}>
             <Presionable escalaAlPresionar={0.96} style={styles.botonLista} onPress={enviarALaLista} disabled={enviandoLista}>
               {enviandoLista ? (
                 <ActivityIndicator size="small" color={colors.accent} />
@@ -385,14 +386,17 @@ export default function RecetaDetalleScreen() {
               )}
               <Text style={styles.botonListaTexto} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>Enviar a mi lista</Text>
             </Presionable>
+            </View>
           )}
           {tienePasos && (
+            <View style={styles.celdaBoton}>
             <Presionable escalaAlPresionar={0.97} style={styles.botonCocinar} onPress={cocinar}>
               <Text style={styles.botonCocinarTexto} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{pasoGuardado !== null ? 'Continuar' : 'Cocinar'}</Text>
               <View style={styles.circuloPlay}>
                 <Ionicons name="play" size={20} color={colors.primary} style={{ marginLeft: 3 }} />
               </View>
             </Presionable>
+            </View>
           )}
         </View>
       )}
@@ -466,14 +470,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingTop: 12, backgroundColor: colors.background,
     borderTopWidth: 1, borderTopColor: colors.border,
   },
+  // Cada botón vive en una celda del mismo ancho (el Presionable no reparte el ancho por sí solo).
+  celdaBoton: { flex: 1 },
   botonLista: {
-    flex: 1, height: 62, borderRadius: 31, backgroundColor: colors.text, paddingHorizontal: 12,
+    width: '100%', height: 62, borderRadius: 31, backgroundColor: colors.text, paddingHorizontal: 12,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     shadowColor: colors.text, shadowOpacity: 0.28, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },
   botonListaTexto: { fontFamily: fonts.heading, fontSize: 15, flexShrink: 1, color: colors.white },
   botonCocinar: {
-    flex: 1, height: 62, borderRadius: 31, backgroundColor: colors.primary, paddingLeft: 24, paddingRight: 8, gap: 10,
+    width: '100%', height: 62, borderRadius: 31, backgroundColor: colors.primary, paddingLeft: 24, paddingRight: 8, gap: 10,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     shadowColor: colors.primary, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },

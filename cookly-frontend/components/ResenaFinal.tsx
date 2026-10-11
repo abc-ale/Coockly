@@ -204,9 +204,9 @@ export default function ResenaFinal({ recetaId, nombre, imagen, puntuacionInicia
           </View>
 
           <Presionable escalaAlPresionar={0.97} style={[st.publicar, puntuacion === 0 && { opacity: 0.55 }]} onPress={publicar} disabled={enviando}>
-            <Text style={st.publicarTexto}>{yaTieneResena ?? puntuacionInicial > 0 ? 'Actualizar reseña' : 'Publicar reseña'}</Text>
+            <Text style={st.publicarTexto} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{yaTieneResena ?? puntuacionInicial > 0 ? 'Actualizar reseña' : 'Publicar reseña'}</Text>
             <View style={st.circulo}>
-              {enviando ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="arrow-forward" size={22} color={colors.primary} />}
+              {enviando ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="paper-plane" size={21} color={colors.primary} style={{ transform: [{ rotate: '45deg' }], marginLeft: 1 }} />}
             </View>
           </Presionable>
 
@@ -250,11 +250,11 @@ const st = StyleSheet.create({
   texto: { fontFamily: fonts.body, fontSize: 16, lineHeight: 23, color: colors.text, minHeight: 70, padding: 0 },
   contador: { alignSelf: 'flex-end', fontFamily: fonts.body, fontSize: 12, color: colors.textMuted, marginTop: 4 },
   publicar: {
-    alignSelf: 'stretch', height: 62, borderRadius: 31, backgroundColor: colors.primary, marginTop: 18, paddingLeft: 26, paddingRight: 8,
+    alignSelf: 'stretch', width: '100%', height: 62, borderRadius: 31, backgroundColor: colors.primary, marginTop: 18, paddingLeft: 28, paddingRight: 8, gap: 12,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     shadowColor: colors.primary, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },
-  publicarTexto: { fontFamily: fonts.heading, fontSize: 18, color: colors.white },
+  publicarTexto: { fontFamily: fonts.heading, fontSize: 18, color: colors.white, flexShrink: 1 },
   circulo: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
   ahoraNo: { paddingVertical: 16 },
   ahoraNoTexto: { fontFamily: fonts.heading, fontSize: 15, color: colors.textMuted },
