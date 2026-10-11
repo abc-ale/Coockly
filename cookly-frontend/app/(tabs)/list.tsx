@@ -1,5 +1,5 @@
 // app/(tabs)/list.tsx
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator, TextInput, Keyboard,
 } from 'react-native';
@@ -9,6 +9,7 @@ import { colors, radius, spacing, fonts, shadow } from '../../constants/theme';
 import { api } from '../../lib/api';
 import { seleccion, toque, exito } from '../../lib/vibracion';
 import { Aparecer, Presionable } from '../../components/Animaciones';
+import { mostrarAviso } from '../../components/Aviso';
 
 type ElementoLista = {
   id: number;
@@ -73,6 +74,34 @@ export default function ListaCompraScreen() {
   const [anotando, setAnotando] = useState(false);
   const [limpiando, setLimpiando] = useState(false);
 
+  // Cuando se compra TODO lo de una receta, la lista se quita sola (con un respiro para poder desmarcar).
+  const listasRef = useRef<ListaCompra[]>([]);
+  const temporizadoresFin = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+  useEffect(() => {
+    listasRef.current = listas;
+  }, [listas]);
+  useEffect(() => {
+    const t = temporizadoresFin.current;
+    return () => Object.values(t).forEach(clearTimeout);
+  }, []);
+
+  function revisarListaCompleta(listaId: number) {
+    clearTimeout(temporizadoresFin.current[listaId]);
+    temporizadoresFin.current[listaId] = setTimeout(async () => {
+      const lista = listasRef.current.find((l) => l.id === listaId);
+      if (!lista || lista.nombre === NOMBRE_BLOC) return; // el bloc de mercado no se borra solo
+      if (lista.elementos.length === 0 || lista.elementos.some((e) => !e.comprado)) return;
+      try {
+        await api.delete(`/listas-compra/${listaId}`);
+        setListas((prev) => prev.filter((l) => l.id !== listaId));
+        exito();
+        mostrarAviso(`Lista completa: ${lista.nombre}`, 'exito');
+      } catch {
+        /* si no se pudo quitar, la lista queda ahí y se puede borrar a mano */
+      }
+    }, 1600);
+  }
+
   const cargar = useCallback(async (silencioso = false) => {
     if (!silencioso) setCargando(true);
     try {
@@ -103,6 +132,7 @@ export default function ListaCompraScreen() {
     poner(!item.comprado);
     try {
       await api.put(`/listas-compra/elementos/${item.id}/comprado`, null, { params: { valor: !item.comprado } });
+      revisarListaCompleta(listaId);
     } catch (error: any) {
       poner(item.comprado);
       Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudo actualizar el ítem.');

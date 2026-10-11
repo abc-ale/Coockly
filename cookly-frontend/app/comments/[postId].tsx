@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -58,6 +59,17 @@ function tiempoRelativo(iso?: string) {
 
 export default function CommentsScreen() {
   const insets = useSafeAreaInsets();
+  // Con el teclado abierto, la barra para escribir sube sobre él (y no deja el hueco de los botones de Android).
+  const [tecladoAbierto, setTecladoAbierto] = useState(false);
+  useEffect(() => {
+    const a = Keyboard.addListener('keyboardDidShow', () => setTecladoAbierto(true));
+    const b = Keyboard.addListener('keyboardDidHide', () => setTecladoAbierto(false));
+    return () => {
+      a.remove();
+      b.remove();
+    };
+  }, []);
+  const [miId, setMiId] = useState<string | null>(null); // para mostrar "eliminar" solo en mis comentarios
   const [abiertos, setAbiertos] = useState<Set<string>>(new Set()); // comentarios con respuestas desplegadas
   const { postId } = useLocalSearchParams<{ postId: string }>();
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
@@ -70,6 +82,7 @@ export default function CommentsScreen() {
   const cargarComentarios = useCallback(async () => {
     const { data: sesion } = await supabase.auth.getSession();
     const userId = sesion.session?.user.id;
+    setMiId(userId ?? null);
 
     // Si la columna "avatar" aún no existe en Supabase, se vuelve a pedir sin ella.
     const pedir = (columnasPerfil: string) =>
@@ -190,6 +203,29 @@ export default function CommentsScreen() {
 
   const totalComentarios = comentarios.reduce((n, c) => n + 1 + (c.respuestas?.length || 0), 0);
 
+  function confirmarEliminar(item: Comentario) {
+    const conRespuestas = !item.parent_comment_id && (item.respuestas?.length || 0) > 0;
+    Alert.alert(
+      'Eliminar comentario',
+      conRespuestas ? 'Se eliminará tu comentario y también sus respuestas. ¿Seguro?' : '¿Seguro que quieres eliminar tu comentario?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            const { data, error: errorBorrar } = await supabase.from('comments').delete().eq('id', item.id).select('id');
+            if (errorBorrar || !data || data.length === 0) {
+              Alert.alert('No se pudo eliminar', 'Inténtalo de nuevo en unos segundos.');
+              return;
+            }
+            cargarComentarios();
+          },
+        },
+      ]
+    );
+  }
+
   const renderTarjeta = (item: Comentario, esRespuesta: boolean) => {
     const nombre = nombreDe(item);
     return (
@@ -226,6 +262,16 @@ export default function CommentsScreen() {
               <Text style={styles.responderTexto}>Responder</Text>
             </TouchableOpacity>
           )}
+          {miId && item.user_id === miId ? (
+            <TouchableOpacity
+              onPress={() => confirmarEliminar(item)}
+              style={styles.eliminarBoton}
+              hitSlop={8}
+              accessibilityLabel="Eliminar comentario"
+            >
+              <Ionicons name="trash-outline" size={18} color={colors.danger} />
+            </TouchableOpacity>
+          ) : null}
         </View>
       </View>
     );
@@ -260,7 +306,7 @@ export default function CommentsScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
     >
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <Presionable onPress={() => router.back()} style={styles.botonVolver} accessibilityLabel="Volver">
@@ -314,7 +360,7 @@ export default function CommentsScreen() {
         </View>
       )}
 
-      <View style={[styles.inputRow, { paddingBottom: insets.bottom + 12 }]}>
+      <View style={[styles.inputRow, { paddingBottom: tecladoAbierto ? 12 : insets.bottom + 12 }]}>
         <TextInput
           style={styles.input}
           placeholder={respondiendoA ? 'Escribe tu respuesta...' : 'Escribe un comentario...'}
@@ -350,6 +396,7 @@ const styles = StyleSheet.create({
   contadorTexto: { fontFamily: fonts.heading, fontSize: 13, color: colors.primary },
   tarjeta: { backgroundColor: colors.white, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 14, ...SOMBRA },
   tarjetaRespuesta: { borderRadius: 22, paddingHorizontal: 14, paddingVertical: 12 },
+  eliminarBoton: { marginLeft: 'auto', width: 36, height: 36, borderRadius: 18, backgroundColor: '#FDE7E7', alignItems: 'center', justifyContent: 'center' },
   autorFila: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   avatar: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   avatarChico: { width: 32, height: 32, borderRadius: 16 },

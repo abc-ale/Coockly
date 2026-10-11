@@ -79,6 +79,8 @@ export default function RecetaDetalleScreen() {
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [resenas, setResenas] = useState<Resena[]>([]);
   const misAlergias = useMisAlergias();
+  // Al pasar la foto, la barra de la hora (arriba) se tapa con una franja fija para que el contenido no se mezcle con ella.
+  const [pasoLaFoto, setPasoLaFoto] = useState(false);
   const [promedio, setPromedio] = useState(0);
   const [miPuntuacion, setMiPuntuacion] = useState(0);
   const [miComentarioResena, setMiComentarioResena] = useState('');
@@ -267,6 +269,11 @@ export default function RecetaDetalleScreen() {
         contentContainerStyle={{ paddingBottom: mostrarBarra ? 130 + insets.bottom : spacing.xl }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={(e) => {
+          const paso = e.nativeEvent.contentOffset.y > ALTO_FOTO - insets.top - 8;
+          setPasoLaFoto((anterior) => (anterior === paso ? anterior : paso));
+        }}
       >
         {/* Foto grande con esquinas de abajo muy redondeadas */}
         <View style={styles.fotoCaja}>
@@ -399,6 +406,9 @@ export default function RecetaDetalleScreen() {
         </Aparecer>
       </ScrollView>
 
+      {/* Franja fija bajo la hora / wifi / batería */}
+      {pasoLaFoto ? <View pointerEvents="none" style={[styles.franjaEstado, { height: insets.top }]} /> : null}
+
       {/* Barra fija de abajo: Enviar a mi lista + Cocinar */}
       {mostrarBarra && (
         <View style={[styles.barra, { paddingBottom: insets.bottom + 12 }]}>
@@ -444,6 +454,7 @@ export default function RecetaDetalleScreen() {
 }
 
 const styles = StyleSheet.create({
+  franjaEstado: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: colors.background, zIndex: 10 },
   screen: { flex: 1, backgroundColor: colors.background },
   fotoCaja: { width: '100%', height: ALTO_FOTO, borderBottomLeftRadius: 44, borderBottomRightRadius: 44, overflow: 'hidden', backgroundColor: colors.primaryLight },
   foto: { width: '100%', height: '100%' },

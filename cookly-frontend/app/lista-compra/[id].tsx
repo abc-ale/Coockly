@@ -9,6 +9,8 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radius, spacing, typography, fonts, shadow } from '../../constants/theme';
 import { api } from '../../lib/api';
+import { mostrarAviso } from '../../components/Aviso';
+import { exito } from '../../lib/vibracion';
 
 // Mismo margen de arriba que las pantallas de las pestañas
 const MARGEN_SUPERIOR = 24;
@@ -142,6 +144,32 @@ export default function ListaCompraDetalleScreen() {
     }
   }
 
+  // Al comprar TODO, se muestra el festejo un momento y la lista se quita sola (si desmarcas algo, se cancela).
+  const listaRef = useRef<typeof lista>(null);
+  const temporizadorFin = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    listaRef.current = lista;
+  }, [lista]);
+  useEffect(() => () => {
+    if (temporizadorFin.current) clearTimeout(temporizadorFin.current);
+  }, []);
+
+  function revisarListaCompleta() {
+    if (temporizadorFin.current) clearTimeout(temporizadorFin.current);
+    temporizadorFin.current = setTimeout(async () => {
+      const actual = listaRef.current;
+      if (!actual || actual.elementos.length === 0 || actual.elementos.some((e) => !e.comprado)) return;
+      try {
+        await api.delete(`/listas-compra/${id}`);
+        exito();
+        mostrarAviso(`Lista completa: ${actual.nombre}`, 'exito');
+        router.back();
+      } catch {
+        /* si no se pudo quitar, la lista queda ahí */
+      }
+    }, 2200);
+  }
+
   async function alternarComprado(item: Elemento) {
     try {
       await api.put(`/listas-compra/elementos/${item.id}/comprado`, null, { params: { valor: !item.comprado } });
@@ -150,6 +178,7 @@ export default function ListaCompraDetalleScreen() {
           ? { ...prev, elementos: prev.elementos.map((e) => (e.id === item.id ? { ...e, comprado: !e.comprado } : e)) }
           : prev
       );
+      revisarListaCompleta();
     } catch (error: any) {
       Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudo actualizar el ítem.');
     }
