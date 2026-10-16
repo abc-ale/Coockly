@@ -10,7 +10,7 @@
 
   var estado = {
     sesion: null,
-    dias: 30,
+    dias: 7,
     seccionActual: null,
     usuarios: [],
     filtro: { texto: '', rol: '', estado: '' },
@@ -291,11 +291,27 @@
       }
     });
 
+    // Las 3 horas con más sesiones se pintan en rosa y se listan debajo del gráfico.
+    var topHoras = g.horasPico.filter(function (h) { return Number(h.valor) > 0; })
+      .sort(function (x, y) { return Number(y.valor) - Number(x.valor); }).slice(0, 3);
+    var horasTop = topHoras.map(function (h) { return String(h.hora); });
+    var lienzoHoras = $('g-horas').parentNode;
+    var resumenHoras = $('resumen-horas');
+    if (!resumenHoras) {
+      resumenHoras = el('p', { id: 'resumen-horas', clase: 'nota' });
+      lienzoHoras.parentNode.insertBefore(resumenHoras, lienzoHoras.nextSibling);
+    }
+    resumenHoras.textContent = topHoras.length
+      ? 'Se usa más a las ' + topHoras.map(function (h) { return h.hora + ':00 h (' + numero.format(h.valor) + ' sesiones)'; }).join(', ')
+      : 'Todavía no hay sesiones registradas.';
+
     crearGrafico('g-horas', {
       type: 'bar',
       data: {
         labels: g.horasPico.map(function (h) { return h.hora + ' h'; }),
-        datasets: [{ label: 'Sesiones iniciadas', data: g.horasPico.map(function (h) { return Number(h.valor); }), backgroundColor: color('--durazno'), borderRadius: 4 }]
+        datasets: [{ label: 'Sesiones iniciadas', data: g.horasPico.map(function (h) { return Number(h.valor); }),
+          backgroundColor: g.horasPico.map(function (h) { return horasTop.indexOf(String(h.hora)) >= 0 ? color('--rosa-marca') : color('--durazno'); }),
+          borderRadius: 4, maxBarThickness: 22 }]
       },
       options: { scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxTicksLimit: 8 } } }, plugins: { legend: { display: false } } }
     });
@@ -351,7 +367,7 @@
       type: 'bar',
       data: {
         labels: serie.map(function (d) { return etiquetaDia(d.dia); }),
-        datasets: [{ label: nombre, data: serie.map(function (d) { return Number(d.valor); }), backgroundColor: colorBarra, borderRadius: 4 }]
+        datasets: [{ label: nombre, data: serie.map(function (d) { return Number(d.valor); }), backgroundColor: colorBarra, borderRadius: 4, maxBarThickness: 34 }]
       },
       options: { scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxTicksLimit: 10 } } } }
     });
@@ -361,12 +377,13 @@
     var vacio = !filas || filas.length === 0;
     $(id).parentNode.hidden = vacio;
     $(idVacio).hidden = !vacio;
+    if (!vacio) filas = filas.slice(0, 8);
     if (vacio) { if (graficos[id]) { graficos[id].destroy(); delete graficos[id]; } return; }
     crearGrafico(id, {
       type: 'bar',
       data: {
         labels: filas.map(function (f) { return f.nombre.length > 26 ? f.nombre.slice(0, 25) + '…' : f.nombre; }),
-        datasets: [{ label: nombre, data: filas.map(function (f) { return Number(f.valor); }), backgroundColor: colorBarra, borderRadius: 4 }]
+        datasets: [{ label: nombre, data: filas.map(function (f) { return Number(f.valor); }), backgroundColor: colorBarra, borderRadius: 4, maxBarThickness: 22 }]
       },
       options: { indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { precision: 0 } }, y: { grid: { display: false } } } }
     });
