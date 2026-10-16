@@ -246,7 +246,13 @@
     $('vacio-reportes').hidden = rep.length > 0;
     $('g-reportes').parentNode.hidden = rep.length === 0;
     if (rep.length) dibujarDona('g-reportes', rep);
-    if (window.CooklyResumen) window.CooklyResumen.pintar(r, g, estado.dias);
+    if (window.CooklyResumen) {
+      var contar = function (ruta) { return json(ruta).then(function (l) { return Array.isArray(l) ? l.length : 0; }).catch(function () { return 0; }); };
+      var largas = json('/administracion/graficas?dias=90').catch(function () { return null; });
+      Promise.all([contar('/administracion/moderacion/reportes'), contar('/administracion/reportes-comunidad'), largas]).then(function (c) {
+        window.CooklyResumen.pintar(r, g, estado.dias, { recetas: c[0], comunidad: c[1] }, c[2]);
+      });
+    }
   }
 
   function pintarUso() {

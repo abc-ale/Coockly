@@ -239,12 +239,19 @@
     return t;
   }
 
-  function tarjetaReportes(r) {
+  function tarjetaReportes(r, rep) {
+    rep = rep || { recetas: r.reportesPendientes || 0, comunidad: 0 };
+    var total = rep.recetas + rep.comunidad;
     var t = h('section', 'rm-b rm-dark');
     t.appendChild(h('div', 'rm-lab', 'Reportes pendientes'));
-    t.appendChild(h('div', 'rm-bigf', num.format(r.reportesPendientes)));
-    t.appendChild(h('div', 'rm-sub', r.reportesPendientes > 0 ? 'Hay reportes por revisar.' : 'Todo al día. Nada por revisar.'));
-    var cta = h('a', 'rm-cta', 'Ver reportes'); cta.href = '#reportes'; t.appendChild(cta);
+    t.appendChild(h('div', 'rm-bigf', num.format(total)));
+    t.appendChild(h('div', 'rm-sub', total > 0 ? 'Hay reportes por revisar.' : 'Todo al día. Nada por revisar.'));
+    [['Recetas', rep.recetas, '#reportes'], ['Comunidad', rep.comunidad, '#reportes-comunidad']].forEach(function (p) {
+      var fila = h('a', 'rm-rep' + (p[1] > 0 ? ' rm-rep-on' : '')); fila.href = p[2];
+      fila.appendChild(h('span', null, p[0])); fila.appendChild(h('b', null, num.format(p[1])));
+      t.appendChild(fila);
+    });
+    var cta = h('a', 'rm-cta', 'Ver reportes'); cta.href = rep.recetas === 0 && rep.comunidad > 0 ? '#reportes-comunidad' : '#reportes'; t.appendChild(cta);
     return t;
   }
 
@@ -262,18 +269,18 @@
     vaciar(raiz);
     var cols = h('div', 'rm-cols');
     var main = h('div', 'rm-main');
-    var g1 = h('div', 'rm-g12'); g1.appendChild(tarjetaUsuarios(r, g)); g1.appendChild(tarjetaUso(r, g));
+    var g1 = h('div', 'rm-g12'); g1.appendChild(tarjetaUsuarios(r, ultimo.g90)); g1.appendChild(tarjetaUso(r, ultimo.g90));
     var g2 = h('div', 'rm-g12'); g2.appendChild(tarjetaCuentas(r)); g2.appendChild(tarjetaRecetas(r));
     main.appendChild(g1); main.appendChild(g2); main.appendChild(tarjetaVistas(g));
-    var lado = h('aside', 'rm-side'); lado.appendChild(calendario(g)); lado.appendChild(tarjetaReportes(r));
+    var lado = h('aside', 'rm-side'); lado.appendChild(calendario(ultimo.g90)); lado.appendChild(tarjetaReportes(r, ultimo.rep));
     cols.appendChild(main); cols.appendChild(lado);
     raiz.appendChild(cols);
   }
 
   window.CooklyResumen = {
-    pintar: function (r, g) {
+    pintar: function (r, g, dias, rep, g90) {
       try {
-        ultimo = { r: r, g: g };
+        ultimo = { r: r, g: g, rep: rep, g90: g90 || g };
         semana = 0;
         var sec = document.querySelector('[data-seccion="resumen"]');
         render();

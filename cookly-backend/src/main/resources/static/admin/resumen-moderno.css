@@ -50,3 +50,8 @@
 .rm-sub { font-size: 14px; color: #E6BBC7; }
 .rm-cta { display: block; text-align: center; background: #fff; color: #2B1020; border-radius: 999px; padding: 13px; font-weight: 700; text-decoration: none; margin-top: 16px; }
 #resumen-mod svg text { font-family: 'DM Sans', sans-serif; font-size: 11px; fill: #2B1020; }
+
+.rm-rep { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,.08); border-radius: 14px; padding: 10px 14px; margin-top: 10px; color: #F3D9DC; text-decoration: none; font-size: 14px; }
+.rm-rep b { font-family: 'Fredoka', sans-serif; font-size: 20px; color: #fff; }
+.rm-rep-on { background: #FF4D82; color: #2B1020; }
+.rm-rep-on b { color: #2B1020; }
