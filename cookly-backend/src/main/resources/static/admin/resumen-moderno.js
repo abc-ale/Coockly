@@ -131,7 +131,7 @@
     pts.forEach(function (p, i) { puntos.appendChild(s('circle', { cx: p.x, cy: p.y.toFixed(2), r: i === iPico ? 6 : 4 })); });
     svg.appendChild(puntos);
     var etiquetas = s('g', { style: 'font-weight:700;font-size:11.5px', 'text-anchor': 'middle' });
-    pts.forEach(function (p, i) { if (p.v > 0) etiquetas.appendChild(s('text', { x: p.x, y: (p.y - 9).toFixed(2) }, i === iPico ? num.format(p.v) + ' min' : num.format(p.v))); });
+    pts.forEach(function (p, i) { if (p.v > 0) etiquetas.appendChild(s('text', { x: p.x, y: (p.y - 9).toFixed(2) }, i === iPico ? num.format(Math.round(p.v)) + ' min' : num.format(Math.round(p.v)))); });
     svg.appendChild(etiquetas);
     var dias = s('g', { 'text-anchor': 'middle', style: 'font-size:11.5px' });
     w.ventana.forEach(function (dd, i) { dias.appendChild(s('text', { x: 60 + i * 48, y: 144 }, LETRAS[dd.f.getDay()] + ' ' + dd.f.getDate())); });
@@ -277,14 +277,7 @@
 
   // Un solo manejador de clic para todos los botones (no se pierde aunque se redibuje el Resumen).
   var ultimoToque = 0;
-  function manejar(e) {
-    var b = e.target && e.target.closest ? e.target.closest('[data-rm]') : null;
-    if (!b || b.disabled) return;
-    // pointerdown y click llegan juntos: solo se atiende el primero
-    var ahora = Date.now();
-    if (e.type === 'click' && ahora - ultimoToque < 600) { e.preventDefault(); e.stopPropagation(); return; }
-    if (e.type === 'pointerdown') ultimoToque = ahora;
-    var k = b.getAttribute('data-rm');
+  function accion(k) {
     if (k === 'ant') semana++;
     else if (k === 'sig') { if (semana > 0) semana--; }
     else if (k === 'uso-ant') semanaUso++;
@@ -292,11 +285,24 @@
     else if (k === 'mes-ant') vistaMes = new Date(vistaMes.getFullYear(), vistaMes.getMonth() - 1, 1);
     else if (k === 'mes-sig') vistaMes = new Date(vistaMes.getFullYear(), vistaMes.getMonth() + 1, 1);
     else return;
-    e.preventDefault(); e.stopPropagation();
     if (k.indexOf('uso-') === 0) renderUso(); else render();
   }
-  document.addEventListener('pointerdown', manejar, true);
-  document.addEventListener('click', manejar, true);
+  function disparar(k, e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); }
+    var ahora = Date.now();
+    if (ahora - ultimoToque < 450) return; // pointerdown y click llegan juntos: se atiende uno solo
+    ultimoToque = ahora;
+    accion(k);
+  }
+  function manejar(e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-rm]') : null;
+    if (!b || b.disabled) return;
+    disparar(b.getAttribute('data-rm'), e);
+  }
+  // En window (captura) llega antes que cualquier otro script de la página.
+  window.addEventListener('pointerdown', manejar, true);
+  window.addEventListener('mousedown', manejar, true);
+  window.addEventListener('click', manejar, true);
 
 
   // =====================================================================  USO DE LA APP
@@ -371,20 +377,45 @@
     xs.forEach(function (x, i) { svg.appendChild(s('circle', { cx: x.toFixed(1), cy: yA[i].toFixed(1), r: 4.5, fill: '#fff', stroke: '#E5A700', 'stroke-width': 2.5 })); });
     var iPico = pico > 0 ? vals.indexOf(pico) : -1;
     xs.forEach(function (x, i) { svg.appendChild(s('circle', { cx: x.toFixed(1), cy: ys[i].toFixed(1), r: i === iPico ? 7 : 5, fill: i === iPico ? '#FF4D82' : '#fff', stroke: i === iPico ? '#fff' : '#FF4D82', 'stroke-width': 3 })); });
-    xs.forEach(function (x, i) { if (vals[i] > 0 && i !== iPico) svg.appendChild(s('text', { x: x.toFixed(1), y: (ys[i] - 12).toFixed(1), 'text-anchor': 'middle', style: 'font-weight:700;font-size:12.5px' }, num.format(vals[i]))); });
-    if (iPico >= 0) {
-      var px = xs[iPico], py = ys[iPico];
-      var bx = Math.min(Math.max(px - 80, 62), 880);
-      svg.appendChild(s('rect', { x: bx, y: Math.max(2, py - 58), width: 160, height: 36, rx: 13, fill: '#2B1020' }));
-      svg.appendChild(s('text', { x: bx + 16, y: Math.max(2, py - 58) + 23, style: 'fill:#FFD666;font-size:14px;font-weight:700' }, num.format(pico) + ' min'));
-      svg.appendChild(s('text', { x: bx + 84, y: Math.max(2, py - 58) + 23, style: 'fill:#F3D9DC;font-size:12px' }, '· ' + acts[iPico] + (acts[iPico] === 1 ? ' persona' : ' personas')));
-      svg.appendChild(s('path', { d: 'M' + (px - 8) + ' ' + (Math.max(2, py - 58) + 36) + ' L' + px + ' ' + (Math.max(2, py - 58) + 44) + ' L' + (px + 8) + ' ' + (Math.max(2, py - 58) + 36) + ' Z', fill: '#2B1020' }));
+    xs.forEach(function (x, i) { if (vals[i] > 0 && i !== iPico) svg.appendChild(s('text', { x: x.toFixed(1), y: (ys[i] - 12).toFixed(1), 'text-anchor': 'middle', style: 'font-weight:700;font-size:12.5px' }, num.format(Math.round(vals[i])))); });
+    // Burbuja que aparece al tocar o pasar el mouse por cualquier día (por defecto, el día pico).
+    var tip = s('g', { style: 'pointer-events:none' });
+    var tipLinea = s('line', { stroke: '#2B1020', 'stroke-width': 1.5, 'stroke-dasharray': '3 4', opacity: '.5' });
+    var tipCaja = s('rect', { height: 38, rx: 13, fill: '#2B1020' });
+    var tipFlecha = s('path', { fill: '#2B1020' });
+    var tipTexto = s('text', { 'font-size': 14, 'font-weight': 700, fill: '#FFD666' });
+    var tMin = s('tspan', { fill: '#FFD666' }); var tRes = s('tspan', { fill: '#F3D9DC', 'font-weight': 400, 'font-size': 12.5 });
+    tipTexto.appendChild(tMin); tipTexto.appendChild(tRes);
+    tip.appendChild(tipLinea); tip.appendChild(tipCaja); tip.appendChild(tipFlecha); tip.appendChild(tipTexto);
+    var nombresDia = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    function mostrarTip(i) {
+      if (i < 0 || i >= xs.length) return;
+      var minTxt = num.format(Math.round(vals[i])) + ' min';
+      var resTxt = ' · ' + acts[i] + (acts[i] === 1 ? ' persona activa' : ' personas activas') + ' · ' + nombresDia[w.ventana[i].f.getDay()] + ' ' + w.ventana[i].f.getDate();
+      tMin.textContent = minTxt; tRes.textContent = resTxt;
+      var ancho = Math.ceil((minTxt.length * 8.4) + (resTxt.length * 6.6) + 32);
+      var px = xs[i], alto = Math.min(ys[i], yA[i]);
+      var bx = Math.min(Math.max(px - ancho / 2, 4), 996 - ancho);
+      var by = Math.max(2, alto - 62);
+      tipCaja.setAttribute('x', bx.toFixed(1)); tipCaja.setAttribute('y', by.toFixed(1)); tipCaja.setAttribute('width', ancho);
+      tipTexto.setAttribute('x', (bx + 16).toFixed(1)); tipTexto.setAttribute('y', (by + 24).toFixed(1));
+      tipFlecha.setAttribute('d', 'M' + (px - 8).toFixed(1) + ' ' + (by + 38) + ' L' + px.toFixed(1) + ' ' + (by + 46) + ' L' + (px + 8).toFixed(1) + ' ' + (by + 38) + ' Z');
+      tipLinea.setAttribute('x1', px.toFixed(1)); tipLinea.setAttribute('x2', px.toFixed(1)); tipLinea.setAttribute('y1', (by + 46).toFixed(1)); tipLinea.setAttribute('y2', BASE);
     }
+    var actual = iPico >= 0 ? iPico : Math.max(0, xs.length - 1);
+    var zonas = s('g');
+    xs.forEach(function (x, i) {
+      var zona = s('rect', { x: (x - paso / 2).toFixed(1), y: 20, width: paso.toFixed(1), height: 240, fill: 'transparent', style: 'cursor:pointer' });
+      ['pointerenter', 'pointerdown', 'click', 'touchstart'].forEach(function (ev) { zona.addEventListener(ev, function () { mostrarTip(i); }); });
+      zonas.appendChild(zona);
+    });
+    mostrarTip(actual);
     xs.forEach(function (x, i) {
       var f = vals[i] <= 0 ? '#F3D9DC' : (i === iPico ? '#FF4D82' : (vals[i] < pico / 3 ? '#BFE4A5' : '#FFD666'));
       svg.appendChild(s('rect', { x: (x - paso * 0.45).toFixed(1), y: 228, width: (paso * 0.9).toFixed(1), height: 8, rx: 4, fill: f }));
       svg.appendChild(s('text', { x: x.toFixed(1), y: 262, 'text-anchor': 'middle', style: 'font-size:13px' + (i === iPico ? ';font-weight:700' : '') }, ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][w.ventana[i].f.getDay()] + ' ' + w.ventana[i].f.getDate()));
     });
+    svg.appendChild(zonas); svg.appendChild(tip);
     t.appendChild(svg);
     return t;
   }
