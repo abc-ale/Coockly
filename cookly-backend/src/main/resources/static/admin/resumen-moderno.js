@@ -451,7 +451,7 @@
     if (total === 0) { t.appendChild(h('p', 'rm-vacio', 'Todavía no hay sesiones registradas.')); return t; }
     var top3 = horas.filter(function (x) { return x.v > 0; }).sort(function (a, b) { return b.v - a.v; }).slice(0, 3);
     top3.forEach(function (x) {
-      var fila = h('div', 'rm-pr'); fila.appendChild(h('span', 'rm-pi', String(x.hora)));
+      var fila = h('div', 'rm-pr');
       var pm = h('div', 'rm-pm'); var pt = h('div', 'rm-pt'); pt.appendChild(h('b', null, x.hora + ':00 h')); pt.appendChild(h('span', null, num.format(x.v) + (x.v === 1 ? ' sesión' : ' sesiones'))); pm.appendChild(pt);
       var trk = h('div', 'rm-trk'); var rel = h('div'); rel.style.width = Math.round(x.v / max * 100) + '%'; rel.style.background = '#FF4D82'; trk.appendChild(rel); pm.appendChild(trk);
       fila.appendChild(pm); fila.appendChild(h('span', 'rm-pct', Math.round(x.v / total * 100) + '%')); t.appendChild(fila);
@@ -516,8 +516,10 @@
   function esqueleto(id, seccion, cajas) {
     var raiz = document.getElementById(id), sec = document.querySelector('[data-seccion="' + seccion + '"]');
     if (!raiz || !sec) return;
-    var g = h('div', 'rm-sk-g');
-    cajas.forEach(function (c) { var b = h('div', 'rm-sk ' + c); g.appendChild(b); });
+    var g = h('div', 'rm-cargando'); g.setAttribute('role', 'status'); g.setAttribute('aria-label', 'Cargando');
+    var im = document.createElement('img'); im.src = 'img/favicon.png'; im.alt = ''; im.className = 'rm-logo-gira';
+    im.onerror = function () { im.style.display = 'none'; };
+    g.appendChild(h('div', 'rm-anillo')); g.appendChild(im);
     raiz.appendChild(g); sec.classList.add('rm-on');
   }
   esqueleto('resumen-mod', 'resumen', ['rm-sk-y', 'rm-sk-p', 'rm-sk-g2', 'rm-sk-h']);
