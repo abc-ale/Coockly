@@ -276,20 +276,27 @@
   }
 
   // Un solo manejador de clic para todos los botones (no se pierde aunque se redibuje el Resumen).
-  document.addEventListener('click', function (e) {
+  var ultimoToque = 0;
+  function manejar(e) {
     var b = e.target && e.target.closest ? e.target.closest('[data-rm]') : null;
     if (!b || b.disabled) return;
+    // pointerdown y click llegan juntos: solo se atiende el primero
+    var ahora = Date.now();
+    if (e.type === 'click' && ahora - ultimoToque < 600) { e.preventDefault(); e.stopPropagation(); return; }
+    if (e.type === 'pointerdown') ultimoToque = ahora;
     var k = b.getAttribute('data-rm');
     if (k === 'ant') semana++;
     else if (k === 'sig') { if (semana > 0) semana--; }
-    else if (k === 'uso-ant') { semanaUso++; e.preventDefault(); e.stopPropagation(); renderUso(); return; }
-    else if (k === 'uso-sig') { if (semanaUso > 0) semanaUso--; e.preventDefault(); e.stopPropagation(); renderUso(); return; }
+    else if (k === 'uso-ant') semanaUso++;
+    else if (k === 'uso-sig') { if (semanaUso > 0) semanaUso--; }
     else if (k === 'mes-ant') vistaMes = new Date(vistaMes.getFullYear(), vistaMes.getMonth() - 1, 1);
     else if (k === 'mes-sig') vistaMes = new Date(vistaMes.getFullYear(), vistaMes.getMonth() + 1, 1);
     else return;
     e.preventDefault(); e.stopPropagation();
-    render();
-  }, true);
+    if (k.indexOf('uso-') === 0) renderUso(); else render();
+  }
+  document.addEventListener('pointerdown', manejar, true);
+  document.addEventListener('click', manejar, true);
 
 
   // =====================================================================  USO DE LA APP
@@ -297,7 +304,7 @@
   var ultimoUso = null;
 
   function ventanaUso(serie) {
-    var datos = (serie || []).map(function (d) { return { f: fecha(d.dia), v: Number(d.minutos) || 0 }; });
+    var datos = (serie || []).map(function (d) { return { f: fecha(d.dia), v: Number(d.minutos) || 0, a: Number(d.activos) || 0 }; });
     datos.sort(function (a, b) { return a.f - b.f; });
     var fin = datos.length - semanaUso * 7, ini = Math.max(0, fin - 7);
     return { ventana: datos.slice(ini, Math.max(fin, 0)), hayAnterior: ini > 0, haySiguiente: semanaUso > 0 };
@@ -318,8 +325,11 @@
   function graficoUsoDias(g) {
     var w = ventanaUso(g.usoPorDia);
     var t = h('section', 'rm-b rm-w rm-full');
-    var hd = h('div', 'rm-hd'); var izq = h('div'); izq.appendChild(h('h2', 'rm-t', 'Tiempo de uso por día')); izq.appendChild(h('p', 'rm-subt', 'Un punto por cada día de la semana · minutos de uso'));
+    var hd = h('div', 'rm-hd'); var izq = h('div'); izq.appendChild(h('h2', 'rm-t', 'Tiempo de uso por día')); izq.appendChild(h('p', 'rm-subt', 'Un punto por cada día de la semana'));
     hd.appendChild(izq); hd.appendChild(selectorUso(w.ventana, w.hayAnterior, w.haySiguiente)); t.appendChild(hd);
+    var ley = h('div', 'rm-ley');
+    [['#FF4D82', 'Minutos de uso (izquierda)'], ['#E5A700', 'Personas activas (derecha)']].forEach(function (p) { var sp = h('span'); var i3 = h('i'); i3.style.background = p[0]; sp.appendChild(i3); sp.appendChild(document.createTextNode(p[1])); ley.appendChild(sp); });
+    t.appendChild(ley);
     var vals = w.ventana.map(function (d) { return d.v; });
     var pico = Math.max.apply(null, vals.concat([0]));
     var top = pico <= 0 ? 60 : Math.ceil(pico / 60) * 60;
@@ -348,6 +358,17 @@
       for (var i = 1; i < xs.length; i++) { var cx = (xs[i] - xs[i - 1]) / 2; d += ' C' + (xs[i - 1] + cx).toFixed(1) + ' ' + ys[i - 1].toFixed(1) + ' ' + (xs[i] - cx).toFixed(1) + ' ' + ys[i].toFixed(1) + ' ' + xs[i].toFixed(1) + ' ' + ys[i].toFixed(1); }
       svg.appendChild(s('path', { d: d, fill: 'none', stroke: '#FF4D82', 'stroke-width': 3.5, 'stroke-linecap': 'round' }));
     }
+    var acts = w.ventana.map(function (d) { return d.a; });
+    var maxA = Math.max.apply(null, acts.concat([1]));
+    var topA = Math.max(4, Math.ceil(maxA / 4) * 4);
+    var yA = acts.map(function (v) { return BASE - v / topA * ALTO; });
+    [[BASE - ALTO, topA], [BASE - ALTO * 2 / 3, Math.round(topA * 2 / 3)], [BASE - ALTO / 3, Math.round(topA / 3)], [BASE, 0]].forEach(function (p) { svg.appendChild(s('text', { x: 958, y: p[0] + 4, style: 'font-size:11.5px;fill:#9A8690' }, String(p[1]))); });
+    if (xs.length > 1) {
+      var d2 = 'M' + xs[0].toFixed(1) + ' ' + yA[0].toFixed(1);
+      for (var j = 1; j < xs.length; j++) { var cx2 = (xs[j] - xs[j - 1]) / 2; d2 += ' C' + (xs[j - 1] + cx2).toFixed(1) + ' ' + yA[j - 1].toFixed(1) + ' ' + (xs[j] - cx2).toFixed(1) + ' ' + yA[j].toFixed(1) + ' ' + xs[j].toFixed(1) + ' ' + yA[j].toFixed(1); }
+      svg.appendChild(s('path', { d: d2, fill: 'none', stroke: '#E5A700', 'stroke-width': 3, 'stroke-linecap': 'round' }));
+    }
+    xs.forEach(function (x, i) { svg.appendChild(s('circle', { cx: x.toFixed(1), cy: yA[i].toFixed(1), r: 4.5, fill: '#fff', stroke: '#E5A700', 'stroke-width': 2.5 })); });
     var iPico = pico > 0 ? vals.indexOf(pico) : -1;
     xs.forEach(function (x, i) { svg.appendChild(s('circle', { cx: x.toFixed(1), cy: ys[i].toFixed(1), r: i === iPico ? 7 : 5, fill: i === iPico ? '#FF4D82' : '#fff', stroke: i === iPico ? '#fff' : '#FF4D82', 'stroke-width': 3 })); });
     xs.forEach(function (x, i) { if (vals[i] > 0 && i !== iPico) svg.appendChild(s('text', { x: x.toFixed(1), y: (ys[i] - 12).toFixed(1), 'text-anchor': 'middle', style: 'font-weight:700;font-size:12.5px' }, num.format(vals[i]))); });
@@ -356,7 +377,7 @@
       var bx = Math.min(Math.max(px - 80, 62), 880);
       svg.appendChild(s('rect', { x: bx, y: Math.max(2, py - 58), width: 160, height: 36, rx: 13, fill: '#2B1020' }));
       svg.appendChild(s('text', { x: bx + 16, y: Math.max(2, py - 58) + 23, style: 'fill:#FFD666;font-size:14px;font-weight:700' }, num.format(pico) + ' min'));
-      svg.appendChild(s('text', { x: bx + 84, y: Math.max(2, py - 58) + 23, style: 'fill:#F3D9DC;font-size:12px' }, '· pico'));
+      svg.appendChild(s('text', { x: bx + 84, y: Math.max(2, py - 58) + 23, style: 'fill:#F3D9DC;font-size:12px' }, '· ' + acts[iPico] + (acts[iPico] === 1 ? ' persona' : ' personas')));
       svg.appendChild(s('path', { d: 'M' + (px - 8) + ' ' + (Math.max(2, py - 58) + 36) + ' L' + px + ' ' + (Math.max(2, py - 58) + 44) + ' L' + (px + 8) + ' ' + (Math.max(2, py - 58) + 36) + ' Z', fill: '#2B1020' }));
     }
     xs.forEach(function (x, i) {
@@ -435,6 +456,22 @@
         if (window.console) console.error('Uso moderno:', e);
       }
     }
+  };
+
+  // Mientras llegan los datos se muestra un esqueleto (y no el Resumen anterior).
+  function esqueleto(id, seccion, cajas) {
+    var raiz = document.getElementById(id), sec = document.querySelector('[data-seccion="' + seccion + '"]');
+    if (!raiz || !sec) return;
+    var g = h('div', 'rm-sk-g');
+    cajas.forEach(function (c) { var b = h('div', 'rm-sk ' + c); g.appendChild(b); });
+    raiz.appendChild(g); sec.classList.add('rm-on');
+  }
+  esqueleto('resumen-mod', 'resumen', ['rm-sk-y', 'rm-sk-p', 'rm-sk-g2', 'rm-sk-h']);
+  esqueleto('uso-mod', 'uso', ['rm-sk-y', 'rm-sk-g2', 'rm-sk-p', 'rm-sk-h']);
+
+  window.CooklyFallo = function (seccion) {
+    var sec = document.querySelector('[data-seccion="' + seccion + '"]');
+    if (sec) sec.classList.remove('rm-on');
   };
 
   window.CooklyResumen = {

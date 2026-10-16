@@ -188,7 +188,7 @@
     else if (s === 'reportes-comunidad') tarea = cargarReportesComunidad();
     else if (s === 'respaldo') tarea = cargarRespaldo();
     else if (LISTAS[s]) tarea = cargarLista(s);
-    if (tarea) tarea.catch(function (e) { if (e.message !== 'sesion') aviso(e.message, true); });
+    if (tarea) tarea.catch(function (e) { if (window.CooklyFallo && (s === 'resumen' || s === 'uso')) window.CooklyFallo(s); if (e.message !== 'sesion') aviso(e.message, true); });
     if (s !== 'reportes') actualizarInsignia();
     if (s !== 'reportes-comunidad') actualizarInsigniaComunidad();
   }
@@ -251,7 +251,7 @@
       var largas = json('/administracion/graficas?dias=90').catch(function () { return null; });
       Promise.all([contar('/administracion/moderacion/reportes'), contar('/administracion/reportes-comunidad'), largas]).then(function (c) {
         window.CooklyResumen.pintar(r, g, estado.dias, { recetas: c[0], comunidad: c[1] }, c[2]);
-      });
+      }).catch(function () { if (window.CooklyFallo) window.CooklyFallo('resumen'); });
     }
   }
 
@@ -324,6 +324,9 @@
     });
 
     dibujarRanking('g-top-usuarios', 'vacio-top-usuarios', g.topUsuariosTiempo, 'Minutos de uso', color('--ciruela'));
+    if (window.CooklyUso) {
+      json('/administracion/graficas?dias=90').catch(function () { return null; }).then(function (g90) { window.CooklyUso.pintar(r, g, g90); }).catch(function () { if (window.CooklyFallo) window.CooklyFallo('uso'); });
+    }
   }
 
   // ------------------------------------------------------------------ gráficas

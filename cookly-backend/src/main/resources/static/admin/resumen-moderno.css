@@ -78,3 +78,12 @@
 .rm-rn { flex: 1; min-width: 0; } .rm-rn b { display: block; font-size: 14.5px; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rm-big2 { font-family: 'Fredoka', sans-serif; font-weight: 500; font-size: 28px; }
 .rm-nota { background: #FFF4F6; border-radius: 16px; padding: 11px 14px; margin: 8px 0 0; font-size: 13px; }
+
+.rm-sk-g { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.rm-sk { height: 190px; border-radius: 28px; animation: rm-pulso 1.2s ease-in-out infinite alternate; }
+.rm-sk-y { background: #FFD666; } .rm-sk-p { background: #F6DADD; } .rm-sk-g2 { background: #BFE4A5; } .rm-sk-h { background: #FF4D82; }
+@keyframes rm-pulso { from { opacity: .35; } to { opacity: .7; } }
+@media (prefers-reduced-motion: reduce) { .rm-sk { animation: none; opacity: .5; } }
+
+.rm-ley { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: #7A6670; margin: 0 0 2px; }
+.rm-ley i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
