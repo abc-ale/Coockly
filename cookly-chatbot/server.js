@@ -35,6 +35,16 @@ REGLAS ESTRICTAS (muy importante):
 - Si el usuario menciona ingredientes que tiene (aunque sea "tengo pollo y arroz"), la acción es SIEMPRE "buscar_receta" con esos ingredientes, nunca "ninguna".
 - Si pide una receta completa o los pasos, responde con "buscar_receta" (o "otra_receta" si ya hay una propuesta) y dile que la verá en la tarjeta.
 - Mantén esta forma de responder igual de breve durante TODA la conversación, aunque los mensajes anteriores sean largos.
+- Responde SIEMPRE a lo que el usuario acaba de decir. No repitas el saludo ni vuelvas a presentarte después del primer mensaje.
+- Si el contexto trae "Datos de la receta en pantalla" y el usuario pregunta por ella (cuánto tarda, qué lleva, cuántos pasos), contesta usando SOLO esos datos con acción "ninguna". Si el dato no está ahí, dile con honestidad que lo vea en la tarjeta con "Ver receta"; nunca lo inventes.
+- Si no hay receta en pantalla y pregunta por "la receta", pídele que primero te cuente qué ingredientes tiene.
+- Si el mensaje no tiene que ver con cocina, responde amable en una frase y vuelve a preguntarle qué tiene en la nevera.
+
+Ejemplos (solo el JSON):
+Usuario: "tengo huevo y papa" -> {"texto":"¡Qué buena combinación! Déjame buscarte algo rico.","accion":"buscar_receta","ingredientes":["huevo","papa"],"excluir":[],"porciones":null}
+Usuario: "mejor sin cebolla, tengo pimiento" (con receta en pantalla) -> {"texto":"Listo, la cambio por pimiento.","accion":"cambiar_ingrediente","ingredientes":["pimiento"],"excluir":["cebolla"],"porciones":null}
+Usuario: "ahora para 6" (con receta en pantalla) -> {"texto":"Perfecto, ajusto todo para seis personas.","accion":"porciones","ingredientes":[],"excluir":[],"porciones":6}
+Usuario: "¿cuánto demora?" (con receta de 40 minutos en pantalla) -> {"texto":"Esta receta toma unos 40 minutos en total.","accion":"ninguna","ingredientes":[],"excluir":[],"porciones":null}
 
 Para las acciones distintas de "ninguna", "texto" es solo una frase corta de acompañamiento; la app añadirá el nombre de la receta y los detalles. No menciones nombres de recetas concretas en "texto".`;
 
@@ -62,6 +72,9 @@ function resumirTexto(t, max = 220) {
   return (punto > 40 ? corte.slice(0, punto + 1) : corte.replace(/\s+\S*$/, '') + '…').trim();
 }
 
+// Se puede cambiar sin tocar el código: en Render > Environment > GROQ_MODEL.
+const MODELO = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
+
 const ACCIONES = ['ninguna', 'buscar_receta', 'otra_receta', 'cambiar_ingrediente', 'porciones', 'enviar_lista'];
 const lista = (x) => (Array.isArray(x) ? x.map((s) => String(s).trim().toLowerCase()).filter(Boolean).slice(0, 15) : []);
 
@@ -80,6 +93,14 @@ app.post('/chat', async (req, res) => {
       if (contexto.receta) partes.push(`Receta propuesta ahora: ${contexto.receta}`);
       if (contexto.personas) partes.push(`Cantidades para ${contexto.personas} personas`);
       if (Array.isArray(contexto.ingredientes) && contexto.ingredientes.length) partes.push(`Ingredientes que dijo tener: ${contexto.ingredientes.join(', ')}`);
+      const d = contexto.detalle;
+      if (d && typeof d === 'object') {
+        const datos = [];
+        if (d.minutos) datos.push(`tiempo: ${d.minutos} minutos`);
+        if (d.pasos) datos.push(`${d.pasos} pasos`);
+        if (Array.isArray(d.ingredientes) && d.ingredientes.length) datos.push(`ingredientes: ${d.ingredientes.slice(0, 25).map((x) => String(x).slice(0, 40)).join(', ')}`);
+        if (datos.length) partes.push(`Datos de la receta en pantalla (${datos.join('; ')})`);
+      }
       if (partes.length) ctx = `\n\nContexto de la conversación: ${partes.join('. ')}.`;
     }
 
@@ -92,21 +113,35 @@ app.post('/chat', async (req, res) => {
       })),
     ];
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-oss-120b',
-        messages,
-        temperature: 0.5,
-        max_tokens: 1200,
-        reasoning_effort: 'low',
-        response_format: { type: 'json_object' },
-      }),
-    });
+    if (!process.env.GROQ_API_KEY) {
+      console.log('FALTA GROQ_API_KEY en las variables de entorno');
+      return res.status(500).json({ error: 'Chatbot sin configurar' });
+    }
+
+    // Si Groq tarda demasiado, se corta y la app usa su plan B en vez de dejar al usuario esperando.
+    const corte = new AbortController();
+    const reloj = setTimeout(() => corte.abort(), 12000);
+    let response;
+    try {
+      response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        signal: corte.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: MODELO,
+          messages,
+          temperature: 0.2,
+          max_tokens: 700,
+          reasoning_effort: 'low',
+          response_format: { type: 'json_object' },
+        }),
+      });
+    } finally {
+      clearTimeout(reloj);
+    }
 
     const data = await response.json();
     const crudo = data?.choices?.[0]?.message?.content;
@@ -134,6 +169,10 @@ app.post('/chat', async (req, res) => {
     console.log('ERROR EN /chat:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
+});
+
+app.get('/salud', (req, res) => {
+  res.json({ ok: true });
 });
 
 app.get('/', (req, res) => {

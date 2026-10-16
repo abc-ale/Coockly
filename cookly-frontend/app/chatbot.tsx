@@ -17,10 +17,22 @@ import ImagenReceta from '../components/ImagenReceta';
 import { EntradaSuave } from '../components/RecipeCard';
 import { toque, seleccion, exito } from '../lib/vibracion';
 import { PORCIONES_BASE, limitar, textoIngrediente } from '../lib/cantidades';
-import { api } from '../lib/api';
+import { api, despertarServidor } from '../lib/api';
 import { colors, fonts } from '../constants/theme';
 
-const URL_CHAT = 'https://cookly-backend-y19h.onrender.com/chat';
+const URL_BASE_CHAT = 'https://cookly-backend-y19h.onrender.com';
+const URL_CHAT = `${URL_BASE_CHAT}/chat`;
+
+/** El servidor del chatbot se duerme si nadie lo usa; al abrir la pantalla lo despertamos para que el primer mensaje no espere. */
+let chatDespierto = 0;
+function despertarChat() {
+  if (Date.now() - chatDespierto < 4 * 60 * 1000) return;
+  chatDespierto = Date.now();
+  fetch(URL_BASE_CHAT, { method: 'GET' }).catch(() => undefined);
+}
+
+/** Cosas que casi todos tienen en casa: no se le piden al usuario como "faltantes". */
+const DESPENSA = new Set(['sal', 'pimienta', 'aceite', 'agua', 'azucar']);
 
 type TarjetaChat = { id: number; nombre: string; minutos: number | null; pasos: number; portada: string | null };
 
@@ -132,12 +144,15 @@ function ingredientesDe(texto: string): string[] {
 }
 
 async function preguntarAlServidor(historial: Mensaje[], contexto: any): Promise<Accion | null> {
+  const corte = new AbortController();
+  const reloj = setTimeout(() => corte.abort(), 15000);
   try {
     const r = await fetch(URL_CHAT, {
       method: 'POST',
+      signal: corte.signal,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        mensajes: historial.map((m) => ({ esUsuario: m.esUsuario, texto: m.resumen ?? m.texto ?? '' })),
+        mensajes: historial.slice(-8).map((m) => ({ esUsuario: m.esUsuario, texto: m.resumen ?? m.texto ?? '' })),
         contexto,
       }),
     });
@@ -153,6 +168,8 @@ async function preguntarAlServidor(historial: Mensaje[], contexto: any): Promise
   } catch (e) {
     console.log('ERROR AL LLAMAR AL CHATBOT:', e);
     return null;
+  } finally {
+    clearTimeout(reloj);
   }
 }
 
@@ -177,7 +194,7 @@ export default function ChatbotScreen() {
     ingredientes: [] as string[],
     resultados: [] as Recomendacion[],
     mostradas: new Set<number>(),
-    receta: null as null | { id: number; nombre: string; detalle: IngredienteReceta[] },
+    receta: null as null | { id: number; nombre: string; detalle: IngredienteReceta[]; minutos: number | null; pasos: number },
     personas: PORCIONES_BASE,
   }).current;
 
@@ -298,7 +315,7 @@ export default function ChatbotScreen() {
         // Se miran las mejores candidatas y se elige la que de verdad usa lo que el usuario tiene.
         const quiere = Array.from(new Set(ctx.ingredientes.map((i) => i.trim().toLowerCase()).filter(Boolean)));
         const revisadas = await Promise.all(
-          candidatas.slice(0, 6).map(async (r) => {
+          candidatas.slice(0, 4).map(async (r) => {
             try {
               const { data: det } = await api.get(`/recetas/${r.id}`);
               const usados = quiere.filter((q) => recetaUsa(det.detallesIngredientes ?? [], q));
@@ -325,24 +342,24 @@ export default function ChatbotScreen() {
 
         const resImg = await api.get(`/imagenes/receta/${siguiente.id}`).catch(() => ({ data: [] as any[] }));
         const minutos: number | null = det.minutosPreparacion ?? siguiente.minutosPreparacion ?? null;
-        ctx.receta = { id: det.id, nombre: det.nombre, detalle: det.detallesIngredientes ?? [] };
+        ctx.receta = { id: det.id, nombre: det.nombre, detalle: det.detallesIngredientes ?? [], minutos, pasos: det.pasos?.length ?? 0 };
         ctx.personas = PORCIONES_BASE;
 
         // El mensaje dice la verdad: qué de lo que tienes se usa, qué no, y qué te falta.
-        const falta = siguiente.ingredientesFaltantes ?? [];
+        const falta = (siguiente.ingredientesFaltantes ?? []).filter((f) => !DESPENSA.has(claveIng(f)));
         const noUsa = quiere.filter((q) => !elegida.usados.includes(q));
-        const encaja = siguiente.porcentajeCoincidencia >= 60 && noUsa.length === 0;
+        // Si la receta usa todo lo que dijo el usuario, es una buena propuesta aunque falten otros ingredientes.
+        const encaja = noUsa.length === 0;
         const cuando = minutos ? `, lista en ${minutos} minutos` : '';
         let frase: string;
         if (encaja && falta.length === 0) {
           frase = `¡Perfecto! Con lo que tienes puedes preparar **${det.nombre}**${cuando}.`;
         } else if (encaja) {
-          frase = `Te propongo **${det.nombre}**${cuando}. ${falta.length <= 2 ? 'Solo te faltaría' : 'Te faltarían'}: ${unir(falta.slice(0, 5))}.`;
+          frase = `Con ${unir(elegida.usados)} puedes preparar **${det.nombre}**${cuando}. ${falta.length <= 2 ? 'Solo te faltaría' : 'Para completarla te faltarían'}: ${unir(falta.slice(0, 5))}.`;
         } else {
           frase =
-            `No encontré una receta que encaje del todo con lo que tienes. Lo más cercano es **${det.nombre}**, que usa ${unir(elegida.usados)}` +
-            `${noUsa.length ? ` (pero no ${unir(noUsa)})` : ''}` +
-            `${falta.length ? `, y te faltarían: ${unir(falta.slice(0, 5))}` : ''}. ¿Te sirve, o me cuentas qué más tienes?`;
+            `No encontré una receta que use todo lo que tienes. La más cercana es **${det.nombre}**${cuando}: usa ${unir(elegida.usados)}, pero no ${unir(noUsa)}` +
+            `${falta.length ? `, y te faltarían: ${unir(falta.slice(0, 5))}` : ''}. ¿Te sirve, o buscamos otra?`;
         }
         decir(frase, { resumen: `Te propongo ${det.nombre}${cuando}.` }, porVoz);
         agregar({
@@ -436,12 +453,30 @@ export default function ChatbotScreen() {
       const pers = limpio.match(RE_PORCIONES);
       if (pers && ctx.receta) return ajustarPorciones(Number(pers[1]), esPorVoz);
 
+      // 1b) "Tengo pollo y arroz": se entiende aquí mismo, sin esperar a la IA (más rápido y sin confundirse).
+      if (/^\s*(hola,?\s*)?(solo\s+)?(tengo|me quedan|me sobran|hay)\b/i.test(limpio)) {
+        const ing = ingredientesDe(limpio);
+        if (ing.length > 0) {
+          ctx.ingredientes = ing;
+          ctx.mostradas.clear();
+          return await proponer(esPorVoz);
+        }
+      }
+
       // 2) El chatbot entiende el resto (ingredientes, cambios, charla).
       const historial = [...mensajesRef.current, { id: 'u', esUsuario: true, texto: limpio }];
       const a = await preguntarAlServidor(historial, {
         receta: ctx.receta?.nombre ?? null,
         personas: ctx.receta ? ctx.personas : null,
         ingredientes: ctx.ingredientes,
+        // Datos reales de la receta que se está viendo, para que el chef responda "¿cuánto tarda?" o "¿qué lleva?" sin inventar.
+        detalle: ctx.receta
+          ? {
+              minutos: ctx.receta.minutos,
+              pasos: ctx.receta.pasos,
+              ingredientes: ctx.receta.detalle.map((d) => d.ingrediente.nombre).slice(0, 25),
+            }
+          : null,
       });
 
       if (!a) {
@@ -503,6 +538,8 @@ export default function ChatbotScreen() {
   ];
 
   useEffect(() => {
+    despertarChat();
+    despertarServidor();
     setChips(chipsIniciales());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
