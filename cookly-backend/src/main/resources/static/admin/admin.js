@@ -591,42 +591,71 @@
         return;
       }
 
+      var nPost = lista.filter(function (r) { return r.tipo === 'POST'; }).length;
+      var barra = el('div', { clase: 'rc-top' }, [el('div', { clase: 'rc-seg' }, [
+        el('button', { type: 'button', clase: 'on', 'data-filtro': 'todos', texto: 'Todos ' + lista.length }),
+        el('button', { type: 'button', 'data-filtro': 'POST', texto: 'Publicaciones ' + nPost }),
+        el('button', { type: 'button', 'data-filtro': 'COMMENT', texto: 'Comentarios ' + (lista.length - nPost) })
+      ])]);
+      cont.appendChild(barra);
+      var rejilla = el('div', { clase: 'rc-grid' });
+      cont.appendChild(rejilla);
+
+      var MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+      var COLORES = ['#FFD666', '#BFE4A5', '#F6DADD', '#FFB7CB', '#CDE6F5'];
+      function fechaBonita(s) {
+        var m = /(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(s || '');
+        return m ? Number(m[3]) + ' ' + MESES[Number(m[2]) - 1] + ' ' + m[1] + ', ' + m[4] + ':' + m[5] : (s || '—');
+      }
+      function claseMotivo(mot) {
+        mot = (mot || '').toLowerCase();
+        if (/spam/.test(mot)) return 'y';
+        if (/falsa|peligros/.test(mot)) return 'g';
+        if (/ofens|acoso|odio|insult/.test(mot)) return 'p';
+        return 'r';
+      }
+
       lista.forEach(function (r) {
         var esPost = r.tipo === 'POST';
         var que = esPost ? 'publicación' : 'comentario';
         var existe = r.contenidoExiste !== false;
+        var autor = r.autor || 'Persona desconocida';
+        var suma = 0; for (var i = 0; i < autor.length; i++) suma += autor.charCodeAt(i);
 
-        var detalle = [
-          el('h2', { texto: (esPost ? 'Publicación' : 'Comentario') + ' de ' + (r.autor || 'una persona desconocida') }),
-          el('p', { texto: 'Reportado por ' + (r.reportadoPor || 'un usuario') + ' · ' + (r.creadoEn || '') }),
-          el('p', { clase: 'motivo', texto: 'Motivo: ' + r.motivo })
-        ];
+        var cab = el('div', { clase: 'rc-h' }, [
+          el('div', { clase: 'rc-who' }, [el('span', { clase: 'rc-av', style: 'background:' + COLORES[suma % COLORES.length], texto: autor.charAt(0).toUpperCase() }), el('b', { texto: autor })]),
+          el('span', { clase: 'rc-pill ' + claseMotivo(r.motivo), texto: r.motivo || 'Sin motivo' })
+        ]);
+        var dos = el('div', { clase: 'rc-dos' }, [
+          el('div', null, [el('small', { texto: 'Tipo' }), el('b', { texto: esPost ? 'Publicación' : 'Comentario' })]),
+          el('div', null, [el('small', { texto: 'Reportado' }), el('b', { texto: fechaBonita(r.creadoEn) })])
+        ]);
+        var partes = [cab, dos,
+          el('h3', { texto: (esPost ? 'Publicación' : 'Comentario') + ' de ' + autor }),
+          el('p', { clase: 'rc-por', texto: 'Reportado por ' + (r.reportadoPor || 'un usuario') })];
 
         if (!existe) {
-          detalle.push(el('p', { texto: '(Este contenido ya fue eliminado.)' }));
+          partes.push(el('p', { clase: 'rc-txt', texto: '(Este contenido ya fue eliminado.)' }));
         } else {
-          if (r.contenido) detalle.push(el('p', { texto: '“' + r.contenido + '”' }));
+          if (r.contenido) partes.push(el('p', { clase: 'rc-txt', texto: '“' + r.contenido + '”' }));
           if (r.imagenUrl && /^https:\/\//.test(r.imagenUrl)) {
             var foto = document.createElement('img');
             foto.src = r.imagenUrl;
             foto.alt = 'Foto de la publicación reportada';
             foto.loading = 'lazy';
-            foto.style.maxWidth = '260px';
-            foto.style.width = '100%';
-            foto.style.borderRadius = '10px';
-            foto.style.display = 'block';
-            foto.style.marginTop = '8px';
-            detalle.push(foto);
+            var enlace = el('a', { clase: 'rc-im', href: r.imagenUrl, target: '_blank', rel: 'noopener noreferrer', title: 'Abrir la foto en grande' });
+            enlace.appendChild(foto);
+            partes.push(enlace);
           }
         }
 
-        var botones = el('div', { clase: 'acciones' }, [
-          el('button', { type: 'button', clase: 'boton secundario chico', 'data-resolver-com': 'DESCARTADO', 'data-id': r.id, texto: 'Descartar' }),
-          el('button', { type: 'button', clase: 'boton secundario chico', 'data-resolver-com': 'REVISADO', 'data-id': r.id, texto: 'Marcar revisado' }),
-          el('button', { type: 'button', clase: 'boton peligro chico', 'data-resolver-com': 'ELIMINAR', 'data-id': r.id, 'data-que': que, disabled: !existe, texto: 'Eliminar ' + que })
-        ]);
+        partes.push(el('div', { clase: 'rc-bt' }, [
+          el('button', { type: 'button', 'data-resolver-com': 'DESCARTADO', 'data-id': r.id, texto: 'Descartar' }),
+          el('button', { type: 'button', clase: 'e', 'data-resolver-com': 'ELIMINAR', 'data-id': r.id, 'data-que': que, disabled: !existe, texto: 'Eliminar' }),
+          el('button', { type: 'button', clase: 'd', 'data-resolver-com': 'REVISADO', 'data-id': r.id, texto: 'Revisado' })
+        ]));
 
-        cont.appendChild(el('article', { clase: 'reporte' }, [el('div', null, detalle), botones]));
+        rejilla.appendChild(el('article', { clase: 'rc-card', 'data-tipo': r.tipo || '' }, partes));
       });
     });
   }
@@ -888,6 +917,15 @@
 
     // reportes de comunidad
     $('lista-reportes-comunidad').addEventListener('click', function (e) {
+      var f = e.target.closest('button[data-filtro]');
+      if (f) {
+        var filtro = f.getAttribute('data-filtro');
+        Array.prototype.forEach.call(f.parentNode.children, function (x) { x.classList.toggle('on', x === f); });
+        Array.prototype.forEach.call(document.querySelectorAll('#lista-reportes-comunidad .rc-card'), function (c) {
+          c.hidden = filtro !== 'todos' && c.getAttribute('data-tipo') !== filtro;
+        });
+        return;
+      }
       var b = e.target.closest('button[data-resolver-com]');
       if (b && !b.disabled) resolverReporteComunidad(b);
     });
