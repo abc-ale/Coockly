@@ -89,4 +89,4 @@
 .rm-ley i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
 
 /* mientras llegan los datos de Resumen/Uso no se muestra ni el título suelto */
-body.rm-espera .cabecera { visibility: hidden; }
+body.rm-espera .cabecera, body.rm-espera [data-seccion]:not([hidden]) { visibility: hidden; }

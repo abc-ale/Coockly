@@ -191,26 +191,31 @@
     $('subtitulo-seccion').textContent = SECCIONES[s].sub;
     $('selector-rango').hidden = !(s === 'resumen' || s === 'uso');
     document.title = SECCIONES[s].titulo + ' · Cookly';
-    // En Resumen y Uso la cabecera espera a los datos, para que no se vea el título suelto mientras carga.
-    var espera = (s === 'resumen' || s === 'uso');
-    document.body.classList.toggle('rm-espera', espera);
-    if (espera) setTimeout(function () { document.body.classList.remove('rm-espera'); }, 8000);
+    // Todas las pantallas esperan a sus datos y aparecen completas de una sola vez (sin ver la tabla vacía).
+    document.body.classList.add('rm-espera');
+    var marca = (estado.marcaEspera = (estado.marcaEspera || 0) + 1);
+    setTimeout(function () { if (estado.marcaEspera === marca) document.body.classList.remove('rm-espera'); }, 8000);
     cargarSeccion(s);
   }
 
   // Las peticiones extra del Resumen/Uso salen a la vez que las principales (una sola espera).
-  function precargar() {
+  function precargar(s) {
     var contar = function (ruta) { return json(ruta).then(function (l) { return Array.isArray(l) ? l.length : 0; }).catch(function () { return 0; }); };
+    // Las gráficas de 90 días se guardan 60 s: al pasar de Resumen a Uso (o al revés) ya están listas.
+    var c = estado.cache90;
+    if (!c || Date.now() - c.t > 60000) {
+      c = estado.cache90 = { t: Date.now(), p: json('/administracion/graficas?dias=90').catch(function () { estado.cache90 = null; return null; }) };
+    }
     estado.pre = {
-      rec: contar('/administracion/moderacion/reportes'),
-      com: contar('/administracion/reportes-comunidad'),
-      largas: json('/administracion/graficas?dias=90').catch(function () { return null; })
+      rec: s === 'resumen' ? contar('/administracion/moderacion/reportes') : Promise.resolve(0),
+      com: s === 'resumen' ? contar('/administracion/reportes-comunidad') : Promise.resolve(0),
+      largas: c.p
     };
   }
 
   function cargarSeccion(s) {
     var tarea;
-    if (s === 'resumen' || s === 'uso') precargar();
+    if (s === 'resumen' || s === 'uso') precargar(s);
     if (s === 'resumen') tarea = Promise.all([cargarResumen(), cargarGraficas()]).then(pintarResumen);
     else if (s === 'uso') tarea = Promise.all([cargarResumen(), cargarGraficas()]).then(pintarUso);
     else if (s === 'usuarios') tarea = cargarUsuarios();
@@ -218,6 +223,11 @@
     else if (s === 'reportes-comunidad') tarea = cargarReportesComunidad();
     else if (s === 'respaldo') tarea = cargarRespaldo();
     else if (LISTAS[s]) tarea = cargarLista(s);
+    if (!tarea) document.body.classList.remove('rm-espera');
+    else if (s !== 'resumen' && s !== 'uso') {
+      var fin = function () { if (estado.seccionActual === s) document.body.classList.remove('rm-espera'); };
+      tarea.then(fin, fin);
+    }
     if (tarea) tarea.catch(function (e) { if (window.CooklyFallo && (s === 'resumen' || s === 'uso')) window.CooklyFallo(s); if (e.message !== 'sesion') aviso(e.message, true); });
     if (s !== 'reportes') actualizarInsignia();
     if (s !== 'reportes-comunidad') actualizarInsigniaComunidad();
@@ -353,7 +363,11 @@
 
     dibujarRanking('g-top-usuarios', 'vacio-top-usuarios', g.topUsuariosTiempo, 'Minutos de uso', color('--ciruela'));
     if (window.CooklyUso) {
-      estado.pre.largas.then(function (g90) { window.CooklyUso.pintar(r, g, g90); }).catch(function () { if (window.CooklyFallo) window.CooklyFallo('uso'); });
+      // Se pinta ya con lo que hay y, cuando llegan los 90 días, se completa (sin esperar la petición larga).
+      window.CooklyUso.pintar(r, g, null);
+      estado.pre.largas.then(function (g90) {
+        if (g90 && estado.seccionActual === 'uso' && estado.graficas === g) window.CooklyUso.pintar(r, g, g90);
+      }).catch(function () {});
     }
   }
 
