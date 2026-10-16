@@ -18,6 +18,7 @@ import { EntradaSuave } from '../components/RecipeCard';
 import { toque, seleccion, exito } from '../lib/vibracion';
 import { PORCIONES_BASE, limitar, textoIngrediente } from '../lib/cantidades';
 import { api, despertarServidor } from '../lib/api';
+import { useBarraSobreTeclado } from '../lib/teclado';
 import { colors, fonts } from '../constants/theme';
 
 const URL_BASE_CHAT = 'https://cookly-chatbot.onrender.com';
@@ -183,6 +184,7 @@ async function preguntarAlServidor(historial: Mensaje[], contexto: any): Promise
 
 export default function ChatbotScreen() {
   const insets = useSafeAreaInsets();
+  const { ref: barraRef, margen: margenBarra, abierto: tecladoAbierto } = useBarraSobreTeclado();
   const [mensajes, setMensajes] = useState<Mensaje[]>([{ id: '0', esUsuario: false, texto: SALUDO }]);
   const [texto, setTexto] = useState('');
   const [cargando, setCargando] = useState(false);
@@ -207,6 +209,10 @@ export default function ChatbotScreen() {
     receta: null as null | { id: number; nombre: string; detalle: IngredienteReceta[]; minutos: number | null; pasos: number },
     personas: PORCIONES_BASE,
   }).current;
+
+  useEffect(() => {
+    if (tecladoAbierto) setTimeout(() => lista.current?.scrollToEnd({ animated: true }), 250);
+  }, [tecladoAbierto]);
 
   const bajar = useCallback(() => {
     setTimeout(() => lista.current?.scrollToEnd({ animated: true }), 80);
@@ -706,7 +712,7 @@ export default function ChatbotScreen() {
         </ScrollView>
       ) : null}
 
-      <View style={[st.barra, { paddingBottom: insets.bottom + 12 }]}>
+      <View ref={barraRef} collapsable={false} style={[st.barra, { paddingBottom: tecladoAbierto ? 10 : insets.bottom + 12, marginBottom: margenBarra }]}>
         <View style={st.entrada}>
           <Pressable onPress={manejarToqueMicrofono} style={[st.micro, (escuchando || modoVoz) && st.microActivo]} hitSlop={6} accessibilityLabel="Hablar">
             <Ionicons name={modoVoz ? 'mic' : 'mic-outline'} size={20} color={escuchando || modoVoz ? colors.white : colors.primary} />
