@@ -20,7 +20,7 @@ import { PORCIONES_BASE, limitar, textoIngrediente } from '../lib/cantidades';
 import { api, despertarServidor } from '../lib/api';
 import { colors, fonts } from '../constants/theme';
 
-const URL_BASE_CHAT = 'https://cookly-backend-y19h.onrender.com';
+const URL_BASE_CHAT = 'https://cookly-chatbot.onrender.com';
 const URL_CHAT = `${URL_BASE_CHAT}/chat`;
 
 /** El servidor del chatbot se duerme si nadie lo usa; al abrir la pantalla lo despertamos para que el primer mensaje no espere. */
