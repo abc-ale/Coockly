@@ -93,6 +93,7 @@ app.post('/chat', async (req, res) => {
       if (contexto.receta) partes.push(`Receta propuesta ahora: ${contexto.receta}`);
       if (contexto.personas) partes.push(`Cantidades para ${contexto.personas} personas`);
       if (Array.isArray(contexto.ingredientes) && contexto.ingredientes.length) partes.push(`Ingredientes que dijo tener: ${contexto.ingredientes.join(', ')}`);
+      if (Array.isArray(contexto.noTiene) && contexto.noTiene.length) partes.push(`Ingredientes que NO tiene (nunca los propongas): ${contexto.noTiene.join(', ')}`);
       const d = contexto.detalle;
       if (d && typeof d === 'object') {
         const datos = [];

@@ -81,6 +81,14 @@ function recetaUsa(detalle: IngredienteReceta[], ing: string): boolean {
   });
 }
 
+/** ¿Estos dos nombres son el mismo ingrediente? ("papas" = "papa", "carne" = "carne de res"). */
+function mismoIngrediente(a: string, b: string): boolean {
+  const x = claveIng(a);
+  const y = claveIng(b);
+  if (!x || !y) return false;
+  return x === y || x.split(' ').some((w) => claveIng(w) === y) || y.split(' ').some((w) => claveIng(w) === x);
+}
+
 /** ["a","b","c"] -> "a, b y c" */
 function unir(lista: string[]): string {
   if (lista.length <= 1) return lista.join('');
@@ -192,6 +200,8 @@ export default function ChatbotScreen() {
   // Lo que el chef recuerda de la conversación.
   const ctx = useRef({
     ingredientes: [] as string[],
+    /** Lo que el usuario dijo que NO tiene: ninguna receta propuesta puede llevarlo. */
+    excluidos: [] as string[],
     resultados: [] as Recomendacion[],
     mostradas: new Set<number>(),
     receta: null as null | { id: number; nombre: string; detalle: IngredienteReceta[]; minutos: number | null; pasos: number },
@@ -299,11 +309,17 @@ export default function ChatbotScreen() {
         const { data } = await api.post('/recetas/menu-express', { ingredientes: Array.from(new Set(ctx.ingredientes.map((i) => i.trim().toLowerCase()).filter(Boolean))) });
         const todas: Recomendacion[] = data?.recetas ?? [];
         ctx.resultados = todas;
-        const candidatas = todas.filter((r) => !ctx.mostradas.has(r.id));
+        // Si la receta lleva algo que el usuario NO tiene, se descarta (lo que falta de una receta aparece en ingredientesFaltantes).
+        const sinProhibidos = todas.filter(
+          (r) => !ctx.excluidos.some((ex) => (r.ingredientesFaltantes ?? []).some((f) => mismoIngrediente(f, ex)))
+        );
+        const candidatas = sinProhibidos.filter((r) => !ctx.mostradas.has(r.id));
         if (candidatas.length === 0) {
           decir(
             todas.length === 0
               ? 'Con eso no encontré una receta en Cookly. Cuéntame qué otros ingredientes tienes y lo intento de nuevo.'
+              : sinProhibidos.length === 0
+              ? `Las recetas que encontré llevan ${unir(ctx.excluidos)}, que me dijiste que no tienes. Cuéntame qué otros ingredientes tienes y busco de nuevo.`
               : 'Ya te mostré todas las opciones que encontré con esos ingredientes. Dime si tienes algo más y busco otra.',
             {},
             porVoz
@@ -315,9 +331,10 @@ export default function ChatbotScreen() {
         // Se miran las mejores candidatas y se elige la que de verdad usa lo que el usuario tiene.
         const quiere = Array.from(new Set(ctx.ingredientes.map((i) => i.trim().toLowerCase()).filter(Boolean)));
         const revisadas = await Promise.all(
-          candidatas.slice(0, 4).map(async (r) => {
+          candidatas.slice(0, 6).map(async (r) => {
             try {
               const { data: det } = await api.get(`/recetas/${r.id}`);
+              if (ctx.excluidos.some((ex) => recetaUsa(det.detallesIngredientes ?? [], ex))) return null;
               const usados = quiere.filter((q) => recetaUsa(det.detallesIngredientes ?? [], q));
               return { r, det, usados };
             } catch {
@@ -331,6 +348,16 @@ export default function ChatbotScreen() {
 
         if (validas.length === 0) {
           decir(`No encontré una receta en Cookly que use ${unir(quiere)}. Cuéntame qué otros ingredientes tienes y lo intento de nuevo.`, {}, porVoz);
+          setChips(ctx.receta ? chipsDeReceta() : chipsIniciales());
+          return;
+        }
+
+        if (quiere.length >= 3 && validas[0].usados.length * 2 < quiere.length) {
+          decir(
+            `No tengo una receta que combine ${unir(quiere)}. Prueba con menos ingredientes, por ejemplo solo ${unir(quiere.slice(0, 2))}, y te busco algo.`,
+            {},
+            porVoz
+          );
           setChips(ctx.receta ? chipsDeReceta() : chipsIniciales());
           return;
         }
@@ -399,6 +426,36 @@ export default function ChatbotScreen() {
     [agregar, decir]
   );
 
+  /** "No tengo papa, tengo zanahoria": se cambia dentro de la receta que ya está en pantalla, sin buscar otra. */
+  const sustituirEnReceta = (sacar: string[], poner: string[], porVoz: boolean) => {
+    const r = ctx.receta;
+    if (!r) return;
+    const lleva = sacar.filter((x) => recetaUsa(r.detalle, x));
+    if (lleva.length === 0) {
+      decir(`**${r.nombre}** no lleva ${unir(sacar)}, así que no hace falta cambiar nada. ¿Quieres ver otra receta?`, {}, porVoz);
+      setChips(chipsDeReceta());
+      return;
+    }
+    const nuevos = poner.filter((x) => !recetaUsa(r.detalle, x));
+    let k = 0;
+    r.detalle = r.detalle.flatMap((d) => {
+      if (!lleva.some((x) => recetaUsa([d], x))) return [d];
+      const nuevo = nuevos[k++];
+      return nuevo ? [{ ...d, ingrediente: { ...d.ingrediente, nombre: nuevo } }] : [];
+    });
+    const puestos = nuevos.slice(0, lleva.length);
+    decir(
+      puestos.length
+        ? `Listo, en **${r.nombre}** cambio ${unir(lleva)} por ${unir(puestos)}. Así quedan los ingredientes (el cambio es solo en este chat, la tarjeta conserva la receta original):`
+        : `Listo, quito ${unir(lleva)} de **${r.nombre}**. Así quedan los ingredientes (el cambio es solo en este chat, la tarjeta conserva la receta original):`,
+      { resumen: `Cambié ${unir(lleva)} en ${r.nombre}.` },
+      porVoz
+    );
+    const lineas = r.detalle.map((i) => `• ${textoIngrediente(i.cantidad, i.unidad, i.ingrediente.nombre, ctx.personas, 'original')}`);
+    if (lineas.length > 0) agregar({ esUsuario: false, texto: lineas.join('\n'), resumen: 'Ingredientes actualizados.' });
+    setChips(chipsDeReceta());
+  };
+
   const enviarALaLista = useCallback(
     async (porVoz: boolean) => {
       const r = ctx.receta;
@@ -454,10 +511,11 @@ export default function ChatbotScreen() {
       if (pers && ctx.receta) return ajustarPorciones(Number(pers[1]), esPorVoz);
 
       // 1b) "Tengo pollo y arroz": se entiende aquí mismo, sin esperar a la IA (más rápido y sin confundirse).
-      if (/^\s*(hola,?\s*)?(solo\s+)?(tengo|me quedan|me sobran|hay)\b/i.test(limpio)) {
+      if (/^\s*(hola,?\s*)?(solo\s+)?(tengo|me quedan|me sobran|hay)\b/i.test(limpio) && !/\b(no|sin|sino)\b/i.test(limpio)) {
         const ing = ingredientesDe(limpio);
         if (ing.length > 0) {
           ctx.ingredientes = ing;
+          ctx.excluidos = ctx.excluidos.filter((e) => !ing.some((i) => mismoIngrediente(e, i)));
           ctx.mostradas.clear();
           return await proponer(esPorVoz);
         }
@@ -469,6 +527,7 @@ export default function ChatbotScreen() {
         receta: ctx.receta?.nombre ?? null,
         personas: ctx.receta ? ctx.personas : null,
         ingredientes: ctx.ingredientes,
+        noTiene: ctx.excluidos,
         // Datos reales de la receta que se está viendo, para que el chef responda "¿cuánto tarda?" o "¿qué lleva?" sin inventar.
         detalle: ctx.receta
           ? {
@@ -504,13 +563,37 @@ export default function ChatbotScreen() {
       switch (a.accion) {
         case 'buscar_receta':
           ctx.ingredientes = a.ingredientes.length ? a.ingredientes : ctx.ingredientes;
+          ctx.excluidos = ctx.excluidos.filter((e) => !ctx.ingredientes.some((i) => mismoIngrediente(e, i)));
           ctx.mostradas.clear();
           return await proponer(esPorVoz);
         case 'otra_receta':
           return await proponer(esPorVoz);
         case 'cambiar_ingrediente': {
-          const fuera = new Set(a.excluir);
-          ctx.ingredientes = [...ctx.ingredientes.filter((i) => !fuera.has(i)), ...a.ingredientes.filter((i) => !ctx.ingredientes.includes(i))];
+          // Solo vale lo que el usuario dijo en ESTE mensaje: el modelo a veces mezcla ingredientes de mensajes anteriores.
+          const texto = limpio.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const dicho = (x: string) => {
+            const k = claveIng(x);
+            return k.length > 0 && texto.includes(k);
+          };
+          const sacar = a.excluir.filter(dicho);
+          const poner = a.ingredientes.filter(dicho).filter((x) => !sacar.includes(x));
+          const fuera = new Set(sacar);
+          ctx.excluidos = [...ctx.excluidos.filter((e) => !poner.some((n) => mismoIngrediente(e, n))), ...sacar.filter((x) => !ctx.excluidos.includes(x))];
+          ctx.ingredientes = [...ctx.ingredientes.filter((i) => !fuera.has(i)), ...poner.filter((i) => !ctx.ingredientes.includes(i))];
+          if (ctx.receta && sacar.length > 0) {
+            // Si lo que falta le da nombre a la receta (pollo en "Arroz con pollo"), no se "cambia": se busca otra receta.
+            const nombreReceta = claveIng(ctx.receta.nombre);
+            const daNombre = sacar.some((x) => nombreReceta.includes(claveIng(x)));
+            if (!daNombre) return sustituirEnReceta(sacar, poner, esPorVoz);
+            decir(`Sin ${unir(sacar)} esa receta no funciona, te busco otra opción.`, {}, esPorVoz);
+          } else if (ctx.receta && poner.length > 0 && sacar.length === 0) {
+            decir(`Anotado, tomo en cuenta que tienes ${unir(poner)}.`, {}, esPorVoz);
+          }
+          if (ctx.ingredientes.length === 0) {
+            decir('Cuéntame qué ingredientes sí tienes y te busco una receta.', {}, esPorVoz);
+            setChips(chipsIniciales());
+            return;
+          }
           return await proponer(esPorVoz);
         }
         case 'porciones':
