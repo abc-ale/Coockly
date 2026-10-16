@@ -1,6 +1,6 @@
 // app/_layout.tsx
 import { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
@@ -11,6 +11,20 @@ import { AuthProvider } from '../context/AuthContext';
 import { despertarServidor } from '../lib/api';
 import { DialogoProvider } from '../components/Dialogo';
 import { AvisoProvider } from '../components/Aviso';
+
+// Evita que un doble toque abra la misma pantalla dos veces:
+// ignora un push a la misma ruta si ocurre menos de 800 ms después del anterior.
+const pushOriginal = router.push.bind(router);
+let ultimaRuta = '';
+let ultimoPush = 0;
+router.push = ((href: any) => {
+  const clave = typeof href === 'string' ? href : JSON.stringify(href);
+  const ahora = Date.now();
+  if (clave === ultimaRuta && ahora - ultimoPush < 800) return;
+  ultimaRuta = clave;
+  ultimoPush = ahora;
+  pushOriginal(href);
+}) as typeof router.push;
 
 // Mantiene la pantalla de carga visible hasta que las fuentes estén listas.
 SplashScreen.preventAutoHideAsync();
