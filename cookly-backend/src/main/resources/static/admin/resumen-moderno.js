@@ -383,6 +383,20 @@
       for (var j = 1; j < xs.length; j++) { var cx2 = (xs[j] - xs[j - 1]) / 2; d2 += ' C' + (xs[j - 1] + cx2).toFixed(1) + ' ' + yA[j - 1].toFixed(1) + ' ' + (xs[j] - cx2).toFixed(1) + ' ' + yA[j].toFixed(1) + ' ' + xs[j].toFixed(1) + ' ' + yA[j].toFixed(1); }
       svg.appendChild(s('path', { d: d2, fill: 'none', stroke: '#E5A700', 'stroke-width': 3, 'stroke-linecap': 'round' }));
     }
+    if (xs.length > 1) {
+      var defsA = svg.querySelector('defs') || svg.insertBefore(s('defs'), svg.firstChild);
+      var lgA = s('linearGradient', { id: 'rmfb', x1: 0, y1: 0, x2: 0, y2: 1 });
+      lgA.appendChild(s('stop', { offset: 0, 'stop-color': '#E5A700', 'stop-opacity': '.5' })); lgA.appendChild(s('stop', { offset: 1, 'stop-color': '#FFD666', 'stop-opacity': '.08' }));
+      defsA.appendChild(lgA);
+      var curvaA = function (x) {
+        var t3 = (x - xs[0]) / (xs[xs.length - 1] - xs[0]) * (xs.length - 1); var k3 = Math.min(xs.length - 2, Math.max(0, Math.floor(t3))); var u3 = t3 - k3; u3 = u3 * u3 * (3 - 2 * u3);
+        return yA[k3] + (yA[k3 + 1] - yA[k3]) * u3;
+      };
+      var rayasA = s('g', { fill: 'url(#rmfb)' });
+      for (var xa = xs[0] + 3.5; xa <= xs[xs.length - 1]; xa += 7) { var ya = curvaA(xa); rayasA.appendChild(s('rect', { x: xa.toFixed(1), y: ya.toFixed(1), width: 3.5, height: Math.max(2, BASE - ya).toFixed(1), rx: 1.7 })); }
+      var primeraLinea = svg.querySelector('path');
+      if (primeraLinea) svg.insertBefore(rayasA, primeraLinea); else svg.appendChild(rayasA);
+    }
     xs.forEach(function (x, i) { svg.appendChild(s('circle', { cx: x.toFixed(1), cy: yA[i].toFixed(1), r: 4.5, fill: '#fff', stroke: '#E5A700', 'stroke-width': 2.5 })); });
     var iPico = pico > 0 ? vals.indexOf(pico) : -1;
     xs.forEach(function (x, i) { svg.appendChild(s('circle', { cx: x.toFixed(1), cy: ys[i].toFixed(1), r: i === iPico ? 7 : 5, fill: i === iPico ? '#FF4D82' : '#fff', stroke: i === iPico ? '#fff' : '#FF4D82', 'stroke-width': 3 })); });
