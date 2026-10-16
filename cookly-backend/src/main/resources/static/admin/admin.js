@@ -47,6 +47,7 @@
         if (v === null || v === undefined || v === false) return;
         if (k === 'texto') nodo.textContent = v;
         else if (k === 'clase') nodo.className = v;
+        else if (k === 'style') nodo.style.cssText = v;
         else nodo.setAttribute(k, v === true ? '' : v);
       });
     }
