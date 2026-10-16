@@ -77,3 +77,22 @@
 .bg-opciones { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: #fff; border: 1px solid var(--borde); border-radius: 18px; padding: 6px; z-index: 30; box-shadow: 0 8px 24px rgba(43, 16, 32, .12); }
 .bg-opciones button { display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 10px 14px; border-radius: 12px; font: inherit; font-size: 14px; color: var(--tinta); cursor: pointer; }
 .bg-opciones button:hover { background: var(--blush); }
+
+/* ---------- Resumen estilo mockup (pantallas grandes) ---------- */
+@media (min-width: 961px) {
+  [data-seccion="resumen"] .rejilla {
+    display: grid; gap: 18px; align-items: stretch;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas: "usu rec cal" "est rep cal" "vis vis fav";
+  }
+  [data-seccion="resumen"] .rejilla > .tarjeta { grid-column: auto; margin: 0; min-width: 0; }
+  [data-seccion="resumen"] .rejilla > .tarjeta:nth-child(1) { grid-area: usu; background: var(--mantequilla); border-color: transparent; }
+  [data-seccion="resumen"] .rejilla > .tarjeta:nth-child(2) { grid-area: rec; background: var(--blush); border-color: transparent; }
+  [data-seccion="resumen"] .rejilla > .tarjeta:nth-child(3) { grid-area: vis; }
+  [data-seccion="resumen"] .rejilla > .tarjeta:nth-child(4) { grid-area: fav; }
+  [data-seccion="resumen"] .rejilla > .tarjeta:nth-child(5) { grid-area: est; background: var(--pistacho); border-color: transparent; }
+  [data-seccion="resumen"] .rejilla > .tarjeta:nth-child(6) { grid-area: rep; }
+  [data-seccion="resumen"] .rejilla > .calendario { grid-area: cal; align-self: start; }
+}
+/* Buscador dentro de la cabecera */
+.cabecera .buscador-global { margin: 0 12px 0 auto; flex: 0 1 340px; }

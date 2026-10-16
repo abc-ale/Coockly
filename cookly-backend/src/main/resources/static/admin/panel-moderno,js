@@ -42,7 +42,9 @@
     campo.appendChild(lupa); campo.appendChild(entrada); campo.appendChild(tecla);
     var opciones = el('div', 'bg-opciones'); opciones.hidden = true;
     caja.appendChild(campo); caja.appendChild(opciones);
-    contenido.insertBefore(caja, contenido.firstChild);
+    var cab0 = contenido.querySelector('.cabecera');
+    if (cab0) { var rango = cab0.querySelector('.segmentos'); cab0.insertBefore(caja, rango || null); }
+    else contenido.insertBefore(caja, contenido.firstChild);
 
     var DESTINOS = [['usuarios', 'Usuarios'], ['recetas', 'Recetas']];
     function ir(seccion, texto) {
