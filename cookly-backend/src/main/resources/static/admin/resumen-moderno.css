@@ -1,7 +1,7 @@
 /* Cookly · Resumen estilo mockup. Solo se activa cuando resumen-moderno.js pinta con éxito (clase rm-on). */
-[data-seccion="resumen"] #resumen-mod { display: none; }
-[data-seccion="resumen"].rm-on #resumen-mod { display: block; }
-[data-seccion="resumen"].rm-on > :not(#resumen-mod) { display: none !important; }
+[data-seccion="resumen"] #resumen-mod, [data-seccion="uso"] #uso-mod { display: none; }
+[data-seccion="resumen"].rm-on #resumen-mod, [data-seccion="uso"].rm-on #uso-mod { display: block; }
+[data-seccion="resumen"].rm-on > :not(#resumen-mod), [data-seccion="uso"].rm-on > :not(#uso-mod) { display: none !important; }
 
 #resumen-mod { color: #2B1020; font-family: 'DM Sans', system-ui, sans-serif; }
 .rm-cols { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; align-items: start; }
@@ -55,3 +55,26 @@
 .rm-rep b { font-family: 'Fredoka', sans-serif; font-size: 20px; color: #fff; }
 .rm-rep-on { background: #FF4D82; color: #2B1020; }
 .rm-rep-on b { color: #2B1020; }
+
+/* ---- Uso de la app ---- */
+#uso-mod { color: #2B1020; font-family: 'DM Sans', system-ui, sans-serif; }
+.rm-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 18px; }
+.rm-k { border-radius: 28px; padding: 20px 22px; }
+.rm-k.rm-y { background: #FFD666; } .rm-k.rm-g { background: #BFE4A5; } .rm-k.rm-p { background: #F6DADD; } .rm-k.rm-h { background: #FF4D82; }
+.rm-kt { font-family: 'Fredoka', sans-serif; font-weight: 500; font-size: 20px; }
+.rm-kn { font-size: 13px; margin: 4px 0 14px; }
+.rm-kf { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.rm-kchip { font-size: 12.5px; font-weight: 700; background: rgba(255,255,255,.6); border-radius: 999px; padding: 5px 12px; }
+.rm-knum { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 38px; line-height: 1; }
+.rm-full { margin-bottom: 18px; }
+.rm-dos { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; }
+.rm-subt { margin: 3px 0 0; font-size: 13px; color: #9A8690; }
+.rm-pr { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.rm-pi { width: 40px; height: 40px; border-radius: 12px; background: #FFF1F4; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
+.rm-pm { flex: 1; min-width: 0; } .rm-pt { display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 6px; } .rm-pt span { color: #9A8690; }
+.rm-trk { height: 7px; border-radius: 999px; background: #F6E4E7; overflow: hidden; } .rm-trk div { height: 100%; border-radius: 999px; }
+.rm-pct { font-family: 'Fredoka', sans-serif; font-weight: 500; font-size: 20px; width: 52px; text-align: right; }
+.rm-rk { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+.rm-rn { flex: 1; min-width: 0; } .rm-rn b { display: block; font-size: 14.5px; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rm-big2 { font-family: 'Fredoka', sans-serif; font-weight: 500; font-size: 28px; }
+.rm-nota { background: #FFF4F6; border-radius: 16px; padding: 11px 14px; margin: 8px 0 0; font-size: 13px; }

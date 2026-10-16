@@ -58,8 +58,7 @@
     var cont = h('span', 'rm-chip rm-sem');
     var ant = h('button', 'rm-flecha', '‹'); ant.type = 'button'; ant.disabled = !hayAnt; ant.setAttribute('aria-label', 'Semana anterior');
     var sig = h('button', 'rm-flecha', '›'); sig.type = 'button'; sig.disabled = !haySig; sig.setAttribute('aria-label', 'Semana siguiente');
-    ant.addEventListener('click', function () { semana++; render(); });
-    sig.addEventListener('click', function () { if (semana > 0) semana--; render(); });
+    ant.setAttribute('data-rm', 'ant'); sig.setAttribute('data-rm', 'sig');
     cont.appendChild(ant); cont.appendChild(h('span', null, 'Semana ' + etiquetaSemana(v))); cont.appendChild(sig);
     return cont;
   }
@@ -217,8 +216,7 @@
     var fl = h('div', 'rm-flechas');
     var a = h('button', 'rm-ar', '‹'); a.type = 'button'; a.setAttribute('aria-label', 'Mes anterior');
     var b = h('button', 'rm-ar', '›'); b.type = 'button'; b.setAttribute('aria-label', 'Mes siguiente');
-    a.addEventListener('click', function () { vistaMes = new Date(vistaMes.getFullYear(), vistaMes.getMonth() - 1, 1); render(); });
-    b.addEventListener('click', function () { vistaMes = new Date(vistaMes.getFullYear(), vistaMes.getMonth() + 1, 1); render(); });
+    a.setAttribute('data-rm', 'mes-ant'); b.setAttribute('data-rm', 'mes-sig');
     fl.appendChild(a); fl.appendChild(b); hd.appendChild(fl); t.appendChild(hd);
     var cal = h('div', 'rm-calg');
     ['L', 'M', 'X', 'J', 'V', 'S', 'D'].forEach(function (l) { cal.appendChild(h('span', 'rm-wd', l)); });
@@ -277,11 +275,172 @@
     raiz.appendChild(cols);
   }
 
+  // Un solo manejador de clic para todos los botones (no se pierde aunque se redibuje el Resumen).
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-rm]') : null;
+    if (!b || b.disabled) return;
+    var k = b.getAttribute('data-rm');
+    if (k === 'ant') semana++;
+    else if (k === 'sig') { if (semana > 0) semana--; }
+    else if (k === 'uso-ant') { semanaUso++; e.preventDefault(); e.stopPropagation(); renderUso(); return; }
+    else if (k === 'uso-sig') { if (semanaUso > 0) semanaUso--; e.preventDefault(); e.stopPropagation(); renderUso(); return; }
+    else if (k === 'mes-ant') vistaMes = new Date(vistaMes.getFullYear(), vistaMes.getMonth() - 1, 1);
+    else if (k === 'mes-sig') vistaMes = new Date(vistaMes.getFullYear(), vistaMes.getMonth() + 1, 1);
+    else return;
+    e.preventDefault(); e.stopPropagation();
+    render();
+  }, true);
+
+
+  // =====================================================================  USO DE LA APP
+  var semanaUso = 0;
+  var ultimoUso = null;
+
+  function ventanaUso(serie) {
+    var datos = (serie || []).map(function (d) { return { f: fecha(d.dia), v: Number(d.minutos) || 0 }; });
+    datos.sort(function (a, b) { return a.f - b.f; });
+    var fin = datos.length - semanaUso * 7, ini = Math.max(0, fin - 7);
+    return { ventana: datos.slice(ini, Math.max(fin, 0)), hayAnterior: ini > 0, haySiguiente: semanaUso > 0 };
+  }
+  function selectorUso(v, hayAnt, haySig) {
+    var c = h('span', 'rm-chip rm-sem');
+    var a = h('button', 'rm-flecha', '‹'); a.type = 'button'; a.disabled = !hayAnt; a.setAttribute('data-rm', 'uso-ant'); a.setAttribute('aria-label', 'Semana anterior');
+    var b = h('button', 'rm-flecha', '›'); b.type = 'button'; b.disabled = !haySig; b.setAttribute('data-rm', 'uso-sig'); b.setAttribute('aria-label', 'Semana siguiente');
+    c.appendChild(a); c.appendChild(h('span', null, 'Semana ' + etiquetaSemana(v))); c.appendChild(b);
+    return c;
+  }
+  function kpiUso(clase, titulo, nota, chip, valor) {
+    var k = h('section', 'rm-k ' + clase);
+    k.appendChild(h('div', 'rm-kt', titulo)); k.appendChild(h('div', 'rm-kn', nota));
+    var pie = h('div', 'rm-kf'); pie.appendChild(h('span', 'rm-kchip', chip)); pie.appendChild(h('span', 'rm-knum', valor));
+    k.appendChild(pie); return k;
+  }
+  function graficoUsoDias(g) {
+    var w = ventanaUso(g.usoPorDia);
+    var t = h('section', 'rm-b rm-w rm-full');
+    var hd = h('div', 'rm-hd'); var izq = h('div'); izq.appendChild(h('h2', 'rm-t', 'Tiempo de uso por día')); izq.appendChild(h('p', 'rm-subt', 'Un punto por cada día de la semana · minutos de uso'));
+    hd.appendChild(izq); hd.appendChild(selectorUso(w.ventana, w.hayAnterior, w.haySiguiente)); t.appendChild(hd);
+    var vals = w.ventana.map(function (d) { return d.v; });
+    var pico = Math.max.apply(null, vals.concat([0]));
+    var top = pico <= 0 ? 60 : Math.ceil(pico / 60) * 60;
+    var X0 = 60, ANCHO = 890, BASE = 210, ALTO = 170;
+    var paso = ANCHO / 7;
+    var xs = vals.map(function (_, i) { return X0 + paso * (i + 0.5); });
+    var ys = vals.map(function (v) { return BASE - v / top * ALTO; });
+    var svg = s('svg', { viewBox: '0 0 1000 275', width: '100%', role: 'img', 'aria-label': 'Minutos de uso por día, semana ' + etiquetaSemana(w.ventana) });
+    var gr = s('g', { stroke: '#F3D9DC' });
+    [BASE - ALTO, BASE - ALTO * 2 / 3, BASE - ALTO / 3].forEach(function (y) { gr.appendChild(s('line', { x1: 60, y1: y, x2: 950, y2: y })); });
+    gr.appendChild(s('line', { x1: 60, y1: BASE, x2: 950, y2: BASE, stroke: '#E5C9CE' }));
+    svg.appendChild(gr);
+    [[BASE - ALTO, top], [BASE - ALTO * 2 / 3, Math.round(top * 2 / 3)], [BASE - ALTO / 3, Math.round(top / 3)], [BASE, 0]].forEach(function (p) { svg.appendChild(s('text', { x: 14, y: p[0] + 4, style: 'font-size:11.5px;fill:#9A8690' }, String(p[1]))); });
+    if (xs.length > 1) {
+      var defs = s('defs'); var lg = s('linearGradient', { id: 'rmfa', x1: 0, y1: 0, x2: 0, y2: 1 });
+      lg.appendChild(s('stop', { offset: 0, 'stop-color': '#FF4D82', 'stop-opacity': '.5' })); lg.appendChild(s('stop', { offset: 1, 'stop-color': '#FFD666', 'stop-opacity': '.12' }));
+      defs.appendChild(lg); svg.appendChild(defs);
+      var curva = function (i) { // interpolación suave entre puntos
+        var t2 = (i - xs[0]) / (xs[xs.length - 1] - xs[0]) * (xs.length - 1); var k = Math.min(xs.length - 2, Math.max(0, Math.floor(t2))); var u = t2 - k; u = u * u * (3 - 2 * u);
+        return ys[k] + (ys[k + 1] - ys[k]) * u;
+      };
+      var rayas = s('g', { fill: 'url(#rmfa)' });
+      for (var x = xs[0]; x <= xs[xs.length - 1]; x += 7) { var yy = curva(x); rayas.appendChild(s('rect', { x: x.toFixed(1), y: yy.toFixed(1), width: 3.5, height: Math.max(2, BASE - yy).toFixed(1), rx: 1.7 })); }
+      svg.appendChild(rayas);
+      var d = 'M' + xs[0].toFixed(1) + ' ' + ys[0].toFixed(1);
+      for (var i = 1; i < xs.length; i++) { var cx = (xs[i] - xs[i - 1]) / 2; d += ' C' + (xs[i - 1] + cx).toFixed(1) + ' ' + ys[i - 1].toFixed(1) + ' ' + (xs[i] - cx).toFixed(1) + ' ' + ys[i].toFixed(1) + ' ' + xs[i].toFixed(1) + ' ' + ys[i].toFixed(1); }
+      svg.appendChild(s('path', { d: d, fill: 'none', stroke: '#FF4D82', 'stroke-width': 3.5, 'stroke-linecap': 'round' }));
+    }
+    var iPico = pico > 0 ? vals.indexOf(pico) : -1;
+    xs.forEach(function (x, i) { svg.appendChild(s('circle', { cx: x.toFixed(1), cy: ys[i].toFixed(1), r: i === iPico ? 7 : 5, fill: i === iPico ? '#FF4D82' : '#fff', stroke: i === iPico ? '#fff' : '#FF4D82', 'stroke-width': 3 })); });
+    xs.forEach(function (x, i) { if (vals[i] > 0 && i !== iPico) svg.appendChild(s('text', { x: x.toFixed(1), y: (ys[i] - 12).toFixed(1), 'text-anchor': 'middle', style: 'font-weight:700;font-size:12.5px' }, num.format(vals[i]))); });
+    if (iPico >= 0) {
+      var px = xs[iPico], py = ys[iPico];
+      var bx = Math.min(Math.max(px - 80, 62), 880);
+      svg.appendChild(s('rect', { x: bx, y: Math.max(2, py - 58), width: 160, height: 36, rx: 13, fill: '#2B1020' }));
+      svg.appendChild(s('text', { x: bx + 16, y: Math.max(2, py - 58) + 23, style: 'fill:#FFD666;font-size:14px;font-weight:700' }, num.format(pico) + ' min'));
+      svg.appendChild(s('text', { x: bx + 84, y: Math.max(2, py - 58) + 23, style: 'fill:#F3D9DC;font-size:12px' }, '· pico'));
+      svg.appendChild(s('path', { d: 'M' + (px - 8) + ' ' + (Math.max(2, py - 58) + 36) + ' L' + px + ' ' + (Math.max(2, py - 58) + 44) + ' L' + (px + 8) + ' ' + (Math.max(2, py - 58) + 36) + ' Z', fill: '#2B1020' }));
+    }
+    xs.forEach(function (x, i) {
+      var f = vals[i] <= 0 ? '#F3D9DC' : (i === iPico ? '#FF4D82' : (vals[i] < pico / 3 ? '#BFE4A5' : '#FFD666'));
+      svg.appendChild(s('rect', { x: (x - paso * 0.45).toFixed(1), y: 228, width: (paso * 0.9).toFixed(1), height: 8, rx: 4, fill: f }));
+      svg.appendChild(s('text', { x: x.toFixed(1), y: 262, 'text-anchor': 'middle', style: 'font-size:13px' + (i === iPico ? ';font-weight:700' : '') }, ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][w.ventana[i].f.getDay()] + ' ' + w.ventana[i].f.getDate()));
+    });
+    t.appendChild(svg);
+    return t;
+  }
+  function tarjetaHoras(g) {
+    var t = h('section', 'rm-b rm-w');
+    var hd = h('div', 'rm-hd'); var izq = h('div'); izq.appendChild(h('h2', 'rm-t', 'Horas de mayor uso')); izq.appendChild(h('p', 'rm-subt', 'Sesiones iniciadas por hora')); hd.appendChild(izq); t.appendChild(hd);
+    var horas = (g.horasPico || []).map(function (x) { return { hora: Number(x.hora), v: Number(x.valor) || 0 }; });
+    var total = horas.reduce(function (a, x) { return a + x.v; }, 0);
+    var max = Math.max.apply(null, horas.map(function (x) { return x.v; }).concat([0]));
+    if (total === 0) { t.appendChild(h('p', 'rm-vacio', 'Todavía no hay sesiones registradas.')); return t; }
+    var top3 = horas.filter(function (x) { return x.v > 0; }).sort(function (a, b) { return b.v - a.v; }).slice(0, 3);
+    top3.forEach(function (x) {
+      var fila = h('div', 'rm-pr'); fila.appendChild(h('span', 'rm-pi', String(x.hora)));
+      var pm = h('div', 'rm-pm'); var pt = h('div', 'rm-pt'); pt.appendChild(h('b', null, x.hora + ':00 h')); pt.appendChild(h('span', null, num.format(x.v) + (x.v === 1 ? ' sesión' : ' sesiones'))); pm.appendChild(pt);
+      var trk = h('div', 'rm-trk'); var rel = h('div'); rel.style.width = Math.round(x.v / max * 100) + '%'; rel.style.background = '#FF4D82'; trk.appendChild(rel); pm.appendChild(trk);
+      fila.appendChild(pm); fila.appendChild(h('span', 'rm-pct', Math.round(x.v / total * 100) + '%')); t.appendChild(fila);
+    });
+    var svg = s('svg', { viewBox: '0 0 400 90', width: '100%', role: 'img', 'aria-label': 'Sesiones por hora del día', style: 'margin-top:12px' });
+    var tops = top3.map(function (x) { return x.hora; });
+    horas.forEach(function (x, i) {
+      var alto = x.v > 0 ? Math.max(4, x.v / max * 68) : 2;
+      svg.appendChild(s('rect', { x: 6 + i * 16.2, y: 76 - alto, width: 9, height: alto, rx: 4, fill: tops.indexOf(x.hora) >= 0 ? '#FF4D82' : '#FFD666', opacity: x.v > 0 ? 1 : 0.4 }));
+    });
+    [[0, '0 h'], [6, '6 h'], [12, '12 h'], [18, '18 h'], [23, '23 h']].forEach(function (p) { svg.appendChild(s('text', { x: 4 + p[0] * 16.2, y: 90, style: 'font-size:11px;fill:#9A8690' }, p[1])); });
+    t.appendChild(svg);
+    return t;
+  }
+  function tarjetaQuien(g) {
+    var t = h('section', 'rm-b rm-w');
+    var hd = h('div', 'rm-hd'); var izq = h('div'); izq.appendChild(h('h2', 'rm-t', 'Quién usa más')); izq.appendChild(h('p', 'rm-subt', 'Minutos con la app abierta')); hd.appendChild(izq); t.appendChild(hd);
+    var lista = (g.topUsuariosTiempo || []).slice(0, 5);
+    if (!lista.length) { t.appendChild(h('p', 'rm-vacio', 'Todavía no hay uso registrado.')); return t; }
+    var max = Math.max.apply(null, lista.map(function (x) { return Number(x.valor) || 0; }).concat([1]));
+    var colores = ['#FF4D82', '#FFD666', '#BFE4A5', '#F6DADD', '#FFD666'];
+    lista.forEach(function (x, i) {
+      var nombre = String(x.nombre || '');
+      var fila = h('div', 'rm-rk');
+      var av = h('span', 'rm-av', nombre.split(/\s+/).map(function (p) { return p.charAt(0); }).join('').slice(0, 2).toUpperCase() || '?'); av.style.background = colores[i % colores.length]; if (i === 0) av.style.color = '#fff';
+      fila.appendChild(av);
+      var rn = h('div', 'rm-rn'); rn.appendChild(h('b', null, nombre));
+      var trk = h('div', 'rm-trk'); var rel = h('div'); rel.style.width = Math.max(3, Math.round((Number(x.valor) || 0) / max * 100)) + '%'; rel.style.background = '#2B1020'; trk.appendChild(rel); rn.appendChild(trk);
+      fila.appendChild(rn); fila.appendChild(h('span', 'rm-big2', num.format(Number(x.valor) || 0))); t.appendChild(fila);
+    });
+    t.appendChild(h('p', 'rm-nota', 'El tiempo se mide con la app abierta, cada 30 segundos.'));
+    return t;
+  }
+  function renderUso() {
+    var raiz = document.getElementById('uso-mod');
+    if (!raiz || !ultimoUso) return;
+    var r = ultimoUso.r, g = ultimoUso.g90 || ultimoUso.g;
+    vaciar(raiz);
+    var k = h('div', 'rm-kpis');
+    k.appendChild(kpiUso('rm-y', 'En línea ahora', 'Usaron la app hace menos de 2 min', 'Ahora', num.format(r.enLineaAhora)));
+    k.appendChild(kpiUso('rm-g', 'Activos hoy', num.format(r.activos7d) + ' usuarios en los últimos 7 días', 'Usuarios únicos', num.format(r.activosHoy)));
+    k.appendChild(kpiUso('rm-p', 'Sesiones', 'Promedio de ' + fmt1(r.minutosPorSesion) + ' min por sesión', 'Desde el inicio', num.format(r.sesionesTotal)));
+    k.appendChild(kpiUso('rm-h', 'Tiempo total', minutosATexto(r.minutosUso7d) + ' en los últimos 7 días', 'App abierta', fmt1(r.minutosUsoTotal / 60) + ' h'));
+    raiz.appendChild(k);
+    raiz.appendChild(graficoUsoDias(g));
+    var dos = h('div', 'rm-dos'); dos.appendChild(tarjetaHoras(ultimoUso.g)); dos.appendChild(tarjetaQuien(ultimoUso.g)); raiz.appendChild(dos);
+  }
+  window.CooklyUso = {
+    pintar: function (r, g, g90) {
+      try {
+        ultimoUso = { r: r, g: g, g90: g90 || g };
+        renderUso();
+        var sec = document.querySelector('[data-seccion="uso"]'); if (sec) sec.classList.add('rm-on');
+      } catch (e) {
+        var s3 = document.querySelector('[data-seccion="uso"]'); if (s3) s3.classList.remove('rm-on');
+        if (window.console) console.error('Uso moderno:', e);
+      }
+    }
+  };
+
   window.CooklyResumen = {
     pintar: function (r, g, dias, rep, g90) {
       try {
         ultimo = { r: r, g: g, rep: rep, g90: g90 || g };
-        semana = 0;
         var sec = document.querySelector('[data-seccion="resumen"]');
         render();
         if (sec) sec.classList.add('rm-on');
