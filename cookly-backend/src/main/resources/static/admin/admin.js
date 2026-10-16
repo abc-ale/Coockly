@@ -28,10 +28,6 @@
     reportes: { titulo: 'Reportes de recetas',   sub: 'Recetas señaladas por la comunidad.' },
     'reportes-comunidad': { titulo: 'Reportes de comunidad', sub: 'Publicaciones y comentarios señalados desde Comunidad.' },
     comentarios: { titulo: 'Comentarios',          sub: 'Lo que escribe la comunidad. Elimina lo que no corresponda.' },
-    'comunidad-posts': { titulo: 'Publicaciones de Comunidad', sub: 'Lo que la gente publica en Comunidad. Elimina lo que no corresponda.' },
-    'comunidad-comentarios': { titulo: 'Comentarios de Comunidad', sub: 'Comentarios y respuestas de Comunidad, sin esperar a que alguien los reporte.' },
-    alergias: { titulo: 'Alergias', sub: 'Catálogo de alergias y qué alérgenos contiene cada ingrediente.' },
-    'nueva-receta': { titulo: 'Nueva receta',    sub: 'Publica una receta con sus ingredientes, pasos y fotos.' },
     resenas:  { titulo: 'Reseñas',              sub: 'Calificaciones y opiniones de las recetas. Elimina lo que no corresponda.' },
     recetas:  { titulo: 'Recetas',               sub: 'Todas las recetas publicadas, con su autor.' },
     historial: { titulo: 'Historial de acciones', sub: 'Qué hicieron los administradores y cuándo (últimas 200).' },
@@ -164,7 +160,7 @@
   }
 
   function seccionDesdeHash() {
-    var h = (location.hash || '').replace('#', '').split('/')[0];
+    var h = (location.hash || '').replace('#', '');
     return SECCIONES[h] ? h : 'resumen';
   }
 
@@ -295,27 +291,11 @@
       }
     });
 
-    // Las 3 horas con más sesiones se pintan en rosa y se listan debajo del gráfico.
-    var topHoras = g.horasPico.filter(function (h) { return Number(h.valor) > 0; })
-      .sort(function (x, y) { return Number(y.valor) - Number(x.valor); }).slice(0, 3);
-    var horasTop = topHoras.map(function (h) { return String(h.hora); });
-    var lienzoHoras = $('g-horas').parentNode;
-    var resumenHoras = $('resumen-horas');
-    if (!resumenHoras) {
-      resumenHoras = el('p', { id: 'resumen-horas', clase: 'nota' });
-      lienzoHoras.parentNode.insertBefore(resumenHoras, lienzoHoras.nextSibling);
-    }
-    resumenHoras.textContent = topHoras.length
-      ? 'Se usa más a las ' + topHoras.map(function (h) { return h.hora + ':00 h (' + numero.format(h.valor) + ' sesiones)'; }).join(', ')
-      : 'Todavía no hay sesiones registradas.';
-
     crearGrafico('g-horas', {
       type: 'bar',
       data: {
         labels: g.horasPico.map(function (h) { return h.hora + ' h'; }),
-        datasets: [{ label: 'Sesiones iniciadas', data: g.horasPico.map(function (h) { return Number(h.valor); }),
-          backgroundColor: g.horasPico.map(function (h) { return horasTop.indexOf(String(h.hora)) >= 0 ? color('--rosa-marca') : color('--durazno'); }),
-          borderRadius: 4, maxBarThickness: 22 }]
+        datasets: [{ label: 'Sesiones iniciadas', data: g.horasPico.map(function (h) { return Number(h.valor); }), backgroundColor: color('--durazno'), borderRadius: 4 }]
       },
       options: { scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxTicksLimit: 8 } } }, plugins: { legend: { display: false } } }
     });
@@ -371,7 +351,7 @@
       type: 'bar',
       data: {
         labels: serie.map(function (d) { return etiquetaDia(d.dia); }),
-        datasets: [{ label: nombre, data: serie.map(function (d) { return Number(d.valor); }), backgroundColor: colorBarra, borderRadius: 4, maxBarThickness: 34 }]
+        datasets: [{ label: nombre, data: serie.map(function (d) { return Number(d.valor); }), backgroundColor: colorBarra, borderRadius: 4 }]
       },
       options: { scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxTicksLimit: 10 } } } }
     });
@@ -381,13 +361,12 @@
     var vacio = !filas || filas.length === 0;
     $(id).parentNode.hidden = vacio;
     $(idVacio).hidden = !vacio;
-    if (!vacio) filas = filas.slice(0, 8);
     if (vacio) { if (graficos[id]) { graficos[id].destroy(); delete graficos[id]; } return; }
     crearGrafico(id, {
       type: 'bar',
       data: {
         labels: filas.map(function (f) { return f.nombre.length > 26 ? f.nombre.slice(0, 25) + '…' : f.nombre; }),
-        datasets: [{ label: nombre, data: filas.map(function (f) { return Number(f.valor); }), backgroundColor: colorBarra, borderRadius: 4, maxBarThickness: 22 }]
+        datasets: [{ label: nombre, data: filas.map(function (f) { return Number(f.valor); }), backgroundColor: colorBarra, borderRadius: 4 }]
       },
       options: { indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { precision: 0 } }, y: { grid: { display: false } } } }
     });
@@ -699,12 +678,6 @@
     resenas: { ruta: '/administracion/resenas', cont: 'lista-resenas', buscar: 'rs-buscar', vacio: 'No hay reseñas.',
       cols: [['Fecha', 'fecha'], ['Autor', 'autor'], ['Receta', 'recetaNombre'], ['Estrellas', 'estrellas'], ['Opinión', 'contenido']],
       pregunta: '¿Eliminar esta reseña?' },
-    'comunidad-posts': { ruta: '/administracion/comunidad/publicaciones', cont: 'lista-comunidad-posts', buscar: 'cp-buscar', vacio: 'No hay publicaciones.',
-      cols: [['Fecha', 'fecha'], ['Autor', 'autor'], ['Publicación', 'contenido'], ['Foto', 'foto'], ['Comentarios', 'comentarios']],
-      pregunta: '¿Eliminar esta publicación con todos sus comentarios? No se puede deshacer.' },
-    'comunidad-comentarios': { ruta: '/administracion/comunidad/comentarios', cont: 'lista-comunidad-comentarios', buscar: 'cc-buscar', vacio: 'No hay comentarios.',
-      cols: [['Fecha', 'fecha'], ['Autor', 'autor'], ['Tipo', 'tipo'], ['Texto', 'contenido'], ['En la publicación', 'publicacion']],
-      pregunta: '¿Eliminar este comentario y sus respuestas? No se puede deshacer.' },
     recetas: { ruta: '/administracion/recetas', cont: 'lista-recetas', buscar: 're-buscar', vacio: 'No hay recetas.',
       cols: [['Fecha', 'fecha'], ['Receta', 'nombre'], ['Autor', 'autor'], ['Comentarios', 'comentarios'], ['Favoritos', 'favoritos']],
       pregunta: '¿Eliminar esta receta con todos sus datos? No se puede deshacer.' },
@@ -732,22 +705,17 @@
     var cuerpo = filas.map(function (f) {
       var tr = el('tr', null, cfg.cols.map(function (c) {
         var v = f[c[1]];
-        var largo = c[1] === 'contenido' || c[1] === 'detalle' || c[1] === 'publicacion';
+        var largo = c[1] === 'contenido' || c[1] === 'detalle';
         return el('td', { clase: largo ? 'largo' : null, texto: v === null || v === undefined ? '' : String(v) });
       }));
-      if (puedeBorrar) {
-        var acciones = [];
-        if (nombre === 'recetas') acciones.push(el('a', { href: '#nueva-receta/' + f.id, clase: 'boton chico secundario', texto: 'Editar' }));
-        acciones.push(el('button', { type: 'button', clase: 'boton chico peligro', 'data-id': f.id, texto: 'Eliminar' }));
-        tr.appendChild(el('td', { clase: 'acciones' }, acciones));
-      }
+      if (puedeBorrar) tr.appendChild(el('td', null, [el('button', { type: 'button', clase: 'boton chico peligro', 'data-id': f.id, texto: 'Eliminar' })]));
       return tr;
     });
     cont.appendChild(el('div', { clase: 'tabla-envoltura' }, [el('table', null, [el('thead', null, [cab]), el('tbody', null, cuerpo)])]));
   }
 
   function iniciarListas() {
-    ['comentarios', 'resenas', 'comunidad-posts', 'comunidad-comentarios', 'recetas'].forEach(function (nombre) {
+    ['comentarios', 'resenas', 'recetas'].forEach(function (nombre) {
       var cfg = LISTAS[nombre];
       var espera = null;
       $(cfg.buscar).addEventListener('input', function () {
