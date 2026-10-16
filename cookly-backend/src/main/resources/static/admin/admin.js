@@ -179,8 +179,19 @@
     cargarSeccion(s);
   }
 
+  // Las peticiones extra del Resumen/Uso salen a la vez que las principales (una sola espera).
+  function precargar() {
+    var contar = function (ruta) { return json(ruta).then(function (l) { return Array.isArray(l) ? l.length : 0; }).catch(function () { return 0; }); };
+    estado.pre = {
+      rec: contar('/administracion/moderacion/reportes'),
+      com: contar('/administracion/reportes-comunidad'),
+      largas: json('/administracion/graficas?dias=90').catch(function () { return null; })
+    };
+  }
+
   function cargarSeccion(s) {
     var tarea;
+    if (s === 'resumen' || s === 'uso') precargar();
     if (s === 'resumen') tarea = Promise.all([cargarResumen(), cargarGraficas()]).then(pintarResumen);
     else if (s === 'uso') tarea = Promise.all([cargarResumen(), cargarGraficas()]).then(pintarUso);
     else if (s === 'usuarios') tarea = cargarUsuarios();
@@ -247,9 +258,7 @@
     $('g-reportes').parentNode.hidden = rep.length === 0;
     if (rep.length) dibujarDona('g-reportes', rep);
     if (window.CooklyResumen) {
-      var contar = function (ruta) { return json(ruta).then(function (l) { return Array.isArray(l) ? l.length : 0; }).catch(function () { return 0; }); };
-      var largas = json('/administracion/graficas?dias=90').catch(function () { return null; });
-      Promise.all([contar('/administracion/moderacion/reportes'), contar('/administracion/reportes-comunidad'), largas]).then(function (c) {
+      Promise.all([estado.pre.rec, estado.pre.com, estado.pre.largas]).then(function (c) {
         window.CooklyResumen.pintar(r, g, estado.dias, { recetas: c[0], comunidad: c[1] }, c[2]);
       }).catch(function () { if (window.CooklyFallo) window.CooklyFallo('resumen'); });
     }
@@ -325,7 +334,7 @@
 
     dibujarRanking('g-top-usuarios', 'vacio-top-usuarios', g.topUsuariosTiempo, 'Minutos de uso', color('--ciruela'));
     if (window.CooklyUso) {
-      json('/administracion/graficas?dias=90').catch(function () { return null; }).then(function (g90) { window.CooklyUso.pintar(r, g, g90); }).catch(function () { if (window.CooklyFallo) window.CooklyFallo('uso'); });
+      estado.pre.largas.then(function (g90) { window.CooklyUso.pintar(r, g, g90); }).catch(function () { if (window.CooklyFallo) window.CooklyFallo('uso'); });
     }
   }
 
@@ -592,14 +601,13 @@
       }
 
       var nPost = lista.filter(function (r) { return r.tipo === 'POST'; }).length;
-      var barra = el('div', { clase: 'rc-top' }, [el('div', { clase: 'rc-seg' }, [
-        el('button', { type: 'button', clase: 'on', 'data-filtro': 'todos', texto: 'Todos ' + lista.length }),
-        el('button', { type: 'button', 'data-filtro': 'POST', texto: 'Publicaciones ' + nPost }),
-        el('button', { type: 'button', 'data-filtro': 'COMMENT', texto: 'Comentarios ' + (lista.length - nPost) })
-      ])]);
-      cont.appendChild(barra);
-      var rejilla = el('div', { clase: 'rc-grid' });
-      cont.appendChild(rejilla);
+      var colP = el('div', { clase: 'rc-gp' }), colC = el('div', { clase: 'rc-gc' });
+      cont.appendChild(el('div', { clase: 'rc-cols' }, [
+        el('section', { clase: 'rc-colp' }, [el('h2', { clase: 'rc-ch' }, ['Publicaciones ', el('i', { texto: String(nPost) })]), colP]),
+        el('section', { clase: 'rc-colc' }, [el('h2', { clase: 'rc-ch' }, ['Comentarios ', el('i', { texto: String(lista.length - nPost) })]), colC])
+      ]));
+      if (nPost === 0) colP.appendChild(el('p', { clase: 'rc-nada', texto: 'No hay publicaciones reportadas.' }));
+      if (lista.length - nPost === 0) colC.appendChild(el('p', { clase: 'rc-nada', texto: 'No hay comentarios reportados.' }));
 
       var MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
       var COLORES = ['#FFD666', '#BFE4A5', '#F6DADD', '#FFB7CB', '#CDE6F5'];
@@ -655,7 +663,7 @@
           el('button', { type: 'button', clase: 'd', 'data-resolver-com': 'REVISADO', 'data-id': r.id, texto: 'Revisado' })
         ]));
 
-        rejilla.appendChild(el('article', { clase: 'rc-card', 'data-tipo': r.tipo || '' }, partes));
+        (esPost ? colP : colC).appendChild(el('article', { clase: 'rc-card' }, partes));
       });
     });
   }
@@ -917,15 +925,6 @@
 
     // reportes de comunidad
     $('lista-reportes-comunidad').addEventListener('click', function (e) {
-      var f = e.target.closest('button[data-filtro]');
-      if (f) {
-        var filtro = f.getAttribute('data-filtro');
-        Array.prototype.forEach.call(f.parentNode.children, function (x) { x.classList.toggle('on', x === f); });
-        Array.prototype.forEach.call(document.querySelectorAll('#lista-reportes-comunidad .rc-card'), function (c) {
-          c.hidden = filtro !== 'todos' && c.getAttribute('data-tipo') !== filtro;
-        });
-        return;
-      }
       var b = e.target.closest('button[data-resolver-com]');
       if (b && !b.disabled) resolverReporteComunidad(b);
     });
