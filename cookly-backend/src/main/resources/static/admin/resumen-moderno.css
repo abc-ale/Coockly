@@ -76,7 +76,7 @@
 .rm-pct { font-family: 'Fredoka', sans-serif; font-weight: 500; font-size: 20px; width: 52px; text-align: right; }
 .rm-rk { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
 .rm-rn { flex: 1; min-width: 0; } .rm-rn b { display: block; font-size: 14.5px; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rm-big2 { font-family: 'Fredoka', sans-serif; font-weight: 500; font-size: 28px; }
+.rm-big2 { font-family: 'Fredoka', sans-serif; font-weight: 500; font-size: 20px; white-space: nowrap; text-align: right; }
 .rm-nota { background: #FFF4F6; border-radius: 16px; padding: 11px 14px; margin: 8px 0 0; font-size: 13px; }
 
 .rm-cargando { position: relative; width: 84px; height: 84px; margin: 140px auto; display: flex; align-items: center; justify-content: center; }

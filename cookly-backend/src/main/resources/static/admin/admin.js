@@ -759,6 +759,7 @@
     var cfg = LISTAS[nombre];
     var cont = $(cfg.cont);
     vaciar(cont);
+    if (nombre === 'historial' && filas.length) { pintarHistorial(cont, filas); return; }
     if (!filas.length) {
       cont.appendChild(el('div', { clase: 'estado-vacio' }, [el('strong', { texto: 'Nada por aquí' }), el('span', { texto: cfg.vacio })]));
       return;
@@ -776,6 +777,113 @@
       return tr;
     });
     cont.appendChild(el('div', { clase: 'tabla-envoltura' }, [el('table', null, [el('thead', null, [cab]), el('tbody', null, cuerpo)])]));
+  }
+
+
+  // ------------------------------------------------------------------ historial de acciones (tarjeta con buscador, filtros y paginas)
+
+  function pintarHistorial(cont, filas) {
+    var MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    var COLORES = ['#FF4D82', '#FFD666', '#BFE4A5', '#F6DADD', '#CDE6F5'];
+    var POR_PAGINA = 10;
+    var ahora = new Date(), hoy0 = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+
+    function parteFecha(s) {
+      var m = /(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(s || '');
+      if (!m) return { texto: s || '—', sub: '', dias: 9999 };
+      var d = new Date(+m[1], +m[2] - 1, +m[3]);
+      var dias = Math.round((hoy0 - d) / 86400000);
+      var rel = dias <= 0 ? 'Hoy' : dias === 1 ? 'Ayer' : 'Hace ' + dias + ' días';
+      return { texto: (+m[3]) + ' ' + MESES[+m[2] - 1] + ' ' + m[1], sub: rel + ' · ' + m[4] + ':' + m[5], dias: dias };
+    }
+    function bonita(a) {
+      var s = String(a || '').replace(/_/g, ' ').toLowerCase().trim();
+      return s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Acción';
+    }
+    function claseAccion(a) {
+      a = String(a || '').toLowerCase();
+      if (/elimin|borr/.test(a)) return 'r';
+      if (/revis|descart|respald|descarg|restaur/.test(a)) return 'g';
+      if (/rol|desactiv|activ|cambi|bloque/.test(a)) return 'y';
+      return 'p';
+    }
+
+    var datos = filas.map(function (f) {
+      var fe = parteFecha(f.fecha);
+      return { f: f, fe: fe, accion: bonita(f.accion), clase: claseAccion(f.accion), adm: String(f.admin || 'Administrador'),
+               buscar: (String(f.admin || '') + ' ' + bonita(f.accion) + ' ' + String(f.detalle || '')).toLowerCase() };
+    });
+    var acciones = [];
+    datos.forEach(function (d) { if (acciones.indexOf(d.accion) < 0) acciones.push(d.accion); });
+    var estado = { q: '', accion: '', rango: '', pagina: 1 };
+
+    var buscador = el('input', { type: 'search', placeholder: 'Buscar acción o administrador', 'aria-label': 'Buscar en el historial' });
+    var selAccion = el('select', { 'aria-label': 'Filtrar por acción' }, [el('option', { value: '', texto: 'Acción: todas' })].concat(acciones.map(function (a) { return el('option', { value: a, texto: a }); })));
+    var selFecha = el('select', { 'aria-label': 'Filtrar por fecha' }, [
+      el('option', { value: '', texto: 'Fecha: todo' }), el('option', { value: '0', texto: 'Hoy' }),
+      el('option', { value: '7', texto: 'Últimos 7 días' }), el('option', { value: '30', texto: 'Últimos 30 días' })]);
+    var cuenta = el('div', { clase: 'ht-cuenta' });
+    var cuerpo = el('tbody');
+    var pie = el('span');
+    var pager = el('div', { clase: 'ht-pg' });
+
+    function th(txt) { return el('th', { texto: txt }); }
+    var tabla = el('table', { clase: 'ht' }, [el('thead', null, [el('tr', null, [th('Administrador'), th('Acción'), th('Detalle'), th('Fecha')])]), cuerpo]);
+
+    cont.appendChild(el('div', { clase: 'ht-card' }, [
+      el('div', { clase: 'ht-bar' }, [el('div', { clase: 'ht-izq' }, [buscador, selAccion, selFecha]), cuenta]),
+      el('div', { clase: 'ht-scroll' }, [tabla]),
+      el('div', { clase: 'ht-pie' }, [pie, pager])
+    ]));
+
+    function refrescar() {
+      var q = estado.q;
+      var lista = datos.filter(function (d) {
+        if (q && d.buscar.indexOf(q) < 0) return false;
+        if (estado.accion && d.accion !== estado.accion) return false;
+        if (estado.rango !== '' && d.fe.dias > Number(estado.rango)) return false;
+        return true;
+      });
+      var paginas = Math.max(1, Math.ceil(lista.length / POR_PAGINA));
+      if (estado.pagina > paginas) estado.pagina = paginas;
+      var ini = (estado.pagina - 1) * POR_PAGINA, vis = lista.slice(ini, ini + POR_PAGINA);
+
+      vaciar(cuerpo);
+      if (!vis.length) cuerpo.appendChild(el('tr', null, [el('td', { colspan: '4', clase: 'ht-nada', texto: 'No hay acciones con ese filtro.' })]));
+      vis.forEach(function (d) {
+        var suma = 0; for (var i = 0; i < d.adm.length; i++) suma += d.adm.charCodeAt(i);
+        var col = COLORES[suma % COLORES.length];
+        cuerpo.appendChild(el('tr', null, [
+          el('td', null, [el('div', { clase: 'ht-adm' }, [el('span', { clase: 'ht-av', style: 'background:' + col + ';color:' + (col === '#FF4D82' ? '#fff' : '#2B1020'), texto: d.adm.charAt(0).toUpperCase() }),
+            el('div', null, [el('b', { texto: d.adm }), el('small', { texto: 'Administrador' })])])]),
+          el('td', null, [el('span', { clase: 'ht-ac ' + d.clase }, [el('i'), d.accion])]),
+          el('td', { clase: 'ht-det', texto: d.f.detalle || '' }),
+          el('td', { clase: 'ht-fe' }, [el('b', { texto: d.fe.texto }), el('small', { texto: d.fe.sub })])
+        ]));
+      });
+
+      cuenta.textContent = lista.length ? 'Mostrando ' + (ini + 1) + '–' + (ini + vis.length) + ' de ' + lista.length + ' acciones' : '0 acciones';
+      pie.textContent = 'Se guardan las últimas 200 acciones.';
+      vaciar(pager);
+      if (paginas > 1) {
+        var mk = function (txt, p, on, off) {
+          return el('button', { type: 'button', clase: on ? 'on' : null, 'data-pg': p, disabled: off, 'aria-label': 'Página ' + p, texto: txt });
+        };
+        pager.appendChild(mk('‹', estado.pagina - 1, false, estado.pagina === 1));
+        for (var p = 1; p <= paginas; p++) pager.appendChild(mk(String(p), p, p === estado.pagina, false));
+        pager.appendChild(mk('›', estado.pagina + 1, false, estado.pagina === paginas));
+      }
+    }
+
+    buscador.addEventListener('input', function () { estado.q = buscador.value.trim().toLowerCase(); estado.pagina = 1; refrescar(); });
+    selAccion.addEventListener('change', function () { estado.accion = selAccion.value; estado.pagina = 1; refrescar(); });
+    selFecha.addEventListener('change', function () { estado.rango = selFecha.value; estado.pagina = 1; refrescar(); });
+    pager.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-pg]');
+      if (!b || b.disabled) return;
+      estado.pagina = Number(b.getAttribute('data-pg')); refrescar();
+    });
+    refrescar();
   }
 
   function iniciarListas() {

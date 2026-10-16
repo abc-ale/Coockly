@@ -480,7 +480,7 @@
       fila.appendChild(av);
       var rn = h('div', 'rm-rn'); rn.appendChild(h('b', null, nombre));
       var trk = h('div', 'rm-trk'); var rel = h('div'); rel.style.width = Math.max(3, Math.round((Number(x.valor) || 0) / max * 100)) + '%'; rel.style.background = '#2B1020'; trk.appendChild(rel); rn.appendChild(trk);
-      fila.appendChild(rn); fila.appendChild(h('span', 'rm-big2', num.format(Number(x.valor) || 0))); t.appendChild(fila);
+      fila.appendChild(rn); fila.appendChild(h('span', 'rm-big2', minutosATexto(Number(x.valor) || 0))); t.appendChild(fila);
     });
     t.appendChild(h('p', 'rm-nota', 'El tiempo se mide con la app abierta, cada 30 segundos.'));
     return t;
@@ -516,11 +516,7 @@
   function esqueleto(id, seccion, cajas) {
     var raiz = document.getElementById(id), sec = document.querySelector('[data-seccion="' + seccion + '"]');
     if (!raiz || !sec) return;
-    var g = h('div', 'rm-cargando'); g.setAttribute('role', 'status'); g.setAttribute('aria-label', 'Cargando');
-    var im = document.createElement('img'); im.src = 'img/favicon.png'; im.alt = ''; im.className = 'rm-logo-gira';
-    im.onerror = function () { im.style.display = 'none'; };
-    g.appendChild(h('div', 'rm-anillo')); g.appendChild(im);
-    raiz.appendChild(g); sec.classList.add('rm-on');
+    sec.classList.add('rm-on');  // oculta el contenido viejo hasta que lleguen los datos
   }
   esqueleto('resumen-mod', 'resumen', ['rm-sk-y', 'rm-sk-p', 'rm-sk-g2', 'rm-sk-h']);
   esqueleto('uso-mod', 'uso', ['rm-sk-y', 'rm-sk-g2', 'rm-sk-p', 'rm-sk-h']);
