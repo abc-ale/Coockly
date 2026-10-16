@@ -246,6 +246,7 @@
     $('vacio-reportes').hidden = rep.length > 0;
     $('g-reportes').parentNode.hidden = rep.length === 0;
     if (rep.length) dibujarDona('g-reportes', rep);
+    if (window.CooklyResumen) window.CooklyResumen.pintar(r, g, estado.dias);
   }
 
   function pintarUso() {
