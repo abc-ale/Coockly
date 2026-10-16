@@ -153,7 +153,21 @@
     ($('acceso-correo').value ? $('acceso-contrasena') : $('acceso-correo')).focus();
   }
 
+  // Menú lateral por grupos (no depende de otros archivos)
+  function agruparMenu() {
+    var nav = document.querySelector('.navegacion');
+    if (!nav || nav.querySelector('.grp')) return;
+    [['resumen', 'General'], ['reportes', 'Moderación'], ['comentarios', 'Contenido'], ['historial', 'Sistema']].forEach(function (g, i) {
+      var a = nav.querySelector('a[data-nav="' + g[0] + '"]');
+      if (!a) return;
+      var p = el('p', { clase: 'grp', texto: g[1] });
+      p.style.cssText = 'margin:' + (i ? '14px' : '0') + ' 0 4px 14px;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#B58C9B;';
+      nav.insertBefore(p, a);
+    });
+  }
+
   function mostrarPanel() {
+    agruparMenu();
     $('vista-acceso').hidden = true;
     $('vista-panel').hidden = false;
     $('admin-nombre').textContent = estado.sesion.nombre || estado.sesion.correo;

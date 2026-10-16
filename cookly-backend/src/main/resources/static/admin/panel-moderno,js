@@ -16,7 +16,7 @@
   // ---- menú con grupos
   var grupos = { resumen: 'General', reportes: 'Moderación', comentarios: 'Contenido', historial: 'Sistema' };
   var nav = document.querySelector('.navegacion');
-  if (nav) {
+  if (nav && !nav.querySelector('.grp')) {
     Object.keys(grupos).forEach(function (k) {
       var a = nav.querySelector('a[data-nav="' + k + '"]');
       if (a) nav.insertBefore(el('p', 'grp', grupos[k]), a);
