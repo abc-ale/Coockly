@@ -40,14 +40,30 @@
   }
   function fmt1(n) { return num.format(Math.round(n * 10) / 10); }
 
-  // ---- ventana de 7 días
-  function ventana(serie, campo) {
-    var datos = (serie || []).map(function (d) { return { f: fecha(d.dia), v: Number(d[campo]) || 0 }; });
-    datos.sort(function (a, b) { return a.f - b.f; });
-    var fin = datos.length - semana * 7;
-    var ini = Math.max(0, fin - 7);
-    return { todo: datos, ventana: datos.slice(ini, Math.max(fin, 0)), hayAnterior: ini > 0, haySiguiente: semana > 0 };
+  // ---- ventana de 7 días (por fechas del calendario, no por posición en la lista)
+  var MAX_SEMANAS = 12;
+  function aClave(f) { return f.getFullYear() + '-' + ('0' + (f.getMonth() + 1)).slice(-2) + '-' + ('0' + f.getDate()).slice(-2); }
+  function ventanaPorFechas(serie, campos, desplazamiento) {
+    var mapa = {}, ultima = null;
+    (serie || []).forEach(function (d) {
+      var f = fecha(d.dia); if (isNaN(f.getTime())) return;
+      mapa[aClave(f)] = d;
+      if (!ultima || f > ultima) ultima = f;
+    });
+    var hoy = new Date(); hoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    var fin = ultima && ultima < hoy ? ultima : hoy;           // la última fecha con datos (o hoy)
+    var out = [];
+    for (var i = 6; i >= 0; i--) {
+      var f2 = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate() - i - desplazamiento * 7);
+      var d2 = mapa[aClave(f2)] || {};
+      var fila = { f: f2 };
+      Object.keys(campos).forEach(function (k) { fila[k] = Number(d2[campos[k]]) || 0; });
+      out.push(fila);
+    }
+    return { ventana: out, hayAnterior: desplazamiento < MAX_SEMANAS, haySiguiente: desplazamiento > 0 };
   }
+  function ventana(serie, campo) { return ventanaPorFechas(serie, { v: campo }, semana); }
+
   function etiquetaSemana(v) {
     if (!v.length) return 'Sin datos';
     var a = v[0].f, b = v[v.length - 1].f;
@@ -276,7 +292,7 @@
   }
 
   // Un solo manejador de clic para todos los botones (no se pierde aunque se redibuje el Resumen).
-  var ultimoToque = 0;
+  var ignorarHasta = 0;
   function accion(k) {
     if (k === 'ant') semana++;
     else if (k === 'sig') { if (semana > 0) semana--; }
@@ -287,17 +303,15 @@
     else return;
     if (k.indexOf('uso-') === 0) renderUso(); else render();
   }
-  function disparar(k, e) {
-    if (e) { e.preventDefault(); e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); }
-    var ahora = Date.now();
-    if (ahora - ultimoToque < 450) return; // pointerdown y click llegan juntos: se atiende uno solo
-    ultimoToque = ahora;
-    accion(k);
-  }
   function manejar(e) {
     var b = e.target && e.target.closest ? e.target.closest('[data-rm]') : null;
     if (!b || b.disabled) return;
-    disparar(b.getAttribute('data-rm'), e);
+    e.preventDefault(); e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+    var ahora = Date.now();
+    if (e.type === 'pointerdown') { ignorarHasta = ahora + 1500; accion(b.getAttribute('data-rm')); return; }
+    // mousedown y click que siguen a un pointerdown ya atendido se ignoran; un click solo (teclado) sí cuenta
+    if (ahora < ignorarHasta) return;
+    accion(b.getAttribute('data-rm'));
   }
   // En window (captura) llega antes que cualquier otro script de la página.
   window.addEventListener('pointerdown', manejar, true);
@@ -309,12 +323,7 @@
   var semanaUso = 0;
   var ultimoUso = null;
 
-  function ventanaUso(serie) {
-    var datos = (serie || []).map(function (d) { return { f: fecha(d.dia), v: Number(d.minutos) || 0, a: Number(d.activos) || 0 }; });
-    datos.sort(function (a, b) { return a.f - b.f; });
-    var fin = datos.length - semanaUso * 7, ini = Math.max(0, fin - 7);
-    return { ventana: datos.slice(ini, Math.max(fin, 0)), hayAnterior: ini > 0, haySiguiente: semanaUso > 0 };
-  }
+  function ventanaUso(serie) { return ventanaPorFechas(serie, { v: 'minutos', a: 'activos' }, semanaUso); }
   function selectorUso(v, hayAnt, haySig) {
     var c = h('span', 'rm-chip rm-sem');
     var a = h('button', 'rm-flecha', '‹'); a.type = 'button'; a.disabled = !hayAnt; a.setAttribute('data-rm', 'uso-ant'); a.setAttribute('aria-label', 'Semana anterior');
