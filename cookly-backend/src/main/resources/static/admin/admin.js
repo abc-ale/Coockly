@@ -176,6 +176,10 @@
     $('subtitulo-seccion').textContent = SECCIONES[s].sub;
     $('selector-rango').hidden = !(s === 'resumen' || s === 'uso');
     document.title = SECCIONES[s].titulo + ' · Cookly';
+    // En Resumen y Uso la cabecera espera a los datos, para que no se vea el título suelto mientras carga.
+    var espera = (s === 'resumen' || s === 'uso');
+    document.body.classList.toggle('rm-espera', espera);
+    if (espera) setTimeout(function () { document.body.classList.remove('rm-espera'); }, 8000);
     cargarSeccion(s);
   }
 
@@ -760,6 +764,7 @@
     var cont = $(cfg.cont);
     vaciar(cont);
     if (nombre === 'historial' && filas.length) { pintarHistorial(cont, filas); return; }
+    if (nombre === 'resenas' && filas.length) { pintarResenas(cont, filas); return; }
     if (!filas.length) {
       cont.appendChild(el('div', { clase: 'estado-vacio' }, [el('strong', { texto: 'Nada por aquí' }), el('span', { texto: cfg.vacio })]));
       return;
@@ -818,9 +823,9 @@
     var estado = { q: '', accion: '', rango: '', pagina: 1 };
 
     var buscador = el('input', { type: 'search', placeholder: 'Buscar acción o administrador', 'aria-label': 'Buscar en el historial' });
-    var selAccion = el('select', { 'aria-label': 'Filtrar por acción' }, [el('option', { value: '', texto: 'Acción: todas' })].concat(acciones.map(function (a) { return el('option', { value: a, texto: a }); })));
+    var selAccion = el('select', { 'aria-label': 'Filtrar por acción' }, [el('option', { value: '', texto: 'Todas las acciones' })].concat(acciones.map(function (a) { return el('option', { value: a, texto: a }); })));
     var selFecha = el('select', { 'aria-label': 'Filtrar por fecha' }, [
-      el('option', { value: '', texto: 'Fecha: todo' }), el('option', { value: '0', texto: 'Hoy' }),
+      el('option', { value: '', texto: 'Todas las fechas' }), el('option', { value: '0', texto: 'Hoy' }),
       el('option', { value: '7', texto: 'Últimos 7 días' }), el('option', { value: '30', texto: 'Últimos 30 días' })]);
     var cuenta = el('div', { clase: 'ht-cuenta' });
     var cuerpo = el('tbody');
@@ -831,7 +836,7 @@
     var tabla = el('table', { clase: 'ht' }, [el('thead', null, [el('tr', null, [th('Administrador'), th('Acción'), th('Detalle'), th('Fecha')])]), cuerpo]);
 
     cont.appendChild(el('div', { clase: 'ht-card' }, [
-      el('div', { clase: 'ht-bar' }, [el('div', { clase: 'ht-izq' }, [buscador, selAccion, selFecha]), cuenta]),
+      el('div', { clase: 'ht-bar' }, [el('div', { clase: 'ht-izq' }, [el('div', { clase: 'ht-c ht-cb' }, [buscador]), el('div', { clase: 'ht-c ht-cs' }, [selAccion]), el('div', { clase: 'ht-c ht-cs' }, [selFecha])]), cuenta]),
       el('div', { clase: 'ht-scroll' }, [tabla]),
       el('div', { clase: 'ht-pie' }, [pie, pager])
     ]));
@@ -878,6 +883,103 @@
     buscador.addEventListener('input', function () { estado.q = buscador.value.trim().toLowerCase(); estado.pagina = 1; refrescar(); });
     selAccion.addEventListener('change', function () { estado.accion = selAccion.value; estado.pagina = 1; refrescar(); });
     selFecha.addEventListener('change', function () { estado.rango = selFecha.value; estado.pagina = 1; refrescar(); });
+    pager.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-pg]');
+      if (!b || b.disabled) return;
+      estado.pagina = Number(b.getAttribute('data-pg')); refrescar();
+    });
+    refrescar();
+  }
+
+
+  // ------------------------------------------------------------------ reseñas (resumen, tarjeta con estrellas y paginas)
+
+  function pintarResenas(cont, filas) {
+    var MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    var COLA = ['#FFE9B8', '#FFB7CB', '#D7EEC6', '#FFD666', '#CDE6F5'];
+    var COLU = ['#FF4D82', '#FFD666', '#BFE4A5', '#F6DADD', '#CDE6F5'];
+    var POR_PAGINA = 10;
+    var hoy0 = new Date(); hoy0 = new Date(hoy0.getFullYear(), hoy0.getMonth(), hoy0.getDate());
+    function suma(s) { var n = 0; for (var i = 0; i < s.length; i++) n += s.charCodeAt(i); return n; }
+    function parteFecha(s) {
+      var m = /(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(s || '');
+      if (!m) return { texto: s || '—', sub: '' };
+      var dias = Math.round((hoy0 - new Date(+m[1], +m[2] - 1, +m[3])) / 86400000);
+      var rel = dias <= 0 ? 'Hoy' : dias === 1 ? 'Ayer' : 'Hace ' + dias + ' días';
+      return { texto: (+m[3]) + ' ' + MESES[+m[2] - 1] + ' ' + m[1], sub: rel + ' · ' + m[4] + ':' + m[5] };
+    }
+    function estrellas(n) {
+      var caja = el('span', { clase: 'rs-est' });
+      for (var i = 1; i <= 5; i++) {
+        var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        s.setAttribute('viewBox', '0 0 24 24');
+        var pth = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        pth.setAttribute('d', 'M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z');
+        pth.setAttribute('fill', i <= n ? '#FFB400' : '#EBDDE0');
+        s.appendChild(pth); caja.appendChild(s);
+      }
+      caja.appendChild(el('em', { texto: String(n) }));
+      return caja;
+    }
+
+    var datos = filas.map(function (f) {
+      return { f: f, n: Math.max(0, Math.min(5, Math.round(Number(f.estrellas) || 0))), fe: parteFecha(f.fecha),
+               rec: String(f.recetaNombre || 'Receta'), aut: String(f.autor || 'Usuario'), op: String(f.contenido || '').trim() };
+    });
+    var total = datos.length, conOp = datos.filter(function (d) { return d.op; }).length;
+    var prom = datos.reduce(function (a, d) { return a + d.n; }, 0) / total;
+
+    function tile(color, valor, sub, etiqueta) {
+      var t = el('div', { clase: 'rs-tile', style: 'background:' + color }, [el('div', null, [el('b', { texto: valor }), el('small', { texto: sub })]), el('span', { texto: etiqueta })]);
+      return t;
+    }
+    cont.appendChild(el('div', { clase: 'rs-tiles' }, [
+      tile('#FFD666', (Math.round(prom * 100) / 100).toString().replace('.', ','), 'de 5 estrellas', 'Puntuación promedio'),
+      tile('#BFE4A5', String(total), 'en esta lista', 'Reseñas'),
+      tile('#F6DADD', String(conOp), 'de ' + total, 'Con opinión escrita')
+    ]));
+
+    var selEst = el('select', { 'aria-label': 'Filtrar por estrellas' }, [el('option', { value: '', texto: 'Todas las estrellas' })].concat([5, 4, 3, 2, 1].map(function (n) { return el('option', { value: String(n), texto: n + (n === 1 ? ' estrella' : ' estrellas') }); })));
+    var cuenta = el('div', { clase: 'rs-cuenta' }), cuerpo = el('tbody'), pie = el('span'), pager = el('div', { clase: 'rs-pg' });
+    function th(x) { return el('th', { texto: x }); }
+    cont.appendChild(el('div', { clase: 'rs-card' }, [
+      el('div', { clase: 'rs-bar' }, [el('div', { clase: 'rs-c' }, [selEst]), cuenta]),
+      el('div', { clase: 'rs-scroll' }, [el('table', { clase: 'rs' }, [
+        el('colgroup', null, [el('col', { style: 'width:24%' }), el('col', { style: 'width:17%' }), el('col', { style: 'width:16%' }), el('col'), el('col', { style: 'width:170px' }), el('col', { style: 'width:130px' })]),
+        el('thead', null, [el('tr', null, [th('Receta'), th('Autor'), th('Estrellas'), th('Opinión'), th('Fecha'), th('')])]), cuerpo])]),
+      el('div', { clase: 'rs-pie' }, [pie, pager])
+    ]));
+
+    var estado = { est: '', pagina: 1 };
+    function refrescar() {
+      var lista = datos.filter(function (d) { return !estado.est || d.n === Number(estado.est); });
+      var paginas = Math.max(1, Math.ceil(lista.length / POR_PAGINA));
+      if (estado.pagina > paginas) estado.pagina = paginas;
+      var ini = (estado.pagina - 1) * POR_PAGINA, vis = lista.slice(ini, ini + POR_PAGINA);
+      vaciar(cuerpo);
+      if (!vis.length) cuerpo.appendChild(el('tr', null, [el('td', { colspan: '6', clase: 'rs-nada', texto: 'No hay reseñas con ese filtro.' })]));
+      vis.forEach(function (d) {
+        var cu = COLU[suma(d.aut) % COLU.length];
+        cuerpo.appendChild(el('tr', null, [
+          el('td', null, [el('div', { clase: 'rs-rec' }, [el('b', { texto: d.rec })])]),
+          el('td', null, [el('div', { clase: 'rs-aut' }, [el('span', { clase: 'rs-av', style: 'background:' + cu + ';color:' + (cu === '#FF4D82' ? '#fff' : '#2B1020'), texto: d.aut.charAt(0).toUpperCase() }), el('b', { texto: d.aut })])]),
+          el('td', null, [estrellas(d.n)]),
+          el('td', { clase: 'rs-op' + (d.op ? '' : ' no'), texto: d.op || 'Sin opinión escrita' }),
+          el('td', { clase: 'rs-fe' }, [el('b', { texto: d.fe.texto }), el('small', { texto: d.fe.sub })]),
+          el('td', { clase: 'rs-ac' }, [el('button', { type: 'button', clase: 'rs-del', 'data-id': d.f.id, texto: 'Eliminar' })])
+        ]));
+      });
+      cuenta.textContent = lista.length ? 'Mostrando ' + (ini + 1) + '–' + (ini + vis.length) + ' de ' + lista.length + ' reseñas' : '0 reseñas';
+      pie.textContent = 'Ordenadas de la más reciente a la más antigua.';
+      vaciar(pager);
+      if (paginas > 1) {
+        var mk = function (txt, p, on, off) { return el('button', { type: 'button', clase: on ? 'on' : null, 'data-pg': p, disabled: off, 'aria-label': 'Página ' + p, texto: txt }); };
+        pager.appendChild(mk('‹', estado.pagina - 1, false, estado.pagina === 1));
+        for (var p = 1; p <= paginas; p++) pager.appendChild(mk(String(p), p, p === estado.pagina, false));
+        pager.appendChild(mk('›', estado.pagina + 1, false, estado.pagina === paginas));
+      }
+    }
+    selEst.addEventListener('change', function () { estado.est = selEst.value; estado.pagina = 1; refrescar(); });
     pager.addEventListener('click', function (e) {
       var b = e.target.closest('button[data-pg]');
       if (!b || b.disabled) return;

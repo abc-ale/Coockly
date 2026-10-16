@@ -505,8 +505,10 @@
         ultimoUso = { r: r, g: g, g90: g90 || g };
         renderUso();
         var sec = document.querySelector('[data-seccion="uso"]'); if (sec) sec.classList.add('rm-on');
+        document.body.classList.remove('rm-espera');
       } catch (e) {
         var s3 = document.querySelector('[data-seccion="uso"]'); if (s3) s3.classList.remove('rm-on');
+        document.body.classList.remove('rm-espera');
         if (window.console) console.error('Uso moderno:', e);
       }
     }
@@ -524,6 +526,7 @@
   window.CooklyFallo = function (seccion) {
     var sec = document.querySelector('[data-seccion="' + seccion + '"]');
     if (sec) sec.classList.remove('rm-on');
+    document.body.classList.remove('rm-espera');
   };
 
   window.CooklyResumen = {
@@ -536,9 +539,11 @@
         var t = document.getElementById('titulo-seccion'), st = document.getElementById('subtitulo-seccion');
         if (t) t.textContent = saludo();
         if (st) st.textContent = 'Así va Cookly en este momento.';
+        document.body.classList.remove('rm-espera');
       } catch (e) {
         var s2 = document.querySelector('[data-seccion="resumen"]');
         if (s2) s2.classList.remove('rm-on'); // si algo falla, vuelve el Resumen anterior
+        document.body.classList.remove('rm-espera');
         if (window.console) console.error('Resumen moderno:', e);
       }
     }

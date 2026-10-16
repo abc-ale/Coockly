@@ -87,3 +87,6 @@
 
 .rm-ley { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: #7A6670; margin: 0 0 2px; }
 .rm-ley i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+
+/* mientras llegan los datos de Resumen/Uso no se muestra ni el título suelto */
+body.rm-espera .cabecera { visibility: hidden; }
