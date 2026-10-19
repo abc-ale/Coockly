@@ -255,17 +255,17 @@
 
   function tarjetaReportes(r, rep) {
     rep = rep || { recetas: r.reportesPendientes || 0, comunidad: 0 };
-    var total = rep.recetas + rep.comunidad;
+    var total = rep.comunidad;
     var t = h('section', 'rm-b rm-dark');
     t.appendChild(h('div', 'rm-lab', 'Reportes pendientes'));
     t.appendChild(h('div', 'rm-bigf', num.format(total)));
     t.appendChild(h('div', 'rm-sub', total > 0 ? 'Hay reportes por revisar.' : 'Todo al día. Nada por revisar.'));
-    [['Recetas', rep.recetas, '#reportes'], ['Comunidad', rep.comunidad, '#reportes-comunidad']].forEach(function (p) {
+    [['Comunidad', rep.comunidad, '#reportes-comunidad']].forEach(function (p) {
       var fila = h('a', 'rm-rep' + (p[1] > 0 ? ' rm-rep-on' : '')); fila.href = p[2];
       fila.appendChild(h('span', null, p[0])); fila.appendChild(h('b', null, num.format(p[1])));
       t.appendChild(fila);
     });
-    var cta = h('a', 'rm-cta', 'Ver reportes'); cta.href = rep.recetas === 0 && rep.comunidad > 0 ? '#reportes-comunidad' : '#reportes'; t.appendChild(cta);
+    var cta = h('a', 'rm-cta', 'Ver reportes'); cta.href = '#reportes-comunidad'; t.appendChild(cta);
     return t;
   }
 

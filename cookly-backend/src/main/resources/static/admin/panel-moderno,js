@@ -14,7 +14,7 @@
   }
 
   // ---- menú con grupos
-  var grupos = { resumen: 'General', reportes: 'Moderación', comentarios: 'Contenido', historial: 'Sistema' };
+  var grupos = { resumen: 'General', 'reportes-comunidad': 'Moderación', comentarios: 'Contenido', historial: 'Sistema' };
   var nav = document.querySelector('.navegacion');
   if (nav && !nav.querySelector('.grp')) {
     Object.keys(grupos).forEach(function (k) {

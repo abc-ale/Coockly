@@ -25,7 +25,6 @@
     resumen:  { titulo: 'Resumen',               sub: 'Cómo va Cookly en este momento.' },
     usuarios: { titulo: 'Usuarios',              sub: 'Personas registradas, su tiempo de uso y su rol.' },
     uso:      { titulo: 'Uso de la app',         sub: 'Cuánto, cuándo y quién usa Cookly.' },
-    reportes: { titulo: 'Reportes de recetas',   sub: 'Recetas señaladas por la comunidad.' },
     'reportes-comunidad': { titulo: 'Reportes de comunidad', sub: 'Publicaciones y comentarios señalados desde Comunidad.' },
     comentarios: { titulo: 'Comentarios',          sub: 'Lo que escribe la comunidad. Elimina lo que no corresponda.' },
     resenas:  { titulo: 'Reseñas',              sub: 'Calificaciones y opiniones de las recetas. Elimina lo que no corresponda.' },
@@ -157,7 +156,7 @@
   function agruparMenu() {
     var nav = document.querySelector('.navegacion');
     if (!nav || nav.querySelector('.grp')) return;
-    [['resumen', 'General'], ['reportes', 'Moderación'], ['comentarios', 'Contenido'], ['historial', 'Sistema']].forEach(function (g, i) {
+    [['resumen', 'General'], ['reportes-comunidad', 'Moderación'], ['comentarios', 'Contenido'], ['historial', 'Sistema']].forEach(function (g, i) {
       var a = nav.querySelector('a[data-nav="' + g[0] + '"]');
       if (!a) return;
       var p = el('p', { clase: 'grp', texto: g[1] });
@@ -207,7 +206,7 @@
       c = estado.cache90 = { t: Date.now(), p: json('/administracion/graficas?dias=90').catch(function () { estado.cache90 = null; return null; }) };
     }
     estado.pre = {
-      rec: s === 'resumen' ? contar('/administracion/moderacion/reportes') : Promise.resolve(0),
+      rec: Promise.resolve(0),
       com: s === 'resumen' ? contar('/administracion/reportes-comunidad') : Promise.resolve(0),
       largas: c.p
     };
@@ -219,7 +218,6 @@
     if (s === 'resumen') tarea = Promise.all([cargarResumen(), cargarGraficas()]).then(pintarResumen);
     else if (s === 'uso') tarea = Promise.all([cargarResumen(), cargarGraficas()]).then(pintarUso);
     else if (s === 'usuarios') tarea = cargarUsuarios();
-    else if (s === 'reportes') tarea = cargarReportes();
     else if (s === 'reportes-comunidad') tarea = cargarReportesComunidad();
     else if (s === 'respaldo') tarea = cargarRespaldo();
     else if (LISTAS[s]) tarea = cargarLista(s);
@@ -229,7 +227,6 @@
       tarea.then(fin, fin);
     }
     if (tarea) tarea.catch(function (e) { if (window.CooklyFallo && (s === 'resumen' || s === 'uso')) window.CooklyFallo(s); if (e.message !== 'sesion') aviso(e.message, true); });
-    if (s !== 'reportes') actualizarInsignia();
     if (s !== 'reportes-comunidad') actualizarInsigniaComunidad();
   }
 
@@ -254,7 +251,7 @@
     var horas = Math.round(r.minutosUsoTotal / 60 * 10) / 10;
     cont.appendChild(cifra('Tiempo de uso', numero.format(horas), minutosATexto(r.minutosUso7d) + ' en 7 días', true, 'h'));
     var enlace = r.reportesPendientes > 0
-      ? el('span', { clase: 'cifra-nota' }, [el('a', { href: '#reportes', texto: 'Revisar ahora' })])
+      ? el('span', { clase: 'cifra-nota' }, [el('a', { href: '#reportes-comunidad', texto: 'Revisar ahora' })])
       : el('span', { clase: 'cifra-nota neutra', texto: 'Todo al día' });
     cont.appendChild(cifra('Reportes pendientes', numero.format(r.reportesPendientes), enlace));
 
@@ -280,12 +277,6 @@
       { nombre: 'Activas', valor: r.usuariosActivos, color: color('--salvia') },
       { nombre: 'Inactivas', valor: r.usuariosInactivos, color: color('--borde-fuerte') }
     ]);
-    var etiquetaEstado = { PENDIENTE: 'Pendientes', REVISADO: 'Revisados', DESCARTADO: 'Descartados' };
-    var colorEstado = { PENDIENTE: color('--durazno'), REVISADO: color('--salvia'), DESCARTADO: color('--borde-fuerte') };
-    var rep = g.reportesPorEstado.map(function (x) { return { nombre: etiquetaEstado[x.nombre] || x.nombre, valor: Number(x.valor), color: colorEstado[x.nombre] || color('--ciruela') }; });
-    $('vacio-reportes').hidden = rep.length > 0;
-    $('g-reportes').parentNode.hidden = rep.length === 0;
-    if (rep.length) dibujarDona('g-reportes', rep);
     if (window.CooklyResumen) {
       Promise.all([estado.pre.rec, estado.pre.com, estado.pre.largas]).then(function (c) {
         window.CooklyResumen.pintar(r, g, estado.dias, { recetas: c[0], comunidad: c[1] }, c[2]);
@@ -496,26 +487,49 @@
     var cuerpo = document.querySelector('#tabla-usuarios tbody');
     vaciar(cuerpo);
     if (visibles.length === 0) {
-      cuerpo.appendChild(el('tr', null, [el('td', { clase: 'sin-resultados', colspan: '9', texto: 'No hay usuarios que coincidan con la búsqueda.' })]));
+      cuerpo.appendChild(el('tr', null, [el('td', { clase: 'sin-resultados', colspan: '8', texto: 'No hay usuarios que coincidan con la búsqueda.' })]));
     }
+    var maxSeg = Math.max.apply(null, [1].concat(estado.usuarios.map(function (u) { return Number(u.segundosUso) || 0; })));
+    var COL_AV = ['#FF4D82', '#FFD666', '#BFE4A5', '#F6DADD'];
     visibles.forEach(function (u) {
       var esYo = estado.sesion && u.correo.toLowerCase() === (estado.sesion.correo || '').toLowerCase();
       var esAdmin = u.rol === 'ADMINISTRADOR';
-      var acciones = el('div', { clase: 'acciones' }, [
-        el('button', { type: 'button', clase: 'boton secundario chico', 'data-accion': 'rol', 'data-id': u.id, 'data-admin': esAdmin ? '1' : '0', disabled: esYo, texto: esAdmin ? 'Quitar admin' : 'Hacer admin' }),
-        el('button', { type: 'button', clase: 'boton chico ' + (u.activo ? 'peligro' : 'secundario'), 'data-accion': 'activo', 'data-id': u.id, 'data-activo': u.activo ? '1' : '0', disabled: esYo, texto: u.activo ? 'Desactivar' : 'Activar' })
+      var idTxt = /^\d+$/.test(String(u.id)) ? '#U' + String(u.id).padStart(3, '0') : '#' + String(u.id).slice(0, 5).toUpperCase();
+      var cAv = COL_AV[(String(u.nombre || '?').charCodeAt(0) + String(u.id).length) % COL_AV.length];
+      var pct = u.segundosUso > 0 ? Math.max(3, Math.round((Number(u.segundosUso) / maxSeg) * 100)) : 0;
+      var barra = el('div', { clase: 'us-bar' }, [el('div', { style: 'width:' + pct + '%' })]);
+      var menu = el('div', { clase: 'us-rm', hidden: true }, [
+        el('button', { type: 'button', 'data-accion': 'rol', 'data-id': u.id, 'data-admin': esAdmin ? '1' : '0', disabled: esYo, texto: esAdmin ? 'Quitar admin' : 'Hacer admin' }),
+        el('button', { type: 'button', clase: u.activo ? 'peligro' : '', 'data-accion': 'activo', 'data-id': u.id, 'data-activo': u.activo ? '1' : '0', disabled: esYo, texto: u.activo ? 'Desactivar' : 'Activar' })
       ]);
+      var puntos = el('button', { type: 'button', clase: 'us-dots', 'aria-label': 'Acciones de ' + u.nombre, 'aria-haspopup': 'true', texto: '⋯' });
+      var av = el('span', { clase: 'us-av', texto: String(u.nombre || '?').charAt(0).toUpperCase() });
+      av.style.background = cAv; av.style.color = cAv === '#FF4D82' ? '#fff' : '#2B1020';
       cuerpo.appendChild(el('tr', null, [
-        el('td', null, [el('div', { clase: 'persona' }, [el('strong', { texto: u.nombre }), el('span', { texto: u.correo })])]),
-        el('td', null, [el('span', { clase: 'etiqueta' + (esAdmin ? ' admin' : ''), texto: esAdmin ? 'Administrador' : 'Usuario' })]),
-        el('td', null, [el('span', { clase: 'etiqueta ' + (u.activo ? 'activo' : 'inactivo'), texto: u.activo ? 'Activo' : 'Inactivo' })]),
+        el('td', { clase: 'us-id', texto: idTxt }),
+        el('td', null, [el('div', { clase: 'us-p' }, [av,
+          el('div', null, [el('b', null, [document.createTextNode(u.nombre)].concat(esYo ? [el('em', { clase: 'us-yo', texto: 'Tú' })] : [])), el('span', { texto: u.correo })])])]),
+        el('td', null, [el('span', { clase: 'us-pill ' + (esAdmin ? 'a' : 'u'), texto: esAdmin ? 'Administrador' : 'Usuario' })]),
+        el('td', null, [el('span', { clase: 'us-pill ' + (u.activo ? 'ok' : 'no'), texto: u.activo ? 'Activo' : 'Inactivo' })]),
+        el('td', null, [el('div', { clase: 'us-uso' }, [el('b', { texto: minutosATexto(u.segundosUso / 60) }), el('span', { texto: numero.format(u.sesiones) + (u.sesiones === 1 ? ' sesión' : ' sesiones') + ' · ' + (u.ultimoAcceso || 'Sin uso registrado') })]), barra]),
         el('td', { texto: (u.creadoEn || '').slice(0, 10) }),
-        el('td', { texto: u.ultimoAcceso || 'Sin uso registrado' }),
-        el('td', { clase: 'num', texto: numero.format(u.sesiones) }),
-        el('td', { clase: 'num', texto: minutosATexto(u.segundosUso / 60) }),
-        el('td', { clase: 'num', texto: numero.format(u.recetas) }),
-        el('td', null, [acciones])
+        el('td', { texto: numero.format(u.recetas) }),
+        el('td', { clase: 'us-ac' }, [puntos, menu])
       ]));
+    });
+
+    // recuadros de resumen (de toda la lista, sin filtros)
+    var todos = estado.usuarios, hace7 = Date.now() - 7 * 86400000;
+    var nuevos = todos.filter(function (u) { var t = Date.parse(u.creadoEn || ''); return !isNaN(t) && t >= hace7; }).length;
+    var nAdm = todos.filter(function (u) { return u.rol === 'ADMINISTRADOR'; }).length;
+    var nAct = todos.filter(function (u) { return u.activo; }).length;
+    var tiles = $('u-tiles');
+    vaciar(tiles);
+    [['#FFD666', 'Usuarios', todos.length, '+' + nuevos + ' esta semana'], ['#BFE4A5', 'Activos', nAct, 'de ' + todos.length + ' cuentas'],
+     ['#F6DADD', 'Administradores', nAdm, 'con acceso total'], ['#FF4D82', 'Inactivos', todos.length - nAct, 'cuentas desactivadas']].forEach(function (t) {
+      var d = el('div', { clase: 'us-tile' }, [el('span', { texto: t[1] }), el('b', { texto: numero.format(t[2]) }), el('small', { texto: t[3] })]);
+      d.style.background = t[0];
+      tiles.appendChild(d);
     });
 
     var pag = $('u-paginacion');
@@ -551,60 +565,6 @@
     boton.disabled = true;
     json(ruta, opciones)
       .then(function () { aviso('Cambio guardado.'); return cargarUsuarios(); })
-      .catch(function (e) { if (e.message !== 'sesion') { aviso(e.message, true); boton.disabled = false; } });
-  }
-
-  // ------------------------------------------------------------------ reportes de recetas
-
-  function actualizarInsignia() {
-    json('/administracion/moderacion/reportes').then(function (lista) {
-      var b = $('insignia-reportes');
-      b.hidden = lista.length === 0;
-      b.textContent = lista.length;
-    }).catch(function () { /* la insignia es opcional */ });
-  }
-
-  function cargarReportes() {
-    return json('/administracion/moderacion/reportes').then(function (lista) {
-      var cont = $('lista-reportes');
-      vaciar(cont);
-      var b = $('insignia-reportes');
-      b.hidden = lista.length === 0;
-      b.textContent = lista.length;
-
-      if (lista.length === 0) {
-        cont.appendChild(el('div', { clase: 'estado-vacio' }, [el('strong', { texto: 'No hay reportes pendientes' }), 'Cuando alguien reporte una receta, aparecerá aquí.']));
-        return;
-      }
-      lista.forEach(function (r) {
-        var botones = el('div', { clase: 'acciones' }, [
-          el('button', { type: 'button', clase: 'boton secundario chico', 'data-resolver': 'DESCARTADO', 'data-id': r.id, texto: 'Descartar' }),
-          el('button', { type: 'button', clase: 'boton secundario chico', 'data-resolver': 'REVISADO', 'data-id': r.id, texto: 'Marcar revisado' }),
-          el('button', { type: 'button', clase: 'boton peligro chico', 'data-resolver': 'ELIMINAR', 'data-id': r.id, 'data-receta': r.recetaNombre, texto: 'Eliminar receta' })
-        ]);
-        cont.appendChild(el('article', { clase: 'reporte' }, [
-          el('div', null, [
-            el('h2', { texto: r.recetaNombre }),
-            el('p', { texto: 'Reportado por ' + r.reportante + ' (' + r.reportanteCorreo + ') · ' + (r.creadoEn || '') }),
-            el('p', { clase: 'motivo', texto: r.motivo })
-          ]),
-          botones
-        ]));
-      });
-    });
-  }
-
-  function resolverReporte(boton) {
-    var id = boton.getAttribute('data-id');
-    var modo = boton.getAttribute('data-resolver');
-    var eliminar = modo === 'ELIMINAR';
-    if (eliminar && !window.confirm('¿Eliminar la receta "' + boton.getAttribute('data-receta') + '" con todos sus comentarios, reseñas e imágenes? No se puede deshacer.')) return;
-    boton.disabled = true;
-    json('/administracion/moderacion/reportes/' + id + '?eliminarReceta=' + eliminar, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ estado: modo === 'DESCARTADO' ? 'DESCARTADO' : 'REVISADO' })
-    }).then(function () { aviso(eliminar ? 'Receta eliminada.' : 'Reporte actualizado.'); return cargarReportes(); })
       .catch(function (e) { if (e.message !== 'sesion') { aviso(e.message, true); boton.disabled = false; } });
   }
 
@@ -794,6 +754,8 @@
     vaciar(cont);
     if (nombre === 'historial' && filas.length) { pintarHistorial(cont, filas); return; }
     if (nombre === 'resenas' && filas.length) { pintarResenas(cont, filas); return; }
+    if (nombre === 'comentarios' && filas.length) { pintarComentarios(cont, filas); return; }
+    if (nombre === 'recetas' && filas.length) { pintarRecetas(cont, filas); return; }
     if (!filas.length) {
       cont.appendChild(el('div', { clase: 'estado-vacio' }, [el('strong', { texto: 'Nada por aquí' }), el('span', { texto: cfg.vacio })]));
       return;
@@ -813,6 +775,497 @@
     cont.appendChild(el('div', { clase: 'tabla-envoltura' }, [el('table', null, [el('thead', null, [cab]), el('tbody', null, cuerpo)])]));
   }
 
+
+  // ------------------------------------------------------------------ comentarios (sentimiento, gráfica y tarjetas)
+
+  function pintarComentarios(cont, filas) {
+    var MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    var COLU = ['#FF4D82', '#FFD666', '#BFE4A5', '#F6DADD'];
+    var POR_PAGINA = 12, SEMANAS = 6, SVGNS = 'http://www.w3.org/2000/svg';
+    var TIPOS = {
+      pos: { nombre: 'Positivos', uno: 'Positivo', a: '#C9EBB0', b: '#7FC463' },
+      neu: { nombre: 'Neutros', uno: 'Neutro', a: '#FFE59A', b: '#F2B71F' },
+      neg: { nombre: 'Negativos', uno: 'Negativo', a: '#FF9DBA', b: '#FF4D82' }
+    };
+    var ORDEN = ['pos', 'neu', 'neg'];
+    var hoy0 = new Date(); hoy0 = new Date(hoy0.getFullYear(), hoy0.getMonth(), hoy0.getDate());
+    function suma(s) { var n = 0; for (var i = 0; i < s.length; i++) n += s.charCodeAt(i); return n; }
+    function sv(tag, attrs, texto) {
+      var n = document.createElementNS(SVGNS, tag);
+      Object.keys(attrs || {}).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+      if (texto !== undefined) n.textContent = texto;
+      return n;
+    }
+    function parteFecha(s) {
+      var m = /(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(s || '');
+      if (!m) return { texto: s || '—', sub: '', dias: 9999 };
+      var dias = Math.round((hoy0 - new Date(+m[1], +m[2] - 1, +m[3])) / 86400000);
+      var rel = dias <= 0 ? 'Hoy' : dias === 1 ? 'Ayer' : 'Hace ' + dias + ' días';
+      return { texto: (+m[3]) + ' ' + MESES[+m[2] - 1] + ' ' + m[1], sub: rel + ' · ' + m[4] + ':' + m[5], dias: Math.max(0, dias) };
+    }
+
+    // ---- clasificación por palabras (positivo, neutro, negativo)
+    var P_INI = ['gust', 'buen', 'delici', 'excelen', 'genial', 'encant', 'perfect', 'espectacul', 'increib', 'lind', 'bonit', 'felicit', 'gracias', 'facil', 'fresc', 'crujient', 'jugos', 'suav', 'sabros', 'recomend', 'repetir', 'estupend', 'fantast', 'maravill', 'riquis', 'amazing', 'awesome', 'excellent', 'wonderful', 'tasty', 'delicious'];
+    var P_EXA = ['bien', 'top', 'amo', 'rico', 'rica', 'ricos', 'ricas', 'mejor', 'good', 'great', 'nice', 'love', 'yummy', 'bravo', 'si'];
+    var N_INI = ['horribl', 'asco', 'pesim', 'terribl', 'salad', 'quem', 'insipid', 'desabrid', 'amarg', 'dificil', 'confus', 'perd', 'decepcion', 'aburrid', 'awful', 'disgust', 'incomest', 'agri', 'duro'];
+    var N_EXA = ['mal', 'mala', 'malo', 'malos', 'malas', 'feo', 'fea', 'peor', 'sec', 'seco', 'seca', 'crudo', 'cruda', 'bad', 'worst', 'error', 'falta', 'faltan'];
+    var NEGADORES = ['no', 'nunca', 'tampoco', 'ni', 'nada', 'jamas'];
+    function empieza(t, lista) { for (var i = 0; i < lista.length; i++) if (t.indexOf(lista[i]) === 0) return true; return false; }
+    function clasificar(texto) {
+      var crudo = String(texto || '');
+      var t = crudo.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+      var puntos = 0;
+      t.split(/[,.;:!?¡¿\n]+/).forEach(function (frase) {
+      var palabras = frase.split(/[^a-z0-9ñ]+/).filter(Boolean);
+      palabras.forEach(function (w, i) {
+        var v = 0;
+        if (P_EXA.indexOf(w) >= 0 && w !== 'si' || empieza(w, P_INI)) v = 1;
+        else if (N_EXA.indexOf(w) >= 0 || empieza(w, N_INI)) v = -1;
+        if (!v) return;
+        for (var j = Math.max(0, i - 3); j < i; j++) if (NEGADORES.indexOf(palabras[j]) >= 0) { v = -v; break; }
+        puntos += v;
+      });
+      });
+      if (/[👍❤😍😋🥰😊👏]/.test(crudo)) puntos += 1;
+      if (/[👎😡🤢😤😞😠]/.test(crudo)) puntos -= 1;
+      return puntos > 0 ? 'pos' : puntos < 0 ? 'neg' : 'neu';
+    }
+
+    var datos = filas.map(function (f) {
+      var txt = String(f.contenido || '').trim();
+      return { f: f, aut: String(f.autor || 'Usuario'), rec: String(f.recetaNombre || 'Receta'), txt: txt, fe: parteFecha(f.fecha), s: clasificar(txt) };
+    });
+    var total = datos.length;
+    var cuenta = { pos: 0, neu: 0, neg: 0 };
+    datos.forEach(function (d) { cuenta[d.s]++; });
+    function pct(n) { return total ? Math.round(n * 100 / total) : 0; }
+
+    // ---- semanas (las últimas 6, de 7 días cada una)
+    var sem = [];
+    for (var k = 0; k < SEMANAS; k++) {
+      var ini = new Date(hoy0.getFullYear(), hoy0.getMonth(), hoy0.getDate() - (SEMANAS - k) * 7 + 1);
+      sem.push({ etiqueta: ini.getDate() + ' ' + MESES[ini.getMonth()], pos: 0, neu: 0, neg: 0 });
+    }
+    datos.forEach(function (d) {
+      var i = SEMANAS - 1 - Math.floor(d.fe.dias / 7);
+      if (i >= 0 && i < SEMANAS && d.fe.dias < 9999) sem[i][d.s]++;
+    });
+    function pctPos(desde, hasta) {
+      var p = 0, t = 0;
+      for (var i = desde; i < hasta; i++) { p += sem[i].pos; t += sem[i].pos + sem[i].neu + sem[i].neg; }
+      return t ? { p: Math.round(p * 100 / t), t: t } : null;
+    }
+    var recientes = pctPos(3, 6), previas = pctPos(0, 3);
+
+    // ---- dibujo
+    function gradientes(defs, pre) {
+      ORDEN.forEach(function (t) {
+        var g = sv('linearGradient', { id: pre + 'a' + t, x1: '0', y1: '0', x2: '0', y2: '1' });
+        g.appendChild(sv('stop', { offset: '0', 'stop-color': TIPOS[t].b, 'stop-opacity': '.55' }));
+        g.appendChild(sv('stop', { offset: '1', 'stop-color': TIPOS[t].a, 'stop-opacity': '0' }));
+        defs.appendChild(g);
+        var l = sv('linearGradient', { id: pre + 'l' + t, x1: '0', y1: '0', x2: '1', y2: '0' });
+        l.appendChild(sv('stop', { offset: '0', 'stop-color': TIPOS[t].a }));
+        l.appendChild(sv('stop', { offset: '1', 'stop-color': TIPOS[t].b }));
+        defs.appendChild(l);
+        var d = sv('linearGradient', { id: pre + 'd' + t, x1: '0', y1: '0', x2: '1', y2: '1' });
+        d.appendChild(sv('stop', { offset: '0', 'stop-color': TIPOS[t].a }));
+        d.appendChild(sv('stop', { offset: '1', 'stop-color': TIPOS[t].b }));
+        defs.appendChild(d);
+      });
+    }
+    var FUENTE = "'DM Sans', Arial, sans-serif";
+    function grafica(pre, conHover) {
+      var X0 = 74, PASO = 100, Y0 = 214, ALTO = 190;
+      var mayor = 0; sem.forEach(function (w) { mayor = Math.max(mayor, w.pos, w.neu, w.neg); });
+      var tope = Math.max(5, Math.ceil(mayor / 5) * 5), PU = ALTO / tope;
+      var svg = sv('svg', { viewBox: '0 0 660 262', role: 'img', 'aria-label': 'Comentarios positivos, neutros y negativos por semana' });
+      var defs = sv('defs'); gradientes(defs, pre); svg.appendChild(defs);
+      for (var v = 0; v <= tope; v += tope / 5) {
+        var y = Y0 - v * PU;
+        var ln = sv('line', { x1: '52', x2: '640', y1: String(y), y2: String(y), stroke: v === 0 ? '#E3CDD2' : '#F3E3E6', 'stroke-width': '1' });
+        if (v) ln.setAttribute('stroke-dasharray', '3 5');
+        svg.appendChild(ln);
+        svg.appendChild(sv('text', { x: '40', y: String(y + 4), 'text-anchor': 'end', 'font-size': '11.5', fill: '#7A6670', 'font-family': FUENTE }, String(v)));
+      }
+      function puntos(t) { return sem.map(function (w, i) { return [X0 + i * PASO, Y0 - w[t] * PU]; }); }
+      function suave(p) {
+        var d = 'M' + p[0][0].toFixed(1) + ',' + p[0][1].toFixed(1);
+        for (var i = 0; i < p.length - 1; i++) {
+          var p0 = p[i - 1] || p[i], p1 = p[i], p2 = p[i + 1], p3 = p[i + 2] || p[i + 1], t = 0.18;
+          var c1 = [p1[0] + (p2[0] - p0[0]) * t, Math.min(Y0, p1[1] + (p2[1] - p0[1]) * t)];
+          var c2 = [p2[0] - (p3[0] - p1[0]) * t, Math.min(Y0, p2[1] - (p3[1] - p1[1]) * t)];
+          d += ' C' + c1[0].toFixed(1) + ',' + c1[1].toFixed(1) + ' ' + c2[0].toFixed(1) + ',' + c2[1].toFixed(1) + ' ' + p2[0].toFixed(1) + ',' + p2[1].toFixed(1);
+        }
+        return d;
+      }
+      var capas = ['pos', 'neg', 'neu'];
+      capas.forEach(function (t) {
+        var p = puntos(t);
+        svg.appendChild(sv('path', { d: suave(p) + ' L' + p[p.length - 1][0] + ',' + Y0 + ' L' + p[0][0] + ',' + Y0 + ' Z', fill: 'url(#' + pre + 'a' + t + ')' }));
+      });
+      capas.forEach(function (t) { svg.appendChild(sv('path', { d: suave(puntos(t)), fill: 'none', stroke: 'url(#' + pre + 'l' + t + ')', 'stroke-width': '3', 'stroke-linecap': 'round' })); });
+      capas.forEach(function (t) {
+        puntos(t).forEach(function (p) { svg.appendChild(sv('circle', { cx: String(p[0]), cy: String(p[1]), r: '5', fill: TIPOS[t].b, stroke: '#fff', 'stroke-width': '2.5' })); });
+      });
+      // pico de negativos
+      var iMax = -1, vMax = 0;
+      sem.forEach(function (w, i) { if (w.neg > vMax) { vMax = w.neg; iMax = i; } });
+      if (iMax >= 0 && vMax >= 2) {
+        var px = X0 + iMax * PASO, py = Y0 - vMax * PU, txt = 'Pico: ' + vMax + ' negativos';
+        svg.appendChild(sv('line', { x1: String(px), x2: String(px), y1: String(py - 8), y2: String(py - 30), stroke: '#2B1020', 'stroke-width': '1.5' }));
+        svg.appendChild(sv('rect', { x: String(px - 62), y: String(py - 58), width: '124', height: '28', rx: '14', fill: '#2B1020' }));
+        svg.appendChild(sv('text', { x: String(px), y: String(py - 40), 'text-anchor': 'middle', 'font-size': '12', 'font-weight': '700', fill: '#fff', 'font-family': FUENTE }, txt));
+      }
+      sem.forEach(function (w, i) {
+        svg.appendChild(sv('text', { x: String(X0 + i * PASO), y: String(Y0 + 24), 'text-anchor': 'middle', 'font-size': '11.5', fill: '#7A6670', 'font-family': FUENTE }, w.etiqueta));
+      });
+      if (conHover) {
+        sem.forEach(function (w, i) {
+          var x = X0 + i * PASO, tx = i < SEMANAS - 2 ? x + 14 : x - 146;
+          var g = sv('g', { 'class': 'cm-hv' });
+          g.appendChild(sv('rect', { x: String(x - PASO / 2), y: '14', width: String(PASO), height: String(Y0 - 14 + 30), fill: 'transparent' }));
+          g.appendChild(sv('line', { 'class': 'cm-gl', x1: String(x), x2: String(x), y1: '18', y2: String(Y0), stroke: '#2B1020', 'stroke-opacity': '.25', 'stroke-dasharray': '3 4' }));
+          var tp = sv('g', { 'class': 'cm-tp' });
+          tp.appendChild(sv('rect', { x: String(tx), y: '26', width: '132', height: '86', rx: '14', fill: '#2B1020' }));
+          tp.appendChild(sv('text', { x: String(tx + 14), y: '46', 'font-size': '12', 'font-weight': '700', fill: '#fff', 'font-family': FUENTE }, 'Semana del ' + w.etiqueta));
+          ORDEN.forEach(function (t, j) {
+            tp.appendChild(sv('circle', { cx: String(tx + 18), cy: String(61 + j * 18), r: '4', fill: TIPOS[t].b }));
+            tp.appendChild(sv('text', { x: String(tx + 30), y: String(65 + j * 18), 'font-size': '12', fill: '#F3D9DC', 'font-family': FUENTE }, w[t] + ' ' + TIPOS[t].nombre.toLowerCase()));
+          });
+          g.appendChild(tp); svg.appendChild(g);
+        });
+      }
+      return svg;
+    }
+    function dona(pre, tam, grosor, centro, conTexto) {
+      var r = (tam - grosor) / 2 - 4, c = 2 * Math.PI * r, ang = 0, hueco = 8, m = tam / 2;
+      var svg = sv('svg', { viewBox: '0 0 ' + tam + ' ' + tam, width: String(tam), height: String(tam) });
+      var defs = sv('defs'); gradientes(defs, pre); svg.appendChild(defs);
+      var g = sv('g', { transform: 'rotate(-90 ' + m + ' ' + m + ')' });
+      g.appendChild(sv('circle', { cx: String(m), cy: String(m), r: String(r), fill: 'none', stroke: conTexto ? '#fff' : '#F6E4E7', 'stroke-width': String(grosor) }));
+      ORDEN.forEach(function (t) {
+        if (!cuenta[t]) return;
+        var L = c * cuenta[t] / total, d = Math.max(L - hueco, 0.1);
+        g.appendChild(sv('circle', { cx: String(m), cy: String(m), r: String(r), fill: 'none', stroke: 'url(#' + pre + 'd' + t + ')', 'stroke-width': String(grosor), 'stroke-linecap': 'round', 'stroke-dasharray': d.toFixed(1) + ' ' + (c - d).toFixed(1), 'stroke-dashoffset': (-(ang + hueco / 2)).toFixed(1) }));
+        ang += L;
+      });
+      svg.appendChild(g);
+      return svg;
+    }
+
+    // ---- tarjeta de resumen
+    var porc = pct(cuenta.pos);
+    var donaPanel = el('div', { clase: 'cm-pd' }, [el('div', null, [el('b', { texto: porc + ' %' }), el('small', { texto: 'positivos' })])]);
+    donaPanel.insertBefore(dona('cp', 150, 20, null, true), donaPanel.firstChild);
+    var leyenda = el('div', { clase: 'cm-lg2' }, ORDEN.map(function (t) {
+      var i = el('i'); i.style.background = 'linear-gradient(135deg,' + TIPOS[t].a + ',' + TIPOS[t].b + ')';
+      return el('div', { clase: 'r' }, [i, el('span', { texto: TIPOS[t].nombre }), el('b', { texto: String(cuenta[t]) }), el('small', { texto: pct(cuenta[t]) + ' %' })]);
+    }));
+    var leyendaGraf = el('div', { clase: 'cm-lgh' }, ORDEN.map(function (t) {
+      var i = el('i'); i.style.background = 'linear-gradient(90deg,' + TIPOS[t].a + ',' + TIPOS[t].b + ')';
+      return el('span', null, [i, document.createTextNode(TIPOS[t].nombre)]);
+    }));
+    var filasTabla = sem.map(function (w) {
+      var t = w.pos + w.neu + w.neg;
+      return el('tr', null, [el('td', { texto: w.etiqueta }), el('td', { texto: String(w.pos) }), el('td', { texto: String(w.neu) }), el('td', { texto: String(w.neg) }), el('td', { texto: String(t) })]);
+    });
+    var cambio = null;
+    if (recientes && previas) {
+      var dif = recientes.p - previas.p;
+      cambio = el('span', { clase: 'cm-dl' + (dif < 0 ? ' baja' : ''), texto: (dif >= 0 ? '▲ ' : '▼ ') + Math.abs(dif) + ' pts positivos' });
+    }
+    var menu = el('div', { clase: 'cm-ddm', hidden: true }, [
+      el('button', { type: 'button', 'data-bajar': 'png' }, [el('b', { texto: 'Imagen (PNG)' }), el('small', { texto: 'La gráfica con los porcentajes de positivos, neutros y negativos' })]),
+      el('button', { type: 'button', 'data-bajar': 'pdf' }, [el('b', { texto: 'Informe (PDF)' }), el('small', { texto: 'Gráfica, porcentajes y detalle por semana' })]),
+      el('button', { type: 'button', 'data-bajar': 'csv' }, [el('b', { texto: 'Datos (Excel)' }), el('small', { texto: 'Cantidades y % por semana en una hoja' })])
+    ]);
+    var botonBajar = el('button', { type: 'button', clase: 'cm-ddb', 'aria-haspopup': 'true', 'aria-expanded': 'false' }, [document.createTextNode('⤓ Descargar ▾')]);
+    var graf = grafica('cg', true);
+    graf.setAttribute('class', 'cm-ch');
+    cont.appendChild(el('section', { clase: 'cm-pc' }, [
+      el('div', { clase: 'cm-pl' }, [el('div', null, [el('h2', { texto: 'Sentimiento' }), el('p', { texto: 'Cómo se sienten los comentarios' })]), el('div', { clase: 'cm-plb' }, [donaPanel, leyenda])]),
+      el('div', { clase: 'cm-pr' }, [
+        el('div', { clase: 'cm-prh' }, [el('div', null, [el('h2', { texto: 'Comentarios por semana' }), el('p', { clase: 'sub', texto: 'Positivos, neutros y negativos · últimas 6 semanas' })]),
+          el('div', { clase: 'cm-acc' }, [cambio, el('div', { clase: 'cm-dd' }, [botonBajar, menu])])]),
+        leyendaGraf, graf
+      ]),
+      el('details', { clase: 'cm-tbl' }, [el('summary', { texto: 'Ver como tabla' }),
+        el('table', null, [el('thead', null, [el('tr', null, ['Semana', 'Positivos', 'Neutros', 'Negativos', 'Total'].map(function (x) { return el('th', { texto: x }); }))]), el('tbody', null, filasTabla)])])
+    ]));
+
+    // ---- descargas (todo se genera en el navegador)
+    function exportarSvg() {
+      var W = 1040, H = 470;
+      var raiz = sv('svg', { xmlns: SVGNS, viewBox: '0 0 ' + W + ' ' + H, width: String(W), height: String(H) });
+      raiz.appendChild(sv('rect', { width: String(W), height: String(H), fill: '#FFFFFF' }));
+      raiz.appendChild(sv('text', { x: '36', y: '52', 'font-size': '26', 'font-weight': '700', fill: '#2B1020', 'font-family': FUENTE }, 'Sentimiento de los comentarios'));
+      raiz.appendChild(sv('text', { x: '36', y: '76', 'font-size': '14', fill: '#7A6670', 'font-family': FUENTE }, 'Cookly · ' + total + ' comentarios · ' + hoy0.getDate() + ' ' + MESES[hoy0.getMonth()] + ' ' + hoy0.getFullYear()));
+      var d = dona('ce', 170, 22, null, false); d.setAttribute('x', '40'); d.setAttribute('y', '110'); raiz.appendChild(d);
+      raiz.appendChild(sv('text', { x: '125', y: '204', 'text-anchor': 'middle', 'font-size': '34', 'font-weight': '700', fill: '#2B1020', 'font-family': FUENTE }, porc + ' %'));
+      raiz.appendChild(sv('text', { x: '125', y: '226', 'text-anchor': 'middle', 'font-size': '13', fill: '#7A6670', 'font-family': FUENTE }, 'positivos'));
+      ORDEN.forEach(function (t, i) {
+        var y = 330 + i * 40;
+        raiz.appendChild(sv('circle', { cx: '52', cy: String(y - 5), r: '7', fill: TIPOS[t].b }));
+        raiz.appendChild(sv('text', { x: '70', y: String(y), 'font-size': '16', 'font-weight': '700', fill: '#2B1020', 'font-family': FUENTE }, TIPOS[t].nombre));
+        raiz.appendChild(sv('text', { x: '240', y: String(y), 'text-anchor': 'end', 'font-size': '16', fill: '#2B1020', 'font-family': FUENTE }, cuenta[t] + ' · ' + pct(cuenta[t]) + ' %'));
+      });
+      var g = grafica('cx', false);
+      g.setAttribute('x', '300'); g.setAttribute('y', '100'); g.setAttribute('width', '700'); g.setAttribute('height', '278');
+      raiz.appendChild(g);
+      var lx = 330;
+      ORDEN.forEach(function (t) {
+        raiz.appendChild(sv('rect', { x: String(lx), y: '398', width: '22', height: '6', rx: '3', fill: TIPOS[t].b }));
+        raiz.appendChild(sv('text', { x: String(lx + 30), y: '405', 'font-size': '13', 'font-weight': '700', fill: '#5C4651', 'font-family': FUENTE }, TIPOS[t].nombre));
+        lx += 130;
+      });
+      return raiz;
+    }
+    function bajar(blob, nombre) {
+      var a = el('a', { href: URL.createObjectURL(blob), download: nombre });
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    }
+    function bajarPng() {
+      var xml = new XMLSerializer().serializeToString(exportarSvg());
+      var img = new Image();
+      img.onload = function () {
+        var c = document.createElement('canvas'); c.width = 2080; c.height = 940;
+        var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+        c.toBlob(function (b) { if (b) bajar(b, 'cookly-sentimiento-comentarios.png'); else aviso('No se pudo crear la imagen.', true); }, 'image/png');
+      };
+      img.onerror = function () { aviso('No se pudo crear la imagen.', true); };
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+    }
+    function bajarCsv() {
+      var L = [['Resumen', 'Cantidad', 'Porcentaje']];
+      ORDEN.forEach(function (t) { L.push([TIPOS[t].nombre, cuenta[t], pct(cuenta[t]) + ' %']); });
+      L.push(['Total', total, '100 %'], [], ['Semana (inicio)', 'Positivos', 'Neutros', 'Negativos', 'Total', '% positivos', '% neutros', '% negativos']);
+      sem.forEach(function (w) {
+        var t = w.pos + w.neu + w.neg, p = function (n) { return t ? Math.round(n * 100 / t) + ' %' : '0 %'; };
+        L.push([w.etiqueta, w.pos, w.neu, w.neg, t, p(w.pos), p(w.neu), p(w.neg)]);
+      });
+      var csv = L.map(function (f) { return f.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(';'); }).join('\r\n');
+      bajar(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }), 'cookly-sentimiento-comentarios.csv');
+    }
+    function bajarPdf() {
+      var svgTxt = new XMLSerializer().serializeToString(exportarSvg());
+      var filasHtml = sem.map(function (w) { var t = w.pos + w.neu + w.neg; return '<tr><td>' + w.etiqueta + '</td><td>' + w.pos + '</td><td>' + w.neu + '</td><td>' + w.neg + '</td><td>' + t + '</td></tr>'; }).join('');
+      var html = '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Sentimiento de los comentarios</title><style>body{font-family:Arial,sans-serif;color:#2B1020;margin:28px}h1{font-size:22px}svg{width:100%;height:auto}table{border-collapse:collapse;width:100%;margin-top:18px}th,td{border:1px solid #E8D4D8;padding:7px 10px;text-align:left;font-size:13px}th{background:#FFF4F6}</style></head><body><h1>Informe de sentimiento · Comentarios</h1>' + svgTxt +
+        '<table><thead><tr><th>Tipo</th><th>Cantidad</th><th>Porcentaje</th></tr></thead><tbody>' + ORDEN.map(function (t) { return '<tr><td>' + TIPOS[t].nombre + '</td><td>' + cuenta[t] + '</td><td>' + pct(cuenta[t]) + ' %</td></tr>'; }).join('') + '</tbody></table>' +
+        '<table><thead><tr><th>Semana (inicio)</th><th>Positivos</th><th>Neutros</th><th>Negativos</th><th>Total</th></tr></thead><tbody>' + filasHtml + '</tbody></table></body></html>';
+      var url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+      var w = window.open(url, '_blank');
+      if (!w) { aviso('Permite las ventanas emergentes para generar el PDF.', true); return; }
+      w.addEventListener('load', function () { w.focus(); w.print(); });
+    }
+    botonBajar.addEventListener('click', function (e) {
+      e.stopPropagation();
+      menu.hidden = !menu.hidden;
+      botonBajar.setAttribute('aria-expanded', menu.hidden ? 'false' : 'true');
+    });
+    menu.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-bajar]');
+      if (!b) return;
+      menu.hidden = true; botonBajar.setAttribute('aria-expanded', 'false');
+      var q = b.getAttribute('data-bajar');
+      if (q === 'png') bajarPng(); else if (q === 'pdf') bajarPdf(); else bajarCsv();
+    });
+    if (!pintarComentarios.cierre) {
+      pintarComentarios.cierre = true;
+      document.addEventListener('click', function (e) {
+        if (e.target.closest('.cm-dd')) return;
+        document.querySelectorAll('.cm-ddm').forEach(function (m) { m.hidden = true; });
+      });
+    }
+
+    // ---- pestañas y tarjetas
+    var ICONOS = {
+      pos: 'M8 14.5s1.5 2.2 4 2.2 4-2.2 4-2.2',
+      neg: 'M8 16.5s1.5-2.2 4-2.2 4 2.2 4 2.2',
+      neu: 'M8.5 15.5h7'
+    };
+    function cara(t) {
+      var s = sv('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+      s.appendChild(sv('circle', { cx: '12', cy: '12', r: '9' }));
+      s.appendChild(sv('path', { d: ICONOS[t] }));
+      s.appendChild(sv('path', { d: 'M9 9.5h.01M15 9.5h.01' }));
+      return s;
+    }
+    function papelera() {
+      var s = sv('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+      s.appendChild(sv('path', { d: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3' }));
+      return s;
+    }
+    function tenedor() {
+      var s = sv('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.6', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+      s.appendChild(sv('path', { d: 'M6 3h12M7 3v4a5 5 0 0 0 10 0V3M12 12v9' }));
+      return s;
+    }
+    var estado = { tipo: '', pagina: 1 };
+    var tabs = el('div', { clase: 'cm-tabs' });
+    var muro = el('div', { clase: 'cm-wall' }), pie = el('span'), pager = el('div', { clase: 'rs-pg cm-pg' });
+    cont.appendChild(tabs); cont.appendChild(muro); cont.appendChild(el('div', { clase: 'cm-pie' }, [pie, pager]));
+
+    function pintarTabs() {
+      vaciar(tabs);
+      [['', 'Todos', total, null], ['pos', 'Positivos', cuenta.pos, 'pos'], ['neg', 'Negativos', cuenta.neg, 'neg'], ['neu', 'Neutros', cuenta.neu, 'neu']].forEach(function (t) {
+        var b = el('button', { type: 'button', clase: 'cm-tab ' + (t[3] || '') + (estado.tipo === t[0] ? ' on' : ''), 'data-tipo': t[0] });
+        if (t[3]) b.appendChild(cara(t[3]));
+        b.appendChild(document.createTextNode(t[1] + ' '));
+        b.appendChild(el('b', { texto: String(t[2]) }));
+        tabs.appendChild(b);
+      });
+    }
+    function refrescar() {
+      var lista = datos.filter(function (d) { return !estado.tipo || d.s === estado.tipo; });
+      var paginas = Math.max(1, Math.ceil(lista.length / POR_PAGINA));
+      if (estado.pagina > paginas) estado.pagina = paginas;
+      var ini = (estado.pagina - 1) * POR_PAGINA, vis = lista.slice(ini, ini + POR_PAGINA);
+      pintarTabs();
+      vaciar(muro);
+      if (!vis.length) muro.appendChild(el('p', { clase: 'cm-nada', texto: 'No hay comentarios de este tipo.' }));
+      vis.forEach(function (d) {
+        var cu = COLU[suma(d.aut) % COLU.length];
+        var av = el('span', { clase: 'cm-av', texto: d.aut.charAt(0).toUpperCase() });
+        av.style.background = cu; av.style.color = cu === '#FF4D82' ? '#fff' : '#2B1020';
+        var mood = el('span', { clase: 'cm-mood', title: TIPOS[d.s].uno }, [cara(d.s)]);
+        var del = el('button', { type: 'button', clase: 'cm-x', 'data-id': d.f.id, title: 'Eliminar', 'aria-label': 'Eliminar comentario de ' + d.aut }, [papelera()]);
+        var rc = el('span', { clase: 'cm-rc' }, [tenedor(), document.createTextNode(d.rec)]);
+        muro.appendChild(el('article', { clase: 'cm-card ' + d.s }, [
+          el('div', { clase: 'cm-hd' }, [av, el('div', null, [el('b', { texto: d.aut }), el('small', { texto: d.fe.sub || d.fe.texto })]), mood, del]),
+          el('p', { clase: 'cm-t', texto: d.txt || 'Sin texto' }), rc
+        ]));
+      });
+      pie.textContent = lista.length ? 'Mostrando ' + (ini + 1) + '–' + (ini + vis.length) + ' de ' + lista.length + ' comentarios' : '0 comentarios';
+      vaciar(pager);
+      if (paginas > 1) {
+        var mk = function (txt, p, on, off) { return el('button', { type: 'button', clase: on ? 'on' : null, 'data-pg': p, disabled: off, 'aria-label': 'Página ' + p, texto: txt }); };
+        pager.appendChild(mk('‹', estado.pagina - 1, false, estado.pagina === 1));
+        for (var p = 1; p <= paginas; p++) pager.appendChild(mk(String(p), p, p === estado.pagina, false));
+        pager.appendChild(mk('›', estado.pagina + 1, false, estado.pagina === paginas));
+      }
+    }
+    tabs.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-tipo]');
+      if (!b) return;
+      estado.tipo = estado.tipo === b.getAttribute('data-tipo') ? '' : b.getAttribute('data-tipo');
+      estado.pagina = 1; refrescar();
+    });
+    pager.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-pg]');
+      if (!b || b.disabled) return;
+      estado.pagina = Number(b.getAttribute('data-pg')); refrescar();
+    });
+    refrescar();
+  }
+
+  // ------------------------------------------------------------------ recetas (tarjetas con la foto de Cloudinary)
+
+  function pintarRecetas(cont, filas) {
+    var MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    var COLU = ['#FF4D82', '#FFD666', '#BFE4A5', '#F6DADD'];
+    var FONDOS = ['#FFD666', '#BFE4A5', '#F6DADD', '#FF9DBA'];
+    var POR_PAGINA = 12, SVGNS = 'http://www.w3.org/2000/svg';
+    function suma(s) { var n = 0; for (var i = 0; i < s.length; i++) n += s.charCodeAt(i); return n; }
+    function sv(tag, attrs) {
+      var n = document.createElementNS(SVGNS, tag);
+      Object.keys(attrs || {}).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+      return n;
+    }
+    function icono(d, relleno) {
+      var s = sv('svg', relleno ? { viewBox: '0 0 24 24', fill: 'currentColor' } : { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+      s.appendChild(sv('path', { d: d }));
+      return s;
+    }
+    var D_CUBIERTO = 'M6 3h12M7 3v4a5 5 0 0 0 10 0V3M12 12v9';
+    var D_CHAT = 'M4 5h16v11H9l-5 4z';
+    var D_CORAZON = 'M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z';
+    var D_BASURA = 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3';
+    // Misma optimización que usa la app: Cloudinary entrega la foto liviana (ancho 500, calidad 80).
+    function optimizar(url) {
+      if (!url) return '';
+      url = String(url);
+      if (url.indexOf('res.cloudinary.com') < 0 || !/\/upload\/v\d+\//.test(url)) return url;
+      return url.replace('/upload/', '/upload/w_500,q_80/');
+    }
+    function fechaCorta(s) {
+      var m = /(\d{4})-(\d{2})-(\d{2})/.exec(s || '');
+      return m ? (+m[3]) + ' ' + MESES[+m[2] - 1] + ' ' + m[1] : (s || '—');
+    }
+
+    var datos = filas.map(function (f, i) {
+      return { f: f, id: f.id, nom: String(f.nombre || 'Receta'), aut: String(f.autor || 'Usuario'), fe: fechaCorta(f.fecha),
+        c: Number(f.comentarios) || 0, fav: Number(f.favoritos) || 0, url: optimizar(f.imagenUrl || f.imagen || f.url), fondo: FONDOS[i % FONDOS.length] };
+    });
+    var totC = 0, totF = 0, sinInter = 0, conFoto = 0;
+    datos.forEach(function (d) { totC += d.c; totF += d.fav; if (!d.c && !d.fav) sinInter++; if (d.url) conFoto++; });
+
+    function tile(etiqueta, valor, sub, color, claro) {
+      var t = el('div', { clase: 'us-tile' }, [el('span', { texto: etiqueta }), el('b', { texto: numero.format(valor) }), el('small', { texto: sub })]);
+      t.style.background = color;
+      if (claro) { t.style.color = '#fff'; t.querySelector('small').style.color = 'rgba(255,255,255,.85)'; }
+      return t;
+    }
+    cont.appendChild(el('div', { clase: 'us-tiles' }, [
+      tile('Recetas', datos.length, 'publicadas', '#FFD666'),
+      tile('Comentarios', totC, 'en todas las recetas', '#BFE4A5'),
+      tile('Favoritos', totF, 'guardados por usuarios', '#F6DADD'),
+      tile('Sin interacción', sinInter, 'sin comentarios ni favoritos', '#FF4D82', true)
+    ]));
+
+    var muro = el('div', { clase: 'rc-wall' }), pie = el('span'), pager = el('div', { clase: 'rs-pg rc-pg' });
+    cont.appendChild(el('div', { clase: 'rc-card' }, [muro, el('div', { clase: 'rc-pie' }, [pie, pager])]));
+    var estado = { pagina: 1 };
+
+    function portada(d) {
+      var p = el('div', { clase: 'rc-cov' }, [icono(D_CUBIERTO), el('span', { clase: 'rc-id', texto: '#R' + String(d.id).padStart(3, '0') })]);
+      p.style.background = 'linear-gradient(135deg,' + d.fondo + ',#fff)';
+      if (d.url) {
+        var img = el('img', { src: d.url, alt: d.nom, loading: 'lazy', decoding: 'async', referrerpolicy: 'no-referrer' });
+        img.addEventListener('load', function () { p.classList.add('con-foto'); });
+        img.addEventListener('error', function () { img.remove(); });
+        p.insertBefore(img, p.firstChild);
+      }
+      return p;
+    }
+    function refrescar() {
+      var paginas = Math.max(1, Math.ceil(datos.length / POR_PAGINA));
+      if (estado.pagina > paginas) estado.pagina = paginas;
+      var ini = (estado.pagina - 1) * POR_PAGINA, vis = datos.slice(ini, ini + POR_PAGINA);
+      vaciar(muro);
+      vis.forEach(function (d) {
+        var cu = COLU[suma(d.aut) % COLU.length];
+        var av = el('span', { clase: 'rc-av', texto: d.aut.charAt(0).toUpperCase() });
+        av.style.background = cu; av.style.color = cu === '#FF4D82' ? '#fff' : '#2B1020';
+        var pc = el('span', { clase: 'rc-sp' + (d.c ? '' : ' cero'), title: 'Comentarios' }, [icono(D_CHAT), document.createTextNode(String(d.c))]);
+        var pf = el('span', { clase: 'rc-sp fav' + (d.fav ? '' : ' cero'), title: 'Favoritos' }, [icono(D_CORAZON, true), document.createTextNode(String(d.fav))]);
+        var del = el('button', { type: 'button', clase: 'rc-x', 'data-id': d.id, title: 'Eliminar', 'aria-label': 'Eliminar ' + d.nom }, [icono(D_BASURA)]);
+        muro.appendChild(el('article', { clase: 'rc-item' }, [
+          portada(d),
+          el('div', { clase: 'rc-body' }, [
+            el('h3', { texto: d.nom }),
+            el('div', { clase: 'rc-au' }, [av, el('span', { clase: 'rc-an', texto: d.aut }), el('small', { texto: d.fe })]),
+            el('div', { clase: 'rc-st' }, [pc, pf, del])
+          ])
+        ]));
+      });
+      pie.textContent = 'Mostrando ' + (ini + 1) + '–' + (ini + vis.length) + ' de ' + datos.length + ' recetas';
+      vaciar(pager);
+      if (paginas > 1) {
+        var mk = function (txt, p, on, off) { return el('button', { type: 'button', clase: on ? 'on' : null, 'data-pg': p, disabled: off, 'aria-label': 'Página ' + p, texto: txt }); };
+        pager.appendChild(mk('‹', estado.pagina - 1, false, estado.pagina === 1));
+        for (var p = 1; p <= paginas; p++) pager.appendChild(mk(String(p), p, p === estado.pagina, false));
+        pager.appendChild(mk('›', estado.pagina + 1, false, estado.pagina === paginas));
+      }
+    }
+    pager.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-pg]');
+      if (!b || b.disabled) return;
+      estado.pagina = Number(b.getAttribute('data-pg')); refrescar();
+    });
+    refrescar();
+  }
 
   // ------------------------------------------------------------------ historial de acciones (tarjeta con buscador, filtros y paginas)
 
@@ -1136,9 +1589,30 @@
         pintarUsuarios();
         return;
       }
+      var pt = e.target.closest('.us-dots');
+      if (pt) {
+        var m = pt.parentNode.querySelector('.us-rm'), abrir = m.hidden;
+        cerrarMenusUsuarios();
+        m.hidden = !abrir;
+        return;
+      }
       var b = e.target.closest('button[data-accion]');
-      if (b && !b.disabled) accionUsuario(b);
+      if (b && !b.disabled) { cerrarMenusUsuarios(); accionUsuario(b); }
     });
+    function cerrarMenusUsuarios() {
+      document.querySelectorAll('#tabla-usuarios .us-rm').forEach(function (m) { m.hidden = true; });
+      var mm = $('us-menu'); if (mm) mm.hidden = true;
+      var bd = $('btn-descargar'); if (bd) bd.setAttribute('aria-expanded', 'false');
+    }
+    $('btn-descargar').addEventListener('click', function (e) {
+      e.stopPropagation();
+      var mm = $('us-menu'), abrir = mm.hidden;
+      cerrarMenusUsuarios();
+      mm.hidden = !abrir;
+      this.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (e) { if (!e.target.closest('.us-ac, .us-dwn')) cerrarMenusUsuarios(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') cerrarMenusUsuarios(); });
     $('u-paginacion').addEventListener('click', function (e) {
       var b = e.target.closest('button[data-pagina]');
       if (!b) return;
@@ -1155,12 +1629,6 @@
     }
     $('btn-excel').addEventListener('click', function () { exportar($('btn-excel'), '/administracion/exportar/usuarios.xlsx', 'cookly-usuarios.xlsx'); });
     $('btn-pdf').addEventListener('click', function () { exportar($('btn-pdf'), '/administracion/exportar/usuarios.pdf', 'cookly-usuarios.pdf'); });
-
-    // reportes
-    $('lista-reportes').addEventListener('click', function (e) {
-      var b = e.target.closest('button[data-resolver]');
-      if (b && !b.disabled) resolverReporte(b);
-    });
 
     // reportes de comunidad
     $('lista-reportes-comunidad').addEventListener('click', function (e) {

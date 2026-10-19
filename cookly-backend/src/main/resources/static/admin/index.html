@@ -12,6 +12,9 @@
   <link rel="stylesheet" href="comunidad-moderno.css?v=3">
   <link rel="stylesheet" href="historial-moderno.css?v=4">
   <link rel="stylesheet" href="resenas-moderno.css?v=2">
+  <link rel="stylesheet" href="usuarios-moderno.css?v=1">
+  <link rel="stylesheet" href="comentarios-moderno.css?v=1">
+  <link rel="stylesheet" href="recetas-moderno.css?v=1">
 </head>
 <body>
 
@@ -117,7 +120,6 @@
         <a href="#resumen" data-nav="resumen">Resumen</a>
         <a href="#usuarios" data-nav="usuarios">Usuarios</a>
         <a href="#uso" data-nav="uso">Uso de la app</a>
-        <a href="#reportes" data-nav="reportes">Reportes de recetas <span id="insignia-reportes" class="insignia" hidden></span></a>
         <a href="#reportes-comunidad" data-nav="reportes-comunidad">Reportes de comunidad <span id="insignia-reportes-comunidad" class="insignia" hidden></span></a>
         <a href="#comentarios" data-nav="comentarios">Comentarios</a>
         <a href="#resenas" data-nav="resenas">Reseñas</a>
@@ -172,61 +174,65 @@
             <h2>Cuentas por estado</h2>
             <div class="lienzo alto"><canvas id="g-estado" role="img" aria-label="Cuentas activas e inactivas"></canvas></div>
           </article>
-          <article class="tarjeta">
-            <h2>Reportes de recetas por estado</h2>
-            <div class="lienzo alto"><canvas id="g-reportes" role="img" aria-label="Reportes de recetas por estado"></canvas></div>
-            <p id="vacio-reportes" class="vacio" hidden>Todavía no hay reportes.</p>
-          </article>
         </div>
       </section>
 
       <!-- Usuarios -->
       <section data-seccion="usuarios" hidden>
-        <div class="herramientas">
-          <div class="campo">
-            <label for="u-buscar" class="solo-lectores">Buscar usuario</label>
-            <input id="u-buscar" type="search" placeholder="Buscar por nombre o correo" autocomplete="off">
+        <div class="us-top">
+          <div class="us-dwn">
+            <button type="button" id="btn-descargar" class="us-dbtn" aria-haspopup="true" aria-expanded="false">Descargar <span aria-hidden="true">▾</span></button>
+            <div class="us-menu" id="us-menu" hidden>
+              <button type="button" id="btn-excel">Descargar Excel</button>
+              <button type="button" id="btn-pdf">Descargar PDF</button>
+            </div>
           </div>
-          <div class="campo">
-            <label for="u-rol" class="solo-lectores">Rol</label>
-            <select id="u-rol">
-              <option value="">Todos los roles</option>
-              <option value="USUARIO">Usuarios</option>
-              <option value="ADMINISTRADOR">Administradores</option>
-            </select>
-          </div>
-          <div class="campo">
-            <label for="u-estado" class="solo-lectores">Estado</label>
-            <select id="u-estado">
-              <option value="">Todos los estados</option>
-              <option value="activo">Activos</option>
-              <option value="inactivo">Inactivos</option>
-            </select>
-          </div>
-          <span class="espacio"></span>
-          <button type="button" id="btn-excel" class="boton secundario">Descargar Excel</button>
-          <button type="button" id="btn-pdf" class="boton secundario">Descargar PDF</button>
         </div>
-        <div class="tabla-envoltura">
-          <table id="tabla-usuarios">
-            <caption class="solo-lectores">Lista de usuarios con su tiempo de uso</caption>
-            <thead>
-              <tr>
-                <th scope="col"><button type="button" class="orden" data-orden="nombre">Usuario</button></th>
-                <th scope="col"><button type="button" class="orden" data-orden="rol">Rol</button></th>
-                <th scope="col"><button type="button" class="orden" data-orden="activo">Estado</button></th>
-                <th scope="col"><button type="button" class="orden" data-orden="creadoEn">Registro</button></th>
-                <th scope="col"><button type="button" class="orden" data-orden="ultimoAcceso">Último acceso</button></th>
-                <th scope="col" class="num"><button type="button" class="orden" data-orden="sesiones">Sesiones</button></th>
-                <th scope="col" class="num"><button type="button" class="orden" data-orden="segundosUso">Tiempo de uso</button></th>
-                <th scope="col" class="num"><button type="button" class="orden" data-orden="recetas">Recetas</button></th>
-                <th scope="col"><span class="solo-lectores">Acciones</span></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <div id="u-tiles" class="us-tiles"></div>
+        <div class="us-card">
+          <div class="herramientas">
+            <div class="campo">
+              <label for="u-buscar" class="solo-lectores">Buscar usuario</label>
+              <input id="u-buscar" type="search" placeholder="Buscar por nombre o correo" autocomplete="off">
+            </div>
+            <div class="campo">
+              <label for="u-rol" class="solo-lectores">Rol</label>
+              <select id="u-rol">
+                <option value="">Todos los roles</option>
+                <option value="USUARIO">Usuarios</option>
+                <option value="ADMINISTRADOR">Administradores</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label for="u-estado" class="solo-lectores">Estado</label>
+              <select id="u-estado">
+                <option value="">Todos los estados</option>
+                <option value="activo">Activos</option>
+                <option value="inactivo">Inactivos</option>
+              </select>
+            </div>
+          </div>
+          <div class="tabla-envoltura">
+            <table id="tabla-usuarios">
+              <caption class="solo-lectores">Lista de usuarios con su tiempo de uso</caption>
+              <colgroup><col class="c-id"><col class="c-us"><col class="c-rol"><col class="c-est"><col><col class="c-reg"><col class="c-rec"><col class="c-ac"></colgroup>
+              <thead>
+                <tr>
+                  <th scope="col"><button type="button" class="orden" data-orden="id">ID</button></th>
+                  <th scope="col"><button type="button" class="orden" data-orden="nombre">Usuario</button></th>
+                  <th scope="col"><button type="button" class="orden" data-orden="rol">Rol</button></th>
+                  <th scope="col"><button type="button" class="orden" data-orden="activo">Estado</button></th>
+                  <th scope="col"><button type="button" class="orden" data-orden="segundosUso">Tiempo de uso</button></th>
+                  <th scope="col"><button type="button" class="orden" data-orden="creadoEn">Registro</button></th>
+                  <th scope="col"><button type="button" class="orden" data-orden="recetas">Recetas</button></th>
+                  <th scope="col"><span class="solo-lectores">Acciones</span></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="u-paginacion" class="paginacion"></div>
         </div>
-        <div id="u-paginacion" class="paginacion"></div>
       </section>
 
       <!-- Uso de la app -->
@@ -252,11 +258,6 @@
           El tiempo se mide mientras la app está abierta en primer plano: la app avisa al servidor cada 30 segundos.
           Una sesión termina cuando pasan más de 100 segundos sin avisos. Solo cuentan las personas que ya actualizaron la app.
         </p>
-      </section>
-
-      <!-- Reportes de recetas -->
-      <section data-seccion="reportes" hidden>
-        <div id="lista-reportes" class="lista-reportes"></div>
       </section>
 
       <!-- Reportes de comunidad -->
@@ -330,9 +331,9 @@
   <div id="avisos" class="avisos" role="status" aria-live="polite"></div>
 
   <script src="vendor/chart.umd.js"></script>
-  <script src="admin.js?v=27"></script>
+  <script src="admin.js?v=31"></script>
   <script src="menu-movil.js?v=2"></script>
-  <script src="panel-moderno.js?v=2"></script>
-  <script src="resumen-moderno.js?v=17"></script>
+  <script src="panel-moderno.js?v=3"></script>
+  <script src="resumen-moderno.js?v=18"></script>
 </body>
 </html>

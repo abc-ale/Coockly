@@ -1,0 +1,31 @@
+/* Recetas: tarjetas con la foto de cada receta */
+#lista-recetas .rc-card { background: #fff; border: 1px solid #F3D9DC; border-radius: 22px; overflow: hidden; }
+.rc-wall { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; padding: 18px; }
+.rc-item { border: 1px solid #F3D9DC; border-radius: 22px; overflow: hidden; background: #fff; display: flex; flex-direction: column; min-width: 0; }
+.rc-cov { height: 130px; position: relative; display: flex; align-items: flex-end; padding: 12px 14px; overflow: hidden; }
+.rc-cov img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.rc-cov > svg { position: absolute; right: 12px; top: 10px; width: 44px; height: 44px; color: #2B1020; opacity: .35; }
+.rc-cov.con-foto > svg { display: none; }
+.rc-id { position: relative; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; background: rgba(255, 255, 255, .85); border-radius: 999px; padding: 3px 10px; color: #2B1020; }
+.rc-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.rc-body h3 { margin: 0; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 18px; line-height: 1.2; color: #2B1020; overflow-wrap: anywhere; }
+.rc-au { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #5C4651; min-width: 0; }
+.rc-an { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rc-av { width: 26px; height: 26px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; }
+.rc-au small { margin-left: auto; color: #7A6670; font-size: 12px; white-space: nowrap; }
+.rc-st { display: flex; align-items: center; gap: 8px; margin-top: auto; }
+.rc-sp { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; box-sizing: border-box; border-radius: 999px; font-size: 12.5px; font-weight: 700; background: #FFF4F6; color: #5C4651; }
+.rc-sp svg { width: 14px; height: 14px; }
+.rc-sp.fav { background: #FFE9EE; color: #C2264F; }
+.rc-sp.cero { opacity: .55; }
+.rc-x { margin-left: auto; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: #FFF1F4; color: #C2264F; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.rc-x:hover { background: #FFD9E4; }
+.rc-x svg { width: 16px; height: 16px; }
+.rc-pie { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 18px; border-top: 1px solid #F7E6E8; font-size: 13px; color: #7A6670; }
+.rc-pg { display: flex; gap: 6px; flex-wrap: wrap; }
+.rc-pg button { min-width: 34px; height: 34px; border-radius: 50%; border: 1px solid #F3D9DC; background: #fff; font: inherit; font-weight: 700; font-size: 13px; color: #7A6670; cursor: pointer; }
+.rc-pg button.on { background: #2B1020; border-color: #2B1020; color: #fff; }
+.rc-pg button:disabled { opacity: .45; cursor: not-allowed; }
+@media (max-width: 1280px) { .rc-wall { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1000px) { .rc-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .rc-wall { grid-template-columns: 1fr; padding: 12px; } }
