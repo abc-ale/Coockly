@@ -28,7 +28,7 @@ public class ConfiguracionSeguridad {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Solo el propio sitio, más imágenes del Supabase de Cookly (fotos de Comunidad en el panel).
                 .headers(h -> h.contentSecurityPolicy(c -> c.policyDirectives(
-                        "default-src 'self'; img-src 'self' data: https://torfbgyqvvyajmtbyuvb.supabase.co https://res.cloudinary.com")))
+                        "default-src 'self'; img-src 'self' data: https://torfbgyqvvyajmtbyuvb.supabase.co https://res.cloudinary.com; connect-src 'self' https://api.cloudinary.com")))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(
                                 "/api/v1/autenticacion/**",
