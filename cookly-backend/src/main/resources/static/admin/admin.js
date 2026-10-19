@@ -369,7 +369,27 @@
 
   function etiquetaDia(iso) { return iso.slice(8, 10) + '/' + iso.slice(5, 7); }
 
+  // Chart.js (209 kB) solo se descarga la primera vez que hace falta una gráfica.
+  var cargaChart = null;
+  function cargarChart() {
+    if (window.Chart) return Promise.resolve();
+    if (!cargaChart) {
+      cargaChart = new Promise(function (ok, mal) {
+        var s = document.createElement('script');
+        s.src = 'vendor/chart.umd.js';
+        s.onload = ok;
+        s.onerror = function () { cargaChart = null; mal(new Error('No se pudo cargar las gráficas.')); };
+        document.head.appendChild(s);
+      });
+    }
+    return cargaChart;
+  }
+
   function crearGrafico(id, config) {
+    if (!window.Chart) {
+      cargarChart().then(function () { crearGrafico(id, config); }).catch(function () {});
+      return;
+    }
     if (graficos[id]) graficos[id].destroy();
     var horizontal = config.options && config.options.indexAxis === 'y';
     var base = {

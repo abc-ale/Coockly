@@ -2,11 +2,11 @@
    Paleta: Cream White #FFF8F6 · Soft Blush #F3D9DC · Butter #FFD866 · Pistachio #BEE3A5 · Bubblegum Pink #FF4D80 · Plum Ink #2B1220
    Tipografías: Fredoka (títulos), DM Sans (texto). Los archivos están en /admin/fonts (el servidor no permite fuentes externas). */
 
-@font-face { font-family: 'Fredoka'; font-weight: 600; font-display: swap; src: url('fonts/Fredoka-600.ttf') format('truetype'); }
-@font-face { font-family: 'Fredoka'; font-weight: 700; font-display: swap; src: url('fonts/Fredoka-700.ttf') format('truetype'); }
-@font-face { font-family: 'DM Sans'; font-weight: 400; font-display: swap; src: url('fonts/DMSans-400.ttf') format('truetype'); }
-@font-face { font-family: 'DM Sans'; font-weight: 500; font-display: swap; src: url('fonts/DMSans-500.ttf') format('truetype'); }
-@font-face { font-family: 'DM Sans'; font-weight: 700; font-display: swap; src: url('fonts/DMSans-700.ttf') format('truetype'); }
+@font-face { font-family: 'Fredoka'; font-weight: 600; font-display: swap; src: url('fonts/Fredoka-600.woff2') format('woff2'), url('fonts/Fredoka-600.ttf') format('truetype'); }
+@font-face { font-family: 'Fredoka'; font-weight: 700; font-display: swap; src: url('fonts/Fredoka-700.woff2') format('woff2'), url('fonts/Fredoka-700.ttf') format('truetype'); }
+@font-face { font-family: 'DM Sans'; font-weight: 400; font-display: swap; src: url('fonts/dm-sans-latin-400-normal.woff2') format('woff2'), url('fonts/DMSans-400.ttf') format('truetype'); }
+@font-face { font-family: 'DM Sans'; font-weight: 500; font-display: swap; src: url('fonts/dm-sans-latin-500-normal.woff2') format('woff2'), url('fonts/DMSans-500.ttf') format('truetype'); }
+@font-face { font-family: 'DM Sans'; font-weight: 700; font-display: swap; src: url('fonts/dm-sans-latin-700-normal.woff2') format('woff2'), url('fonts/DMSans-700.ttf') format('truetype'); }
 
 :root {
   --crema: #FFF8F6;
