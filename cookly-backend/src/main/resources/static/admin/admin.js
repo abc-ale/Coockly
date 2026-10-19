@@ -1214,6 +1214,12 @@
       tile('Sin interacción', sinInter, 'sin comentarios ni favoritos', '#FF4D82', true)
     ]));
 
+    // Aviso de diagnóstico: dice por qué no se ven las fotos (servidor sin imagenUrl o navegador que las bloquea).
+    var aviso2 = el('div', { clase: 'rc-aviso', hidden: true });
+    cont.appendChild(aviso2);
+    var fallos = 0;
+    function avisar(texto) { aviso2.textContent = texto; aviso2.hidden = false; }
+    if (!conFoto) avisar('El servidor todavía no envía las fotos de las recetas (campo imagenUrl). Falta actualizar el backend en Render.');
     var muro = el('div', { clase: 'rc-wall' }), pie = el('span'), pager = el('div', { clase: 'rs-pg rc-pg' });
     cont.appendChild(el('div', { clase: 'rc-card' }, [muro, el('div', { clase: 'rc-pie' }, [pie, pager])]));
     var estado = { pagina: 1 };
@@ -1224,7 +1230,10 @@
       if (d.url) {
         var img = el('img', { src: d.url, alt: d.nom, loading: 'lazy', decoding: 'async', referrerpolicy: 'no-referrer' });
         img.addEventListener('load', function () { p.classList.add('con-foto'); });
-        img.addEventListener('error', function () { img.remove(); });
+        img.addEventListener('error', function () {
+          img.remove(); fallos++;
+          if (fallos >= 1) avisar('El servidor envió las fotos, pero el navegador no pudo cargarlas. Revisa que img-src permita https://res.cloudinary.com en ConfiguracionSeguridad.java, o que la URL de la foto exista.');
+        });
         p.insertBefore(img, p.firstChild);
       }
       return p;
