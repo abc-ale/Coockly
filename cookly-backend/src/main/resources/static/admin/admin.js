@@ -1280,98 +1280,116 @@
 
   function abrirNuevaReceta() {
     if (document.getElementById('nr-fondo')) return;
-    var foto = null, enviando = false, urlVista = null;
+    var foto = null, enviando = false, urlVista = null, valorMin = null;
     var SVGNS = 'http://www.w3.org/2000/svg';
     function icono(d) {
       var s = document.createElementNS(SVGNS, 'svg');
       s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('fill', 'none'); s.setAttribute('stroke', 'currentColor');
       s.setAttribute('stroke-width', '2'); s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round');
+      s.setAttribute('aria-hidden', 'true');
       var p = document.createElementNS(SVGNS, 'path'); p.setAttribute('d', d); s.appendChild(p);
       return s;
     }
     var D_CAMARA = 'M4 8h3l2-3h6l2 3h3v11H4zM12 9.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z';
-    function campo(etiqueta, control) {
-      return el('label', { clase: 'nr-campo' }, [el('span', { texto: etiqueta }), control]);
+    var UNIDADES = ['', 'g', 'kg', 'ml', 'l', 'taza', 'cucharada', 'cucharadita', 'unidad', 'pizca'];
+    function bloque(num, titulo, ayuda, hijos) {
+      return el('section', { clase: 'nr-bloque' }, [
+        el('div', { clase: 'nr-bt' }, [el('span', { clase: 'nr-num', texto: String(num) }), el('div', null, [el('h3', { texto: titulo }), ayuda ? el('p', { texto: ayuda }) : null])])
+      ].concat(hijos));
     }
-    var nombre = el('input', { type: 'text', maxlength: '120', placeholder: 'Ej. Lomo saltado', autocomplete: 'off' });
-    var descripcion = el('textarea', { rows: '2', maxlength: '2000', placeholder: 'Cuenta en una o dos frases de qué trata' });
 
-    // Minutos: botones rápidos + "Otro…"
+    // 1. Nombre
+    var nombre = el('input', { type: 'text', id: 'nr-nombre', maxlength: '120', placeholder: 'Ej. Lomo saltado', autocomplete: 'off', 'aria-required': 'true' });
+
+    // 2. Foto
+    var archivo = el('input', { type: 'file', accept: 'image/*', clase: 'nr-archivo', 'aria-label': 'Elegir foto de la receta' });
+    var caja = el('div', { clase: 'nr-caja' }), textoFoto = el('div', { clase: 'nr-ft' }), zona = el('div', { clase: 'nr-zona' }, [caja, textoFoto]);
+    var bElegir = el('button', { type: 'button', clase: 'nr-btn', texto: 'Elegir foto' });
+    var bQuitar = el('button', { type: 'button', clase: 'nr-btn suave', texto: 'Quitar', hidden: true });
+    function pintarFoto() {
+      vaciar(caja); vaciar(textoFoto);
+      if (urlVista) { URL.revokeObjectURL(urlVista); urlVista = null; }
+      if (foto) {
+        urlVista = URL.createObjectURL(foto);
+        caja.appendChild(el('img', { alt: 'Vista previa de la foto', src: urlVista }));
+        textoFoto.appendChild(el('b', { texto: foto.name.length > 34 ? foto.name.slice(0, 31) + '…' : foto.name }));
+        textoFoto.appendChild(el('small', { texto: 'Foto lista. Puedes cambiarla.' }));
+      } else {
+        caja.appendChild(icono(D_CAMARA));
+        textoFoto.appendChild(el('b', { texto: 'Agrega una foto' }));
+        textoFoto.appendChild(el('small', { texto: 'O arrástrala aquí · JPG o PNG · máx. 8 MB' }));
+      }
+      bElegir.textContent = foto ? 'Cambiar foto' : 'Elegir foto';
+      bQuitar.hidden = !foto;
+    }
+    function tomarFoto(f) {
+      if (!f) return;
+      if (!/^image\//.test(f.type)) { aviso('Elige un archivo de imagen (JPG o PNG).', true); return; }
+      if (f.size > 8 * 1024 * 1024) { aviso('La foto pesa más de 8 MB. Elige una más liviana.', true); return; }
+      foto = f; pintarFoto();
+    }
+    archivo.addEventListener('change', function () { tomarFoto(archivo.files && archivo.files[0]); archivo.value = ''; });
+    bElegir.addEventListener('click', function () { archivo.click(); });
+    bQuitar.addEventListener('click', function () { foto = null; pintarFoto(); });
+    ['dragenter', 'dragover'].forEach(function (n) { zona.addEventListener(n, function (e) { e.preventDefault(); zona.classList.add('arrastrando'); }); });
+    ['dragleave', 'drop'].forEach(function (n) { zona.addEventListener(n, function (e) { e.preventDefault(); zona.classList.remove('arrastrando'); }); });
+    zona.addEventListener('drop', function (e) { tomarFoto(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]); });
+    pintarFoto();
+
+    // 3. Tiempo
     var minutos = el('input', { type: 'number', min: '1', max: '1440', placeholder: 'Minutos', 'aria-label': 'Minutos de preparación', hidden: true });
-    var chips = el('div', { clase: 'nr-chips' });
-    var valorMin = null;
-    [15, 30, 45, 60, 'Otro…'].forEach(function (v) {
-      var b = el('button', { type: 'button', clase: 'nr-chip', texto: typeof v === 'number' ? String(v) : v, 'aria-pressed': 'false' });
+    var chips = el('div', { clase: 'nr-chips', role: 'group', 'aria-label': 'Tiempo de preparación' });
+    [['15 min', 15], ['30 min', 30], ['45 min', 45], ['1 hora', 60], ['Otro', 0]].forEach(function (par) {
+      var b = el('button', { type: 'button', clase: 'nr-chip', texto: par[0], 'aria-pressed': 'false' });
       b.addEventListener('click', function () {
         var ya = b.classList.contains('on');
         Array.prototype.forEach.call(chips.children, function (c) { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); });
         minutos.hidden = true;
         if (ya) { valorMin = null; minutos.value = ''; return; }
         b.classList.add('on'); b.setAttribute('aria-pressed', 'true');
-        if (typeof v === 'number') { valorMin = v; minutos.value = ''; }
-        else { valorMin = null; minutos.hidden = false; minutos.focus(); }
+        if (par[1]) { valorMin = par[1]; minutos.value = ''; } else { valorMin = null; minutos.hidden = false; minutos.focus(); }
       });
       chips.appendChild(b);
     });
 
-    // Foto: zona para arrastrar o elegir
-    var archivo = el('input', { type: 'file', accept: 'image/*', clase: 'nr-archivo', 'aria-label': 'Elegir foto' });
-    var zona = el('div', { clase: 'nr-zona', tabindex: '0', role: 'button', 'aria-label': 'Elegir o arrastrar una foto' });
-    function pintarZona() {
-      vaciar(zona); zona.classList.toggle('con-foto', !!foto);
-      if (foto) {
-        if (urlVista) URL.revokeObjectURL(urlVista);
-        urlVista = URL.createObjectURL(foto);
-        zona.appendChild(el('img', { alt: 'Vista previa', src: urlVista }));
-        zona.appendChild(el('span', { clase: 'nr-cambiar', texto: 'Cambiar foto' }));
-        return;
-      }
-      zona.appendChild(el('span', { clase: 'nr-ic' }, [icono(D_CAMARA)]));
-      zona.appendChild(el('b', { texto: 'Arrastra tu foto aquí' }));
-      zona.appendChild(el('small', { texto: 'JPG o PNG · hasta 8 MB · se sube a Cloudinary' }));
-      zona.appendChild(el('span', { clase: 'nr-boton', texto: 'Elegir foto' }));
-    }
-    function tomarFoto(f) {
-      if (!f) return;
-      if (!/^image\//.test(f.type)) { aviso('Elige un archivo de imagen (JPG o PNG).', true); return; }
-      if (f.size > 8 * 1024 * 1024) { aviso('La foto pesa más de 8 MB. Elige una más liviana.', true); return; }
-      foto = f; pintarZona();
-    }
-    archivo.addEventListener('change', function () { tomarFoto(archivo.files && archivo.files[0]); archivo.value = ''; });
-    zona.addEventListener('click', function () { archivo.click(); });
-    zona.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); archivo.click(); } });
-    ['dragenter', 'dragover'].forEach(function (n) { zona.addEventListener(n, function (e) { e.preventDefault(); zona.classList.add('arrastrando'); }); });
-    ['dragleave', 'drop'].forEach(function (n) { zona.addEventListener(n, function (e) { e.preventDefault(); zona.classList.remove('arrastrando'); }); });
-    zona.addEventListener('drop', function (e) { tomarFoto(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]); });
-    pintarZona();
-
-    // Ingredientes y pasos
-    var ingredientes = el('div', { clase: 'nr-ing' }), pasos = el('div', { clase: 'nr-filas' });
-    var cuentaIng = el('span', { clase: 'nr-n2', texto: '0' }), cuentaPas = el('span', { clase: 'nr-n2', texto: '0' });
+    // 4. Ingredientes
+    var ingredientes = el('div', { clase: 'nr-filas' });
     function filaIngrediente() {
+      var uni = el('select', { 'aria-label': 'Unidad' }, UNIDADES.map(function (u) { return el('option', { value: u, texto: u || 'Unidad' }); }));
       var f = el('div', { clase: 'nr-fila ing' }, [
-        el('input', { type: 'text', placeholder: 'Ingrediente', 'aria-label': 'Ingrediente', maxlength: '80' }),
-        el('input', { type: 'number', step: 'any', min: '0', placeholder: 'Cant.', 'aria-label': 'Cantidad' }),
-        el('input', { type: 'text', placeholder: 'Unidad', 'aria-label': 'Unidad', maxlength: '20' }),
-        el('button', { type: 'button', clase: 'nr-quitar', title: 'Quitar', 'aria-label': 'Quitar ingrediente', texto: '×' })
+        el('input', { type: 'text', placeholder: 'Ej. Carne de res', 'aria-label': 'Ingrediente', maxlength: '80' }),
+        el('input', { type: 'number', step: 'any', min: '0', placeholder: '0', 'aria-label': 'Cantidad', inputmode: 'decimal' }),
+        uni,
+        el('button', { type: 'button', clase: 'nr-quitar', title: 'Quitar ingrediente', 'aria-label': 'Quitar ingrediente', texto: '×' })
       ]);
-      f.lastChild.addEventListener('click', function () { if (ingredientes.children.length > 1) { f.remove(); actualizar(); } });
+      f.lastChild.addEventListener('click', function () { if (ingredientes.children.length > 1) { f.remove(); actualizar(); } else { f.querySelector('input').value = ''; } });
+      f.firstChild.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); if (f === ingredientes.lastChild) agregarIng(); else f.nextSibling.firstChild.focus(); } });
       ingredientes.appendChild(f);
     }
+    function agregarIng() { filaIngrediente(); actualizar(); ingredientes.lastChild.querySelector('input').focus(); }
+
+    // 5. Pasos
+    var pasos = el('div', { clase: 'nr-filas' });
     function filaPaso() {
       var f = el('div', { clase: 'nr-fila paso' }, [
         el('span', { clase: 'nr-n', texto: '' }),
-        el('textarea', { rows: '2', placeholder: 'Describe este paso', 'aria-label': 'Paso', maxlength: '1000' }),
-        el('button', { type: 'button', clase: 'nr-quitar', title: 'Quitar', 'aria-label': 'Quitar paso', texto: '×' })
+        el('textarea', { rows: '2', placeholder: 'Escribe qué hay que hacer', 'aria-label': 'Paso', maxlength: '1000' }),
+        el('button', { type: 'button', clase: 'nr-quitar', title: 'Quitar paso', 'aria-label': 'Quitar paso', texto: '×' })
       ]);
-      f.lastChild.addEventListener('click', function () { if (pasos.children.length > 1) { f.remove(); actualizar(); } });
+      f.lastChild.addEventListener('click', function () { if (pasos.children.length > 1) { f.remove(); actualizar(); } else { f.querySelector('textarea').value = ''; } });
       pasos.appendChild(f);
     }
+    function agregarPaso() { filaPaso(); actualizar(); pasos.lastChild.querySelector('textarea').focus(); }
+
+    // Descripción (opcional, plegada)
+    var descripcion = el('textarea', { rows: '3', maxlength: '2000', placeholder: 'Cuenta en una o dos frases de qué trata', 'aria-label': 'Descripción' });
+    var opcional = el('details', { clase: 'nr-opc' }, [el('summary', { texto: '+ Agregar una descripción (opcional)' }), descripcion]);
+
     function leerIngredientes() {
       var l = [];
       Array.prototype.forEach.call(ingredientes.children, function (f) {
         var i = f.querySelectorAll('input'), n = i[0].value.trim();
-        if (n) l.push({ nombre: n, cantidad: i[1].value === '' ? null : Number(i[1].value), unidad: i[2].value.trim() || null });
+        if (n) l.push({ nombre: n, cantidad: i[1].value === '' ? null : Number(i[1].value), unidad: f.querySelector('select').value || null });
       });
       return l;
     }
@@ -1384,47 +1402,44 @@
       return l;
     }
 
-    // Barra de progreso (se llena sola a medida que completas el formulario)
-    function paso(n, texto) { var i = el('i', { texto: String(n) }); var d = el('div', null, [i, document.createTextNode(texto)]); d.i = i; d.n = n; return d; }
-    var p1 = paso(1, 'Datos'), p2 = paso(2, 'Ingredientes y pasos'), p3 = paso(3, 'Listo');
+    var estadoTxt = el('p', { clase: 'nr-estado', 'aria-live': 'polite' });
     function actualizar() {
       Array.prototype.forEach.call(pasos.children, function (f, i) { f.firstChild.textContent = String(i + 1); });
-      var ni = leerIngredientes().length, np = leerPasos().length;
-      cuentaIng.textContent = String(ni); cuentaPas.textContent = String(np);
-      var ok1 = nombre.value.trim().length > 0, ok2 = ni > 0 && np > 0, ok3 = ok1 && ok2;
-      [[p1, ok1], [p2, ok2], [p3, ok3]].forEach(function (x) {
-        var hecho = x[1];
-        x[0].className = hecho ? 'ok' : '';
-        x[0].i.textContent = hecho ? '✓' : String(x[0].n);
-      });
-      var siguiente = !ok1 ? p1 : !ok2 ? p2 : p3;
-      if (!siguiente.className) siguiente.className = 'on';
+      var falta = [];
+      if (!nombre.value.trim()) falta.push('el nombre');
+      if (!leerIngredientes().length) falta.push('un ingrediente');
+      if (!leerPasos().length) falta.push('un paso');
+      estadoTxt.className = 'nr-estado' + (falta.length ? '' : ' ok');
+      estadoTxt.textContent = falta.length ? 'Falta: ' + falta.join(', ') : '✓ Todo listo para guardar';
     }
-    filaIngrediente(); filaIngrediente(); filaIngrediente(); filaIngrediente(); filaPaso(); filaPaso();
+    filaIngrediente(); filaIngrediente(); filaPaso();
 
-    var error = el('p', { clase: 'nr-error', hidden: true });
+    var error = el('p', { clase: 'nr-error', hidden: true, role: 'alert' });
     var quien = (estado.sesion && estado.sesion.nombre) || 'Administrador';
     var guardar = el('button', { type: 'submit', clase: 'nr-guardar', texto: 'Guardar receta' });
     var cancelar = el('button', { type: 'button', clase: 'nr-cancelar', texto: 'Cancelar' });
-    var masIng = el('button', { type: 'button', clase: 'nr-mas', texto: '+ Agregar ingrediente' });
-    var masPaso = el('button', { type: 'button', clase: 'nr-mas', texto: '+ Agregar paso' });
-    masIng.addEventListener('click', function () { filaIngrediente(); actualizar(); ingredientes.lastChild.querySelector('input').focus(); });
-    masPaso.addEventListener('click', function () { filaPaso(); actualizar(); pasos.lastChild.querySelector('textarea').focus(); });
+    var masIng = el('button', { type: 'button', clase: 'nr-mas', texto: '+ Agregar otro ingrediente' });
+    var masPaso = el('button', { type: 'button', clase: 'nr-mas', texto: '+ Agregar otro paso' });
+    masIng.addEventListener('click', agregarIng);
+    masPaso.addEventListener('click', agregarPaso);
 
-    var av = el('span', { clase: 'nr-av', texto: quien.charAt(0).toUpperCase() });
-    var form = el('form', { clase: 'nr-modal', novalidate: true, role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Nueva receta' }, [
-      el('div', { clase: 'nr-cab' }, [el('div', null, [el('h2', { texto: 'Nueva receta' }), el('p', { texto: 'Se publica con tu cuenta de administrador.' })]), el('button', { type: 'button', clase: 'nr-x', 'aria-label': 'Cerrar', texto: '×' })]),
-      el('div', { clase: 'nr-prog' }, [p1, p2, p3]),
+    var form = el('form', { clase: 'nr-modal', novalidate: true, role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'nr-titulo' }, [
+      el('div', { clase: 'nr-cab' }, [
+        el('div', null, [el('h2', { id: 'nr-titulo', texto: 'Nueva receta' }), el('p', { texto: 'Publicas como ' + quien + '. Lo marcado con * es obligatorio.' })]),
+        el('button', { type: 'button', clase: 'nr-x', 'aria-label': 'Cerrar', texto: '×' })
+      ]),
       el('div', { clase: 'nr-cuerpo' }, [
-        el('div', { clase: 'nr-dos' }, [
-          el('div', null, [campo('Nombre *', nombre), campo('Descripción', descripcion), el('div', { clase: 'nr-campo' }, [el('span', { texto: 'Minutos de preparación' }), chips, minutos])]),
-          el('div', null, [el('div', { clase: 'nr-campo' }, [el('span', { texto: 'Foto de la receta' }), zona, archivo]), el('div', { clase: 'nr-tip' }, [el('span', { texto: '💡' }), el('span', { texto: 'Una foto horizontal y bien iluminada se ve mejor en las tarjetas.' })])])
-        ]),
-        el('div', { clase: 'nr-sh' }, [el('h3', null, [document.createTextNode('Ingredientes '), cuentaIng]), masIng]), ingredientes,
-        el('div', { clase: 'nr-sh' }, [el('h3', null, [document.createTextNode('Pasos '), cuentaPas]), masPaso]), pasos,
+        bloque(1, 'Nombre *', null, [nombre]),
+        bloque(2, 'Foto', 'Se ve en la tarjeta de la receta.', [zona, el('div', { clase: 'nr-acc' }, [bElegir, bQuitar]), archivo]),
+        bloque(3, 'Tiempo de preparación', null, [chips, minutos]),
+        bloque(4, 'Ingredientes *', 'Escribe uno por fila.', [
+          el('div', { clase: 'nr-cols', 'aria-hidden': 'true' }, [el('span', { texto: 'Ingrediente' }), el('span', { texto: 'Cantidad' }), el('span', { texto: 'Unidad' }), el('span')]),
+          ingredientes, masIng]),
+        bloque(5, 'Pasos *', 'Cuenta cómo prepararla, paso a paso.', [pasos, masPaso]),
+        opcional,
         error
       ]),
-      el('div', { clase: 'nr-pie' }, [el('div', { clase: 'nr-por' }, [av, document.createTextNode('Publicas como '), el('b', { texto: quien })]), el('div', { clase: 'nr-bts' }, [cancelar, guardar])])
+      el('div', { clase: 'nr-pie' }, [estadoTxt, el('div', { clase: 'nr-bts' }, [cancelar, guardar])])
     ]);
     var fondo = el('div', { clase: 'nr-fondo', id: 'nr-fondo' }, [form]);
     function cerrar() { if (enviando) return; document.removeEventListener('keydown', tecla); if (urlVista) URL.revokeObjectURL(urlVista); fondo.remove(); document.body.classList.remove('nr-abierto'); }
@@ -1439,16 +1454,16 @@
     actualizar();
     nombre.focus();
 
-    function fallo(t) { error.textContent = t; error.hidden = false; error.scrollIntoView({ block: 'nearest' }); }
+    function fallo(t, campo) { error.textContent = t; error.hidden = false; if (campo) campo.focus(); }
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       if (enviando) return;
       error.hidden = true;
       var nom = nombre.value.trim();
-      if (!nom) { fallo('Escribe el nombre de la receta.'); nombre.focus(); return; }
+      if (!nom) { fallo('Escribe el nombre de la receta.', nombre); return; }
       var ings = leerIngredientes(), pas = leerPasos();
-      if (!ings.length) { fallo('Agrega al menos un ingrediente.'); return; }
-      if (!pas.length) { fallo('Agrega al menos un paso.'); return; }
+      if (!ings.length) { fallo('Agrega al menos un ingrediente.', ingredientes.querySelector('input')); return; }
+      if (!pas.length) { fallo('Agrega al menos un paso.', pasos.querySelector('textarea')); return; }
       var min = minutos.hidden ? valorMin : (minutos.value ? Number(minutos.value) : null);
       var cuerpo = { nombre: nom, descripcion: descripcion.value.trim() || null, minutosPreparacion: min, ingredientes: ings, pasos: pas };
       enviando = true; guardar.disabled = true; cancelar.disabled = true; guardar.textContent = 'Guardando…';
