@@ -92,7 +92,7 @@ public class ServicioContenidoAdmin {
                 + "u.nombre AS autor, "
                 + "(SELECT COUNT(*) FROM comentarios c WHERE c.receta_id = r.id) AS comentarios, "
                 + "(SELECT COUNT(*) FROM favoritos f WHERE f.receta_id = r.id) AS favoritos, "
-                + "(SELECT i.url FROM imagenes i WHERE i.receta_id = r.id ORDER BY i.id LIMIT 1) AS imagenUrl "
+                + "(SELECT i.url FROM imagenes i WHERE i.receta_id = r.id ORDER BY i.id LIMIT 1) AS \"imagenUrl\" "
                 + "FROM recetas r JOIN usuarios u ON u.id = r.creador_id ";
         if (filtra) {
             sql += "WHERE r.nombre ILIKE ? OR u.nombre ILIKE ? OR u.correo ILIKE ? ";
