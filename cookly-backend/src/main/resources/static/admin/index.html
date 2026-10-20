@@ -10,7 +10,7 @@
   <link rel="preload" href="fonts/dm-sans-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/Fredoka-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="admin.css?v=11">
-  <link rel="stylesheet" href="login-moderno.css?v=1">
+  <link rel="stylesheet" href="login-moderno.css?v=2">
   <link rel="stylesheet" href="panel-moderno.css?v=3">
   <link rel="stylesheet" href="resumen-moderno.css?v=9">
   <link rel="stylesheet" href="comunidad-moderno.css?v=3">
@@ -27,21 +27,20 @@
     <aside class="lg-panel" aria-hidden="true">
       <i class="lg-g lg-g1"></i><i class="lg-g lg-g2"></i>
       <div class="lg-luz"></div>
-      <div class="lg-glass lg-glass-1"><div class="lg-in"><small>Cookly</small><b>Tu cocina, <em>bajo control.</em></b></div></div>
-      <div class="lg-glass lg-glass-2"><div class="lg-in"><small>Panel administrativo</small><b>Recetas, usuarios y comunidad en un solo lugar.</b></div></div>
-    </aside>
-
-    <div class="lg-fwrap">
-      <div class="lg-escena">
-        <img class="lg-eco" src="https://res.cloudinary.com/pjbmwoxn/image/upload/c_limit,w_1500,q_auto,f_auto/v1792445745/Login.png" data-nube="https://res.cloudinary.com/pjbmwoxn/image/upload/v1792445745/Login.png" data-local="img/login-frutas.webp" alt="" aria-hidden="true" loading="lazy" decoding="async">
-        <img class="lg-base" src="https://res.cloudinary.com/pjbmwoxn/image/upload/c_limit,w_1500,q_auto,f_auto/v1792445745/Login.png" data-nube="https://res.cloudinary.com/pjbmwoxn/image/upload/v1792445745/Login.png" data-local="img/login-frutas.webp" alt="" loading="lazy" decoding="async">
-        <button type="button" class="lg-punto lg-p1" aria-label="Fresas y moras"><span class="lg-tip"><b>Fresas y moras</b>Dulces y de temporada</span></button>
-        <button type="button" class="lg-punto lg-p2" aria-label="Toronja sanguina"><span class="lg-tip"><b>Toronja sanguina</b>Cítrica y muy brillante</span></button>
-        <button type="button" class="lg-punto lg-p3" aria-label="Ruibarbo"><span class="lg-tip"><b>Ruibarbo</b>Ácido, ideal para postres</span></button>
-        <button type="button" class="lg-punto lg-p4" aria-label="Fotos de platos"><span class="lg-tip"><b>Fotos de platos</b>Cada receta, su mejor foto</span></button>
+      <div class="lg-tira">
+        <img class="lg-eco" src="https://res.cloudinary.com/pjbmwoxn/image/upload/q_auto,f_auto/v1792472115/login-borde.webp" data-nube="https://res.cloudinary.com/pjbmwoxn/image/upload/v1792472115/login-borde.webp" data-local="img/login-borde.webp" alt="" decoding="async">
+        <img class="lg-base" src="https://res.cloudinary.com/pjbmwoxn/image/upload/q_auto,f_auto/v1792472115/login-borde.webp" data-nube="https://res.cloudinary.com/pjbmwoxn/image/upload/v1792472115/login-borde.webp" data-local="img/login-borde.webp" alt="" decoding="async">
       </div>
-    </div>
-    <div class="lg-reto" id="lg-reto"><span id="lg-reto-txt" role="status" aria-live="polite">Encuentra los ingredientes</span><span class="lg-pts" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div>
+      <div class="lg-hero">
+        <h2 class="lg-lema">Tu cocina,<br><em>bajo control.</em></h2>
+        <p class="lg-txt">Recetas, usuarios y comunidad en un solo lugar.</p>
+        <div class="lg-pills">
+          <span class="lg-pill"><i><svg viewBox="0 0 24 24"><path d="M4 11h16M6 11a6 6 0 0 1 12 0M5 11v5a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-5"/></svg></i>Recetas</span>
+          <span class="lg-pill"><i><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 5.8M17.5 14a5 5 0 0 1 3 5"/></svg></i>Usuarios</span>
+          <span class="lg-pill"><i><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg></i>Comunidad</span>
+        </div>
+      </div>
+    </aside>
 
     <div class="lg-b1" aria-hidden="true"></div><div class="lg-b2" aria-hidden="true"></div>
 
@@ -90,6 +89,7 @@
         </form>
       </div>
     </section>
+    <p class="lg-pie">Cookly · Panel administrativo</p>
   </div>
 
   <!-- ============ Panel ============ -->
@@ -325,7 +325,7 @@
   <div id="avisos" class="avisos" role="status" aria-live="polite"></div>
 
   <script src="admin.js?v=36"></script>
-  <script src="login-moderno.js?v=1"></script>
+  <script src="login-moderno.js?v=2"></script>
   <script src="menu-movil.js?v=2"></script>
   <script src="panel-moderno.js?v=3"></script>
   <script src="resumen-moderno.js?v=18"></script>

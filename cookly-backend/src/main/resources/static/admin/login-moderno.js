@@ -78,26 +78,6 @@
     });
   }
 
-  // ---------------------------------------------------------------- ingredientes escondidos
-  var puntos = raiz.querySelectorAll('.lg-punto');
-  var reto = $('lg-reto'), retoTxt = $('lg-reto-txt');
-  Array.prototype.forEach.call(puntos, function (b) {
-    b.addEventListener('click', function () {
-      b.classList.toggle('abierto');
-      if (b.classList.contains('visto')) return;
-      b.classList.add('visto');
-      var vistos = raiz.querySelectorAll('.lg-punto.visto').length;
-      Array.prototype.forEach.call(reto.querySelectorAll('.lg-pts i'), function (p, i) { p.classList.toggle('on', i < vistos); });
-      if (vistos >= puntos.length) {
-        reto.classList.add('ganado');
-        retoTxt.textContent = '¡Chef desbloqueado!';
-        confetiDe(reto);
-      } else {
-        retoTxt.textContent = vistos + ' de ' + puntos.length + ' ingredientes';
-      }
-    });
-  });
-
   // ---------------------------------------------------------------- contraseña: bolitas y Bloq Mayús
   var clave = $('acceso-contrasena');
   var ing = $('lg-ing'), caps = $('lg-caps');

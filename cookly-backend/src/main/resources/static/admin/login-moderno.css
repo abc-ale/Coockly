@@ -4,6 +4,7 @@
    ============================================================ */
 
 @keyframes lg-sube { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes lg-entra2 { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: none; } }
 @keyframes lg-entra { from { opacity: 0; transform: translate(-40px, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
 @keyframes lg-deriva { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(var(--dy, -14px)) rotate(var(--r, 6deg)); } }
 @keyframes lg-flota { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-12px) rotate(.6deg); } }
@@ -22,13 +23,13 @@
 #vista-acceso.lg {
   position: relative; min-height: 100vh; overflow: hidden;
   display: flex; align-items: center;
-  background: #fff; color: var(--tinta);
+  background: #FFFAF9; color: var(--tinta);
 }
 
 /* ------------------------------------------------------------ panel izquierdo */
 #vista-acceso .lg-panel {
-  position: absolute; left: 0; top: 0; bottom: 0; width: 54%;
-  border-radius: 0 64px 64px 0; overflow: hidden;
+  position: absolute; left: 0; top: 0; bottom: 0; width: 50%;
+  border-radius: 0 52px 52px 0; overflow: hidden; display: flex; align-items: center; z-index: 2;
   box-shadow: 18px 0 50px rgba(43, 18, 32, .2);
   background:
     radial-gradient(70% 60% at 38% 55%, rgba(255, 77, 128, .47) 0%, rgba(255, 77, 128, 0) 70%),
@@ -41,81 +42,39 @@
 #vista-acceso .lg-luz { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(480px circle at var(--mx, 70%) var(--my, 40%), rgba(255, 77, 128, .09), transparent 62%); }
 #vista-acceso .lg-chispa { position: absolute; bottom: -20px; border-radius: 50%; background: #fff; opacity: 0; animation: lg-asc var(--t) linear var(--dl) infinite; }
 
-/* tarjetas de cristal con el lema */
-#vista-acceso .lg-glass {
-  position: absolute; z-index: 4; min-width: 168px; max-width: 210px;
-  background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .3);
-  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-  border-radius: 18px; padding: 13px 16px 12px; color: #fff;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, .33);
-  translate: calc(var(--nx, 0) * 34px) calc(var(--ny, 0) * 24px);
+/* franja de frutas (Cloudinary) */
+#vista-acceso .lg-tira {
+  position: relative; flex: none; height: 100%; max-height: 1080px; aspect-ratio: 459 / 1080; z-index: 2;
+  translate: calc(var(--nx, 0) * -22px) calc(var(--ny, 0) * -14px);
   transition: translate .3s ease-out;
-}
-#vista-acceso .lg-glass .lg-in { animation: lg-flota 6s ease-in-out infinite; }
-#vista-acceso .lg-glass small { display: block; font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: rgba(255, 255, 255, .78); font-weight: 700; margin-bottom: 4px; }
-#vista-acceso .lg-glass b { display: block; font-family: var(--fuente-titulo); font-size: 19px; line-height: 1.18; font-weight: 600; }
-#vista-acceso .lg-glass b em { font-style: normal; color: var(--mantequilla); }
-#vista-acceso .lg-glass-1 { right: 5%; top: 24%; }
-#vista-acceso .lg-glass-2 { right: 7%; bottom: 10%; }
-#vista-acceso .lg-glass-2 .lg-in { animation-delay: -3s; }
-
-/* ------------------------------------------------------------ escena de frutas */
-#vista-acceso .lg-fwrap { position: absolute; left: 0; top: -3%; bottom: -3%; width: 54%; pointer-events: none; }
-#vista-acceso .lg-escena {
-  position: absolute; left: -26px; top: 50%; height: 100%; max-height: 1080px; aspect-ratio: 664 / 864;
-  transform: translateY(-50%);
-  translate: calc(var(--nx, 0) * -26px) calc(var(--ny, 0) * -18px);
-  transition: translate .3s ease-out;
-  animation: lg-entra .9s cubic-bezier(.2, .8, .2, 1) both;
-  will-change: transform;
+  animation: lg-entra2 .9s cubic-bezier(.2, .8, .2, 1) both;
 }
 #vista-acceso .lg-base, #vista-acceso .lg-eco { object-fit: cover; object-position: left center; }
-#vista-acceso .lg-base { display: block; width: 100%; height: 100%; user-select: none; animation: lg-foto 9s ease-in-out infinite; transform-origin: 25% 50%; }
+#vista-acceso .lg-base { position: absolute; inset: 0; display: block; width: 100%; height: 100%; user-select: none; animation: lg-foto 10s ease-in-out infinite; transform-origin: 0 50%; filter: drop-shadow(10px 0 24px rgba(0, 0, 0, .4)); }
 #vista-acceso .lg-eco {
-  position: absolute; inset: 0; width: 100%; height: 100%; opacity: .4; filter: blur(16px) saturate(1.3); pointer-events: none;
-  translate: calc(var(--nx, 0) * 22px) calc(var(--ny, 0) * 16px); transition: translate .3s ease-out;
+  position: absolute; inset: 0; width: 100%; height: 100%; opacity: .45; filter: blur(18px) saturate(1.4); pointer-events: none;
   animation: lg-eco 12s ease-in-out infinite; transform-origin: 30% 50%;
 }
-/* puntos interactivos */
-#vista-acceso .lg-punto {
-  position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; padding: 0;
-  border: 0; border-radius: 50%; background: #fff; box-shadow: 0 4px 14px rgba(0, 0, 0, .2);
-  pointer-events: auto; cursor: pointer; display: grid; place-items: center; z-index: 2;
-  transition: transform .15s;
-}
-#vista-acceso .lg-punto::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--rosa); transition: background .2s, transform .2s; }
-#vista-acceso .lg-punto::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--rosa); animation: lg-pulso 2s ease-out infinite; }
-#vista-acceso .lg-punto.visto::before { background: #2E9B4F; transform: scale(1.4); }
-#vista-acceso .lg-punto.visto::after { animation: none; opacity: 0; }
-#vista-acceso .lg-punto:hover { transform: scale(1.12); }
-#vista-acceso .lg-punto:focus-visible { outline: 3px solid var(--mantequilla); outline-offset: 3px; }
-#vista-acceso .lg-p1 { left: 23%; top: 28%; }
-#vista-acceso .lg-p2 { left: 64%; top: 50%; }
-#vista-acceso .lg-p3 { left: 36%; top: 72%; }
-#vista-acceso .lg-p4 { left: 75%; top: 15%; }
-#vista-acceso .lg-tip {
-  position: absolute; left: 40px; top: 50%; transform: translateY(-50%) scale(.9); transform-origin: left center;
-  opacity: 0; pointer-events: none; background: #fff; color: #5A3A47; border-radius: 14px; padding: 9px 14px;
-  white-space: nowrap; font-size: 13px; line-height: 1.3; text-align: left;
-  transition: opacity .18s, transform .18s; box-shadow: 0 12px 28px rgba(0, 0, 0, .33);
-}
-#vista-acceso .lg-tip b { display: block; font-family: var(--fuente-titulo); font-size: 16px; color: #E11D5A; font-weight: 700; }
-#vista-acceso .lg-punto:hover .lg-tip,
-#vista-acceso .lg-punto:focus-visible .lg-tip,
-#vista-acceso .lg-punto.abierto .lg-tip { opacity: 1; transform: translateY(-50%) scale(1); }
 
-/* reto de ingredientes */
-#vista-acceso .lg-reto {
-  position: absolute; left: 28px; bottom: 26px; z-index: 5;
-  background: #fff; border-radius: 999px; padding: 10px 18px 10px 14px;
-  display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 700; color: var(--tinta);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, .4); transition: background .3s, color .3s;
+/* mensaje de la izquierda */
+#vista-acceso .lg-hero { position: relative; z-index: 3; flex: 1; min-width: 0; margin: 0 2vw 0 -28px; max-width: 440px; color: #fff; }
+#vista-acceso .lg-lema { margin: 0 0 18px; font-family: var(--fuente-titulo); font-weight: 700; font-size: clamp(40px, 3.9vw, 58px); line-height: 1.06; letter-spacing: -1px; color: #fff; }
+#vista-acceso .lg-lema em { font-style: normal; color: var(--mantequilla); }
+#vista-acceso .lg-txt { margin: 0 0 30px; font-size: 17px; line-height: 1.45; color: rgba(255, 248, 246, .78); max-width: 420px; }
+#vista-acceso .lg-pills { display: flex; flex-wrap: wrap; gap: 12px; }
+#vista-acceso .lg-pill {
+  display: flex; align-items: center; gap: 10px; padding: 10px 18px 10px 12px; border-radius: 999px;
+  background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .25);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  font-weight: 700; font-size: 15px; box-shadow: 0 10px 24px rgba(0, 0, 0, .22);
+  animation: lg-flota 5s ease-in-out infinite;
 }
-#vista-acceso .lg-pts { display: flex; gap: 5px; }
-#vista-acceso .lg-pts i { width: 14px; height: 14px; border-radius: 50%; background: var(--blush); transition: background .3s; }
-#vista-acceso .lg-pts i.on { background: var(--rosa); animation: lg-brota .4s both; }
-#vista-acceso .lg-reto.ganado { background: #2E9B4F; color: #fff; }
-#vista-acceso .lg-reto.ganado .lg-pts i { background: #fff; }
+#vista-acceso .lg-pill:nth-child(2) { animation-delay: -1.6s; }
+#vista-acceso .lg-pill:nth-child(3) { animation-delay: -3.2s; }
+#vista-acceso .lg-pill i { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: #FF4D82; }
+#vista-acceso .lg-pill svg { width: 17px; height: 17px; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+#vista-acceso .lg-pie { position: absolute; left: 50%; right: 0; bottom: 18px; margin: 0; text-align: center; font-size: 12px; letter-spacing: .06em; color: #8A6B77; }
 
 /* ------------------------------------------------------------ lado del formulario */
 #vista-acceso .lg-b1, #vista-acceso .lg-b2 { position: absolute; border-radius: 50%; pointer-events: none; }
@@ -123,15 +82,15 @@
 #vista-acceso .lg-b2 { right: 12%; bottom: -24%; width: 30vw; aspect-ratio: 1; background: radial-gradient(circle, rgba(255, 176, 46, .15), rgba(255, 176, 46, 0) 68%); animation: lg-mueve 18s ease-in-out -7s infinite; }
 
 #vista-acceso .lg-col {
-  position: relative; margin-left: 54%; width: 46%; padding: 40px 0;
+  position: relative; margin-left: 50%; width: 50%; padding: 40px 0;
   display: flex; justify-content: center;
 }
-#vista-acceso .lg-caja { width: min(440px, 86%); }
+#vista-acceso .lg-caja { width: min(420px, 86%); }
 #vista-acceso .lg-caja > * { animation: lg-sube .7s cubic-bezier(.2, .8, .2, 1) both; }
 #vista-acceso .lg-caja > :nth-child(2) { animation-delay: .1s; }
 #vista-acceso .lg-caja.lg-tiembla { animation: lg-tiembla .45s; }
 
-#vista-acceso .lg-logo { display: flex; align-items: center; gap: 3px; margin: 0 0 26px; width: max-content; cursor: pointer; user-select: none; }
+#vista-acceso .lg-logo { display: flex; align-items: center; gap: 3px; margin: 0 0 22px; width: max-content; cursor: pointer; user-select: none; }
 #vista-acceso .lg-logo img { height: 58px; width: auto; display: block; transition: transform .5s cubic-bezier(.3, 1.6, .5, 1); }
 #vista-acceso .lg-logo span { font-family: var(--fuente-titulo); font-weight: 700; font-size: 50px; line-height: 1; color: var(--rosa); letter-spacing: -.5px; }
 #vista-acceso .lg-logo:hover img { transform: rotate(-14deg) scale(1.08); }
@@ -150,7 +109,7 @@
 #vista-acceso .lg-form > :nth-child(5) { animation-delay: .4s; }
 #vista-acceso .lg-form > :nth-child(6) { animation-delay: .46s; }
 #vista-acceso .lg-form > :nth-child(7) { animation-delay: .52s; }
-#vista-acceso .lg-form h1 { margin: 0 0 8px; font-size: 46px; line-height: 1.05; font-weight: 700; letter-spacing: -.5px; color: var(--tinta); }
+#vista-acceso .lg-form h1 { margin: 0 0 8px; font-size: 40px; line-height: 1.08; font-weight: 700; letter-spacing: -.5px; color: var(--tinta); }
 #vista-acceso .lg-form h1 em { font-style: normal; color: var(--rosa); }
 #vista-acceso .lg-ayuda { margin: 0 0 28px; color: #5F4B54; font-size: 16px; }
 
@@ -221,13 +180,14 @@
 /* ------------------------------------------------------------ celular y tableta */
 @media (max-width: 960px) {
   #vista-acceso.lg { align-items: flex-start; }
-  #vista-acceso .lg-panel { width: 100%; height: 230px; bottom: auto; border-radius: 0 0 40px 40px; }
-  #vista-acceso .lg-fwrap { inset: 0 0 auto 0; width: 100%; height: 230px; overflow: hidden; }
-  #vista-acceso .lg-escena { height: auto; width: 58%; left: 0; top: -1%; transform: none; opacity: .9; animation: none; translate: none; }
-  #vista-acceso .lg-punto, #vista-acceso .lg-reto, #vista-acceso .lg-glass { display: none; }
+  #vista-acceso .lg-panel { width: 100%; height: 230px; bottom: auto; border-radius: 0 0 36px 36px; justify-content: center; }
+  #vista-acceso .lg-tira { position: absolute; left: 0; top: 0; opacity: .28; animation: none; translate: none; }
+  #vista-acceso .lg-hero { margin: 0 24px; max-width: none; text-align: center; }
+  #vista-acceso .lg-lema { font-size: 34px; margin: 0; }
+  #vista-acceso .lg-txt, #vista-acceso .lg-pills, #vista-acceso .lg-pie { display: none; }
   #vista-acceso .lg-col { margin: 0; width: 100%; padding: 260px 0 32px; }
   #vista-acceso .lg-caja { width: min(440px, 88%); }
   #vista-acceso .lg-logo img { height: 46px; }
   #vista-acceso .lg-logo span { font-size: 40px; }
-  #vista-acceso .lg-form h1 { font-size: 36px; }
+  #vista-acceso .lg-form h1 { font-size: 34px; }
 }
