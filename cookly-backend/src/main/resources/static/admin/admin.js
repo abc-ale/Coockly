@@ -188,7 +188,7 @@
     });
     $('titulo-seccion').textContent = SECCIONES[s].titulo;
     $('subtitulo-seccion').textContent = SECCIONES[s].sub;
-    $('selector-rango').hidden = !(s === 'resumen' || s === 'uso');
+    $('selector-rango').hidden = s !== 'uso';
     document.title = SECCIONES[s].titulo + ' · Cookly';
     // Todas las pantallas esperan a sus datos y aparecen completas de una sola vez (sin ver la tabla vacía).
     document.body.classList.add('rm-espera');
