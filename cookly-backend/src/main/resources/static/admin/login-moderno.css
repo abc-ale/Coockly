@@ -45,15 +45,11 @@
 /* franja de frutas (Cloudinary) */
 #vista-acceso .lg-tira {
   position: relative; flex: none; height: 100%; max-height: 1080px; aspect-ratio: 459 / 1080; z-index: 2;
-  translate: calc(var(--nx, 0) * -22px) calc(var(--ny, 0) * -14px);
-  transition: translate .3s ease-out;
-  animation: lg-entra2 .9s cubic-bezier(.2, .8, .2, 1) both;
 }
 #vista-acceso .lg-base, #vista-acceso .lg-eco { object-fit: cover; object-position: left center; }
-#vista-acceso .lg-base { position: absolute; inset: 0; display: block; width: 100%; height: 100%; user-select: none; animation: lg-foto 10s ease-in-out infinite; transform-origin: 0 50%; filter: drop-shadow(10px 0 24px rgba(0, 0, 0, .4)); }
+#vista-acceso .lg-base { position: absolute; inset: 0; display: block; width: 100%; height: 100%; user-select: none; filter: drop-shadow(10px 0 24px rgba(0, 0, 0, .4)); }
 #vista-acceso .lg-eco {
   position: absolute; inset: 0; width: 100%; height: 100%; opacity: .45; filter: blur(18px) saturate(1.4); pointer-events: none;
-  animation: lg-eco 12s ease-in-out infinite; transform-origin: 30% 50%;
 }
 
 /* mensaje de la izquierda */
@@ -181,7 +177,7 @@
 @media (max-width: 960px) {
   #vista-acceso.lg { align-items: flex-start; }
   #vista-acceso .lg-panel { width: 100%; height: 230px; bottom: auto; border-radius: 0 0 36px 36px; justify-content: center; }
-  #vista-acceso .lg-tira { position: absolute; left: 0; top: 0; opacity: .28; animation: none; translate: none; }
+  #vista-acceso .lg-tira { position: absolute; left: 0; top: 0; opacity: .28; }
   #vista-acceso .lg-hero { margin: 0 24px; max-width: none; text-align: center; }
   #vista-acceso .lg-lema { font-size: 34px; margin: 0; }
   #vista-acceso .lg-txt, #vista-acceso .lg-pills, #vista-acceso .lg-pie { display: none; }
@@ -191,3 +187,12 @@
   #vista-acceso .lg-logo span { font-size: 40px; }
   #vista-acceso .lg-form h1 { font-size: 34px; }
 }
+
+/* ------------------------------------------------------------ formulario centrado */
+#vista-acceso .lg-caja { text-align: center; margin: 0 auto; }
+#vista-acceso .lg-logo { margin-left: auto; margin-right: auto; }
+#vista-acceso .lg-saludo { margin-left: auto; margin-right: auto; }
+#vista-acceso .lg-ing { justify-content: center; margin-left: 0; margin-right: 0; }
+#vista-acceso .lg-olvide { display: block; width: max-content; margin: 4px auto 0; }
+#vista-acceso .lg-campo input, #vista-acceso .lg-campo label { text-align: left; }
+#vista-acceso .error-linea, #vista-acceso .exito-linea { text-align: left; }
