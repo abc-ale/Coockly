@@ -13,6 +13,7 @@ import { despertarServidor } from '../lib/api';
 import { DialogoProvider } from '../components/Dialogo';
 import { AvisoProvider } from '../components/Aviso';
 import { programarNotificaciones } from '../notificaciones/programar';
+import { iniciarPushSocial } from '../notificaciones/registrarPush';
 
 // Evita que un doble toque abra la misma pantalla dos veces:
 // ignora un push a la misma ruta si ocurre menos de 800 ms después del anterior.
@@ -54,7 +55,9 @@ export default function RootLayout() {
     const sub = AppState.addEventListener('change', (estado) => {
       if (estado === 'active') programar();
     });
-    return () => sub.remove();
+    // Avisos de la comunidad (me gusta, comentarios, respuestas)
+    const detenerPush = iniciarPushSocial();
+    return () => { sub.remove(); detenerPush(); };
   }, []);
 
   useEffect(() => {
