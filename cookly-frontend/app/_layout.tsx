@@ -1,5 +1,6 @@
 // app/_layout.tsx
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -11,6 +12,7 @@ import { AuthProvider } from '../context/AuthContext';
 import { despertarServidor } from '../lib/api';
 import { DialogoProvider } from '../components/Dialogo';
 import { AvisoProvider } from '../components/Aviso';
+import { programarNotificaciones } from '../notificaciones/programar';
 
 // Evita que un doble toque abra la misma pantalla dos veces:
 // ignora un push a la misma ruta si ocurre menos de 800 ms después del anterior.
@@ -42,6 +44,17 @@ export default function RootLayout() {
   // Al abrir la app, despierta el servidor de Render en segundo plano.
   useEffect(() => {
     despertarServidor();
+  }, []);
+
+  // Notificaciones de mañana, tarde y noche: se reprograman al abrir la app
+  // y cada vez que vuelve a primer plano (si no la abre, llegan los "te extraño").
+  useEffect(() => {
+    const programar = () => { programarNotificaciones().catch(() => {}); };
+    programar();
+    const sub = AppState.addEventListener('change', (estado) => {
+      if (estado === 'active') programar();
+    });
+    return () => sub.remove();
   }, []);
 
   useEffect(() => {
