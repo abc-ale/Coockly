@@ -18,6 +18,8 @@ type AuthContextType = {
   usuario: Usuario | null;
   token: string | null;
   cargando: boolean;
+  /** true mientras se completa el inicio de sesión con Google (para tapar la pantalla de bienvenida). */
+  entrandoSocial: boolean;
   login: (correo: string, contrasena: string) => Promise<void>;
   registrar: (nombre: string, correo: string, contrasena: string) => Promise<void>;
   loginConGoogle: () => Promise<void>;
@@ -33,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
+  const [entrandoSocial, setEntrandoSocial] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -175,6 +178,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const loginSocial = useCallback(
     async (proveedor: 'google' | 'facebook', scopes?: string) => {
+      let exito = false;
+      // Tapa la pantalla de bienvenida con "Entrando a Cookly…" hasta que la sesión esté lista.
+      setEntrandoSocial(true);
+      try {
       const redirectTo = Linking.createURL('auth/callback'); // usa el scheme "cookly" de app.json
 
       // Mientras la persona elige su cuenta en el navegador, el servidor se va despertando.
@@ -208,6 +215,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ]);
 
       await guardarSesion(respuesta.token, { nombre: respuesta.nombre, rol: respuesta.rol, correo: respuesta.correo });
+      exito = true;
+      } finally {
+        // Si salió bien, se mantiene un instante para cubrir el cambio a Inicio; si falló o se canceló, se quita ya.
+        if (exito) setTimeout(() => setEntrandoSocial(false), 700);
+        else setEntrandoSocial(false);
+      }
     },
     [guardarSesion]
   );
@@ -239,8 +252,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const valor = useMemo(
-    () => ({ usuario, token, cargando, login, registrar, loginConGoogle, loginConFacebook, logout, actualizarNombre }),
-    [usuario, token, cargando, login, registrar, loginConGoogle, loginConFacebook, logout, actualizarNombre]
+    () => ({ usuario, token, cargando, entrandoSocial, login, registrar, loginConGoogle, loginConFacebook, logout, actualizarNombre }),
+    [usuario, token, cargando, entrandoSocial, login, registrar, loginConGoogle, loginConFacebook, logout, actualizarNombre]
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;

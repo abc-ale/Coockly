@@ -1,6 +1,6 @@
 // app/_layout.tsx
 import { useEffect } from 'react';
-import { AppState } from 'react-native';
+import { ActivityIndicator, AppState, StyleSheet, Text, View } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -8,7 +8,8 @@ import { useFonts } from 'expo-font';
 import { Fredoka_600SemiBold, Fredoka_700Bold } from '@expo-google-fonts/fredoka';
 import { Nunito_700Bold } from '@expo-google-fonts/nunito';
 import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from '@expo-google-fonts/dm-sans';
-import { AuthProvider } from '../context/AuthContext';
+import { AuthProvider, useAuth } from '../context/AuthContext';
+import { colors } from '../constants/theme';
 import { despertarServidor } from '../lib/api';
 import { DialogoProvider } from '../components/Dialogo';
 import { AvisoProvider } from '../components/Aviso';
@@ -28,6 +29,31 @@ router.push = ((href: any) => {
   ultimoPush = ahora;
   pushOriginal(href);
 }) as typeof router.push;
+
+// Pantalla "Entrando a Cookly…": tapa la bienvenida mientras termina el inicio de sesión con Google.
+function CapaEntrando() {
+  const { entrandoSocial } = useAuth();
+  if (!entrandoSocial) return null;
+  return (
+    <View style={estilos.capa}>
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text style={estilos.texto}>Entrando a Cookly…</Text>
+    </View>
+  );
+}
+
+const estilos = StyleSheet.create({
+  capa: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 14,
+    zIndex: 999,
+    elevation: 999,
+  },
+  texto: { fontFamily: 'DMSans_500Medium', fontSize: 16, color: colors.primary },
+});
 
 // Mantiene la pantalla de carga visible hasta que las fuentes estén listas.
 SplashScreen.preventAutoHideAsync();
@@ -80,6 +106,7 @@ export default function RootLayout() {
           <Stack.Screen name="chatbot" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
           <Stack.Screen name="create-post" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         </Stack>
+        <CapaEntrando />
        </AvisoProvider>
       </DialogoProvider>
     </AuthProvider>

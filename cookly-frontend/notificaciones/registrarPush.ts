@@ -43,9 +43,12 @@ async function guardarToken(): Promise<void> {
       (Constants.expoConfig as any)?.extra?.eas?.projectId ?? (Constants as any).easConfig?.projectId;
     const { data: token } = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
     tokenActual = token;
-    await supabase.rpc('registrar_push_token', { p_token: token, p_plataforma: Platform.OS });
-  } catch {
+    const { error } = await supabase.rpc('registrar_push_token', { p_token: token, p_plataforma: Platform.OS });
+    if (error) console.log('PUSH: Supabase no guardó el token:', error.message);
+    else console.log('PUSH: teléfono registrado', token);
+  } catch (e: any) {
     // En Expo Go (Android) o sin proyecto EAS no se puede obtener el token: la app sigue normal.
+    console.log('PUSH: no se pudo registrar el teléfono:', e?.message ?? e);
   }
 }
 
