@@ -55,7 +55,7 @@ function CargandoCookly() {
 }
 
 export default function LoginScreen() {
-  const { token, login, registrar, loginConGoogle, loginConFacebook } = useAuth();
+  const { token, login, registrar, loginConGoogle } = useAuth();
   const { width, height } = useWindowDimensions();
   const scrollX = useRef(new Animated.Value(0)).current;
   const pager = useRef<any>(null);
@@ -81,8 +81,7 @@ export default function LoginScreen() {
   const [cargandoEmail, setCargandoEmail] = useState(false);
   const [cargandoRegistro, setCargandoRegistro] = useState(false);
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
-  const [cargandoFacebook, setCargandoFacebook] = useState(false);
-  const cargandoAlguno = cargandoEmail || cargandoRegistro || cargandoGoogle || cargandoFacebook;
+  const cargandoAlguno = cargandoEmail || cargandoRegistro || cargandoGoogle;
 
   useEffect(() => {
     despertarServidor();
@@ -124,19 +123,6 @@ export default function LoginScreen() {
     } catch (error: any) {
       setCargandoRegistro(false);
       mostrarAlerta('Error', mensajeDeError(error, 'No se pudo crear la cuenta.'));
-    }
-  }
-
-  async function manejarLoginFacebook() {
-    if (cargandoAlguno) return;
-    setCargandoFacebook(true);
-    try {
-      await loginConFacebook();
-      router.replace('/(tabs)/home');
-    } catch (error: any) {
-      setCargandoFacebook(false);
-      if (String(error?.message).includes('cancelado')) return;
-      mostrarAlerta('Error', mensajeDeError(error, 'No se pudo iniciar sesión con Facebook.'));
     }
   }
 
@@ -232,7 +218,6 @@ export default function LoginScreen() {
           <PantallaLogin
             onLogin={manejarLogin}
             onGoogle={manejarLoginGoogle}
-            onFacebook={manejarLoginFacebook}
             onRegistrar={manejarRegistro}
             onOlvide={() => router.push('/olvide-contrasena')}
             cargando={cargandoEmail}

@@ -17,6 +17,7 @@
     },
     "android": {
       "package": "com.cooklyteam.cookly",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#FF4D80",
         "foregroundImage": "./assets/images/adaptive-icon.png",

@@ -19,15 +19,13 @@ type Props = {
   onLogin: (email: string, password: string) => void;
   onRegistrar: (nombre: string, email: string, password: string) => void;
   onGoogle: () => void;
-  onFacebook: () => void;
   onOlvide: () => void;
   cargando?: boolean;          // entrando con correo
   cargandoRegistro?: boolean;  // creando la cuenta
 };
 
-// Logos de Google y Facebook alojados en Cloudinary.
+// Logo de Google alojado en Cloudinary.
 const LOGO_GOOGLE = 'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791669868/google-g.png';
-const LOGO_FACEBOOK = 'https://res.cloudinary.com/pjbmwoxn/image/upload/v1791669860/facebook-f.png';
 
 type Modo = 'login' | 'registro';
 type Foco = 'nombre' | 'email' | 'password' | null;
@@ -47,7 +45,7 @@ function Campo({
 }
 
 export default function PantallaLogin({
-  onLogin, onRegistrar, onGoogle, onFacebook, onOlvide, cargando, cargandoRegistro,
+  onLogin, onRegistrar, onGoogle, onOlvide, cargando, cargandoRegistro,
 }: Props) {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -228,12 +226,6 @@ export default function PantallaLogin({
                   <Presionable style={s.red} onPress={onGoogle}>
                     <Image source={{ uri: LOGO_GOOGLE }} style={{ width: 20, height: 20 }} />
                     <Text style={s.redTexto}>Google</Text>
-                  </Presionable>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Presionable style={s.red} onPress={onFacebook}>
-                    <Image source={{ uri: LOGO_FACEBOOK }} style={{ width: 22, height: 22 }} />
-                    <Text style={s.redTexto}>Facebook</Text>
                   </Presionable>
                 </View>
               </View>

@@ -23,7 +23,6 @@ type AuthContextType = {
   login: (correo: string, contrasena: string) => Promise<void>;
   registrar: (nombre: string, correo: string, contrasena: string) => Promise<void>;
   loginConGoogle: () => Promise<void>;
-  loginConFacebook: () => Promise<void>;
   logout: () => Promise<void>;
   /** Devuelve false si el nombre se guardó pero la Comunidad no pudo actualizarse. */
   actualizarNombre: (nombre: string) => Promise<boolean>;
@@ -173,11 +172,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   /**
-   * Login social (Google/Facebook): abre el navegador con el flujo OAuth de Supabase, recupera
+   * Login social (Google): abre el navegador con el flujo OAuth de Supabase, recupera
    * el access_token de la URL de retorno y lo manda al backend para crear o recuperar el usuario.
    */
   const loginSocial = useCallback(
-    async (proveedor: 'google' | 'facebook', scopes?: string) => {
+    async (proveedor: 'google') => {
       let exito = false;
       // Tapa la pantalla de bienvenida con "Entrando a Cookly…" hasta que la sesión esté lista.
       setEntrandoSocial(true);
@@ -189,7 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: proveedor,
-        options: { redirectTo, skipBrowserRedirect: true, ...(scopes ? { scopes } : {}) },
+        options: { redirectTo, skipBrowserRedirect: true },
       });
       if (error || !data?.url) throw error ?? new Error(`No se pudo iniciar el flujo de ${proveedor}`);
 
@@ -226,7 +225,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const loginConGoogle = useCallback(() => loginSocial('google'), [loginSocial]);
-  const loginConFacebook = useCallback(() => loginSocial('facebook', 'email,public_profile'), [loginSocial]);
 
   const logout = useCallback(async () => {
     setToken(null);
@@ -252,8 +250,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const valor = useMemo(
-    () => ({ usuario, token, cargando, entrandoSocial, login, registrar, loginConGoogle, loginConFacebook, logout, actualizarNombre }),
-    [usuario, token, cargando, entrandoSocial, login, registrar, loginConGoogle, loginConFacebook, logout, actualizarNombre]
+    () => ({ usuario, token, cargando, entrandoSocial, login, registrar, loginConGoogle, logout, actualizarNombre }),
+    [usuario, token, cargando, entrandoSocial, login, registrar, loginConGoogle, logout, actualizarNombre]
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
