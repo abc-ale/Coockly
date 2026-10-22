@@ -38,8 +38,23 @@
       "expo-speech-recognition",
       "expo-web-browser",
       "expo-image",
-      ["expo-splash-screen", { "image": "./assets/images/splash-icon.png", "imageWidth": 200, "resizeMode": "contain", "backgroundColor": "#FF4D80" }],
-      ["expo-notifications", { "icon": "./assets/images/notification-icon.png", "color": "#FF4D80" }]
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#FF4D80"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#FF4D80"
+        }
+      ],
+      "expo-build-properties"
     ],
     "extra": {
       "router": {},
