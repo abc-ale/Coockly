@@ -29,7 +29,7 @@
     comentarios: { titulo: 'Comentarios',          sub: 'Lo que escribe la comunidad. Elimina lo que no corresponda.' },
     resenas:  { titulo: 'Reseñas',              sub: 'Calificaciones y opiniones de las recetas. Elimina lo que no corresponda.' },
     recetas:  { titulo: 'Recetas',               sub: 'Todas las recetas publicadas, con su autor.' },
-    historial: { titulo: 'Historial de acciones', sub: 'Qué hicieron los administradores y cuándo (últimas 200).' },
+    historial: { titulo: 'Historial de acciones', sub: 'Qué hicieron los administradores y cuándo.' },
     respaldo: { titulo: 'Respaldo y recuperación', sub: 'Copia de seguridad de los datos y cómo recuperarlos.' }
   };
 
@@ -1600,7 +1600,7 @@
       });
 
       cuenta.textContent = lista.length ? 'Mostrando ' + (ini + 1) + '–' + (ini + vis.length) + ' de ' + lista.length + ' acciones' : '0 acciones';
-      pie.textContent = 'Se guardan las últimas 200 acciones.';
+      pie.textContent = 'Se muestran todas las acciones registradas.';
       vaciar(pager);
       if (paginas > 1) {
         var mk = function (txt, p, on, off) {

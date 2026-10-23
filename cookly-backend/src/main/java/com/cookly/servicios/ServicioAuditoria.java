@@ -39,7 +39,6 @@ public class ServicioAuditoria {
         return jdbc.queryForList(
                 "SELECT id, admin_correo AS admin, accion, detalle, "
                         + "to_char(creado_en AT TIME ZONE ?, 'YYYY-MM-DD HH24:MI') AS fecha "
-                        + "FROM acciones_admin ORDER BY id DESC LIMIT 200", zona);
+                        + "FROM acciones_admin ORDER BY id DESC", zona);
     }
 }
-
