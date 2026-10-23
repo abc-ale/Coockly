@@ -1239,7 +1239,7 @@
     cont.appendChild(aviso2);
     var fallos = 0;
     function avisar(texto) { aviso2.textContent = texto; aviso2.hidden = false; }
-    if (!conFoto) avisar('Tus recetas aún no tienen foto. Ábrelas y súbeles una imagen para que luzcan deliciosas en la app.');
+    if (!conFoto) avisar('Tus recetas aún no tienen foto.');
     var muro = el('div', { clase: 'rc-wall' }), pie = el('span'), pager = el('div', { clase: 'rs-pg rc-pg' });
     cont.appendChild(el('div', { clase: 'rc-card' }, [muro, el('div', { clase: 'rc-pie' }, [pie, pager])]));
     var estado = { pagina: 1 };
@@ -1270,14 +1270,17 @@
         var pc = el('span', { clase: 'rc-sp' + (d.c ? '' : ' cero'), title: 'Comentarios' }, [icono(D_CHAT), document.createTextNode(String(d.c))]);
         var pf = el('span', { clase: 'rc-sp fav' + (d.fav ? '' : ' cero'), title: 'Favoritos' }, [icono(D_CORAZON, true), document.createTextNode(String(d.fav))]);
         var del = el('button', { type: 'button', clase: 'rc-x', 'data-id': d.id, title: 'Eliminar', 'aria-label': 'Eliminar ' + d.nom }, [icono(D_BASURA)]);
-        muro.appendChild(el('article', { clase: 'rc-item' }, [
+        var tarjeta = el('article', { clase: 'rc-item', tabindex: '0', title: 'Abrir para editar', style: 'cursor:pointer' }, [
           portada(d),
           el('div', { clase: 'rc-body' }, [
             el('h3', { texto: d.nom }),
             el('div', { clase: 'rc-au' }, [av, el('span', { clase: 'rc-an', texto: d.aut }), el('small', { texto: d.fe })]),
             el('div', { clase: 'rc-st' }, [pc, pf, del])
           ])
-        ]));
+        ]);
+        tarjeta.addEventListener('click', function (e) { if (e.target.closest('button')) return; abrirNuevaReceta(d.id); });
+        tarjeta.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target === tarjeta) abrirNuevaReceta(d.id); });
+        muro.appendChild(tarjeta);
       });
       pie.textContent = 'Mostrando ' + (ini + 1) + '–' + (ini + vis.length) + ' de ' + datos.length + ' recetas';
       vaciar(pager);
@@ -1298,8 +1301,10 @@
 
   // ------------------------------------------------------------------ nueva receta (formulario con foto a Cloudinary)
 
-  function abrirNuevaReceta() {
+  function abrirNuevaReceta(editId) {
     if (document.getElementById('nr-fondo')) return;
+    var editando = !!editId, fotosActuales = [], etiquetasActuales = null, cargado = !editando;
+    var textoGuardar = editando ? 'Guardar cambios' : 'Guardar receta';
     var foto = null, enviando = false, urlVista = null, valorMin = null;
     var SVGNS = 'http://www.w3.org/2000/svg';
     function icono(d) {
@@ -1334,12 +1339,16 @@
         caja.appendChild(el('img', { alt: 'Vista previa de la foto', src: urlVista }));
         textoFoto.appendChild(el('b', { texto: foto.name.length > 34 ? foto.name.slice(0, 31) + '…' : foto.name }));
         textoFoto.appendChild(el('small', { texto: 'Foto lista. Puedes cambiarla.' }));
+      } else if (fotosActuales.length && /^https:\/\//.test(fotosActuales[0].url || '')) {
+        caja.appendChild(el('img', { alt: 'Foto actual de la receta', src: fotosActuales[0].url }));
+        textoFoto.appendChild(el('b', { texto: 'Foto actual' }));
+        textoFoto.appendChild(el('small', { texto: 'Elige otra si quieres cambiarla.' }));
       } else {
         caja.appendChild(icono(D_CAMARA));
         textoFoto.appendChild(el('b', { texto: 'Agrega una foto' }));
         textoFoto.appendChild(el('small', { texto: 'O arrástrala aquí · JPG o PNG · máx. 8 MB' }));
       }
-      bElegir.textContent = foto ? 'Cambiar foto' : 'Elegir foto';
+      bElegir.textContent = (foto || fotosActuales.length) ? 'Cambiar foto' : 'Elegir foto';
       bQuitar.hidden = !foto;
     }
     function tomarFoto(f) {
@@ -1436,7 +1445,7 @@
 
     var error = el('p', { clase: 'nr-error', hidden: true, role: 'alert' });
     var quien = (estado.sesion && estado.sesion.nombre) || 'Administrador';
-    var guardar = el('button', { type: 'submit', clase: 'nr-guardar', texto: 'Guardar receta' });
+    var guardar = el('button', { type: 'submit', clase: 'nr-guardar', texto: textoGuardar });
     var cancelar = el('button', { type: 'button', clase: 'nr-cancelar', texto: 'Cancelar' });
     var masIng = el('button', { type: 'button', clase: 'nr-mas', texto: '+ Agregar otro ingrediente' });
     var masPaso = el('button', { type: 'button', clase: 'nr-mas', texto: '+ Agregar otro paso' });
@@ -1445,7 +1454,7 @@
 
     var form = el('form', { clase: 'nr-modal', novalidate: true, role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'nr-titulo' }, [
       el('div', { clase: 'nr-cab' }, [
-        el('div', null, [el('h2', { id: 'nr-titulo', texto: 'Nueva receta' }), el('p', { texto: 'Publicas como ' + quien + '. Lo marcado con * es obligatorio.' })]),
+        el('div', null, [el('h2', { id: 'nr-titulo', texto: editando ? 'Editar receta' : 'Nueva receta' }), el('p', { texto: (editando ? 'Cambia lo que necesites y guarda. ' : 'Publicas como ' + quien + '. ') + 'Lo marcado con * es obligatorio.' })]),
         el('button', { type: 'button', clase: 'nr-x', 'aria-label': 'Cerrar', texto: '×' })
       ]),
       el('div', { clase: 'nr-cuerpo' }, [
@@ -1474,10 +1483,48 @@
     actualizar();
     nombre.focus();
 
+    if (editando) {
+      guardar.disabled = true; guardar.textContent = 'Cargando…';
+      json('/administracion/recetas/' + editId + '/detalle').then(function (d) {
+        nombre.value = d.nombre || '';
+        if (d.descripcion) { descripcion.value = d.descripcion; opcional.open = true; }
+        var m = d.minutosPreparacion;
+        if (m) {
+          var hallado = false;
+          Array.prototype.forEach.call(chips.children, function (c, i) {
+            var v = [15, 30, 45, 60, 0][i];
+            if (v === m) { c.classList.add('on'); c.setAttribute('aria-pressed', 'true'); valorMin = m; hallado = true; }
+          });
+          if (!hallado) { chips.lastChild.classList.add('on'); chips.lastChild.setAttribute('aria-pressed', 'true'); minutos.hidden = false; minutos.value = String(m); }
+        }
+        vaciar(ingredientes); vaciar(pasos);
+        (d.ingredientes || []).forEach(function (ing) {
+          filaIngrediente();
+          var f = ingredientes.lastChild, i = f.querySelectorAll('input'), sel = f.querySelector('select');
+          i[0].value = ing.nombre || '';
+          i[1].value = ing.cantidad === null || ing.cantidad === undefined ? '' : String(ing.cantidad);
+          if (ing.unidad) {
+            if (!Array.prototype.some.call(sel.options, function (o) { return o.value === ing.unidad; })) sel.appendChild(el('option', { value: ing.unidad, texto: ing.unidad }));
+            sel.value = ing.unidad;
+          }
+        });
+        if (!ingredientes.children.length) filaIngrediente();
+        (d.pasos || []).forEach(function (p) { filaPaso(); pasos.lastChild.querySelector('textarea').value = p.instruccion || ''; });
+        if (!pasos.children.length) filaPaso();
+        etiquetasActuales = d.etiquetas || [];
+        fotosActuales = d.imagenes || [];
+        pintarFoto(); actualizar();
+        cargado = true; guardar.disabled = false; guardar.textContent = textoGuardar;
+      }).catch(function (ex) {
+        if (ex.message !== 'sesion') fallo('No se pudo cargar la receta: ' + ex.message);
+        guardar.textContent = 'Cerrar'; guardar.type = 'button'; guardar.disabled = false; guardar.onclick = function () { cerrar(); };
+      });
+    }
+
     function fallo(t, campo) { error.textContent = t; error.hidden = false; if (campo) campo.focus(); }
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      if (enviando) return;
+      if (enviando || !cargado) return;
       error.hidden = true;
       var nom = nombre.value.trim();
       if (!nom) { fallo('Escribe el nombre de la receta.', nombre); return; }
@@ -1486,9 +1533,13 @@
       if (!pas.length) { fallo('Agrega al menos un paso.', pasos.querySelector('textarea')); return; }
       var min = minutos.hidden ? valorMin : (minutos.value ? Number(minutos.value) : null);
       var cuerpo = { nombre: nom, descripcion: descripcion.value.trim() || null, minutosPreparacion: min, ingredientes: ings, pasos: pas };
+      if (editando) cuerpo.etiquetas = etiquetasActuales || [];
       enviando = true; guardar.disabled = true; cancelar.disabled = true; guardar.textContent = 'Guardando…';
       var recetaId = null;
-      json('/recetas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) })
+      var peticion = editando
+        ? json('/administracion/recetas/' + editId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) }).then(function () { return { id: editId }; })
+        : json('/recetas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
+      peticion
         .then(function (r) {
           recetaId = r.id;
           if (!foto) return null;
@@ -1501,15 +1552,20 @@
               .then(function (x) { return x.json().then(function (c) { if (!x.ok) throw new Error((c && c.error && c.error.message) || 'No se pudo subir la foto'); return c; }); })
               .then(function (c) {
                 return json('/imagenes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recetaId: recetaId, url: c.secure_url, identificadorPublico: c.public_id }) });
+              })
+              .then(function () {
+                // Al cambiar la foto, se quitan las anteriores para que la nueva sea la portada.
+                if (!editando) return null;
+                return Promise.all(fotosActuales.map(function (a) { return json('/imagenes/' + a.id, { method: 'DELETE' }).catch(function () { return null; }); }));
               });
           });
         })
-        .then(function () { enviando = false; cerrar(); aviso('Receta creada.'); return cargarLista('recetas'); })
+        .then(function () { enviando = false; cerrar(); aviso(editando ? 'Receta actualizada.' : 'Receta creada.'); return cargarLista('recetas'); })
         .catch(function (ex) {
-          enviando = false; guardar.disabled = false; cancelar.disabled = false; guardar.textContent = 'Guardar receta';
+          enviando = false; guardar.disabled = false; cancelar.disabled = false; guardar.textContent = textoGuardar;
           if (ex.message === 'sesion') return;
           if (recetaId) {
-            fallo('La receta se creó, pero la foto falló: ' + ex.message + '. Puedes agregarle la foto desde la app.');
+            fallo('La receta se ' + (editando ? 'guardó' : 'creó') + ', pero la foto falló: ' + ex.message + '. Puedes intentarlo de nuevo.');
             cargarLista('recetas').catch(function () {});
             guardar.textContent = 'Cerrar'; guardar.type = 'button'; guardar.onclick = function () { cerrar(); };
           } else fallo(ex.message);
@@ -1722,7 +1778,7 @@
 
   function iniciarListas() {
     var nueva = $('btn-nueva-receta');
-    if (nueva) nueva.addEventListener('click', abrirNuevaReceta);
+    if (nueva) nueva.addEventListener('click', function () { abrirNuevaReceta(); });
     ['comentarios', 'resenas', 'recetas'].forEach(function (nombre) {
       var cfg = LISTAS[nombre];
       var espera = null;
