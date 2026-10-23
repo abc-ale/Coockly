@@ -1,6 +1,6 @@
 // app/cambiar-contrasena.tsx
 // Cambiar contraseña según el mockup: tres campos con ojito, barra de seguridad y lista de requisitos.
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
@@ -69,11 +69,19 @@ export default function CambiarContrasenaScreen() {
   const [confirmar, setConfirmar] = useState('');
   const [ver, setVer] = useState({ actual: false, nueva: false, confirmar: false });
   const [guardando, setGuardando] = useState(false);
+  // false = la cuenta entró con Google y todavía no tiene contraseña: no se pide la actual.
+  const [tienePropia, setTienePropia] = useState(true);
+
+  useEffect(() => {
+    api.get('/perfil/contrasena/estado')
+      .then(({ data }) => setTienePropia(data?.tienePropia !== false))
+      .catch(() => {});
+  }, []);
 
   const largo = nueva.length >= MINIMO;
   const mayusNumero = /[A-ZÁÉÍÓÚÑ]/.test(nueva) && /\d/.test(nueva);
   const coincide = nueva.length > 0 && nueva === confirmar;
-  const todoOk = actual.length > 0 && largo && mayusNumero && coincide;
+  const todoOk = (!tienePropia || actual.length > 0) && largo && mayusNumero && coincide;
 
   // Seguridad: 0 a 4 puntos (largo, mayúscula y número, símbolo, largo de 14 o más).
   const puntos = useMemo(() => {
@@ -92,7 +100,7 @@ export default function CambiarContrasenaScreen() {
     if (guardando || !todoOk) return;
     setGuardando(true);
     try {
-      await api.put('/perfil/contrasena', { contrasenaActual: actual, contrasenaNueva: nueva });
+      await api.put('/perfil/contrasena', { contrasenaActual: tienePropia ? actual : undefined, contrasenaNueva: nueva });
       exito();
       mostrarAviso('Contraseña actualizada', 'exito');
       router.back();
@@ -126,7 +134,13 @@ export default function CambiarContrasenaScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Campo etiqueta="Contraseña actual" valor={actual} alCambiar={setActual} mostrar={ver.actual} alMostrar={() => setVer((v) => ({ ...v, actual: !v.actual }))} />
+        {!tienePropia ? (
+          <Text style={{ fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.textMuted, marginBottom: 12 }}>
+            Entraste con Google, así que aún no tienes contraseña. Crea una para poder entrar también con tu correo.
+          </Text>
+        ) : (
+          <Campo etiqueta="Contraseña actual" valor={actual} alCambiar={setActual} mostrar={ver.actual} alMostrar={() => setVer((v) => ({ ...v, actual: !v.actual }))} />
+        )}
         <Campo etiqueta="Nueva contraseña" valor={nueva} alCambiar={setNueva} mostrar={ver.nueva} alMostrar={() => setVer((v) => ({ ...v, nueva: !v.nueva }))} />
         <Campo etiqueta="Confirmar contraseña" valor={confirmar} alCambiar={setConfirmar} mostrar={ver.confirmar} alMostrar={() => setVer((v) => ({ ...v, confirmar: !v.confirmar }))} />
 

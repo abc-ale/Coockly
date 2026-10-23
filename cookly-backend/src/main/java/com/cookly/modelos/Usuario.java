@@ -13,6 +13,8 @@ public class Usuario {
     @Column(nullable = false) private String nombre;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private Rol rol = Rol.USUARIO;
     private boolean activo = true;
+    /** false = cuenta creada con Google: tiene una contraseña aleatoria que nadie conoce. */
+    @JsonIgnore @Column(name = "contrasena_propia", nullable = false) private boolean contrasenaPropia = true;
     private Instant creadoEn = Instant.now();
     public Long getId() { return id; }
     public String getCorreo() { return correo; }
@@ -20,10 +22,12 @@ public class Usuario {
     public String getNombre() { return nombre; }
     public Rol getRol() { return rol; }
     public boolean isActivo() { return activo; }
+    public boolean isContrasenaPropia() { return contrasenaPropia; }
     public Instant getCreadoEn() { return creadoEn; }
     public void setCorreo(String v) { correo = v; }
     public void setContrasena(String v) { contrasena = v; }
     public void setNombre(String v) { nombre = v; }
     public void setRol(Rol v) { rol = v; }
     public void setActivo(boolean v) { activo = v; }
+    public void setContrasenaPropia(boolean v) { contrasenaPropia = v; }
 }

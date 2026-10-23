@@ -29,6 +29,12 @@ public class ControladorPerfil {
         return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada correctamente."));
     }
 
+    /** La app lo usa para saber si pide "contraseña actual" (false = cuenta de Google sin contraseña propia). */
+    @GetMapping("/contrasena/estado")
+    public ResponseEntity<Map<String, Boolean>> estadoContrasena(Authentication autenticacion) {
+        return ResponseEntity.ok(Map.of("tienePropia", servicio.tieneContrasenaPropia(autenticacion.getName())));
+    }
+
     /** Cambia el nombre que se muestra de la persona que tiene la sesión iniciada. */
     @PutMapping("/nombre")
     public ResponseEntity<Map<String, String>> cambiarNombre(Authentication autenticacion,

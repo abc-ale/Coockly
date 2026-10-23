@@ -191,6 +191,7 @@ public class ServicioAutenticacion {
         usuario.setContrasena(
                 codificador.encode(nuevaContrasena)
         );
+        usuario.setContrasenaPropia(true);
 
         usuarios.save(usuario);
 
@@ -278,6 +279,14 @@ public class ServicioAutenticacion {
         return respuesta(usuario);
     }
 
+    /** true si la cuenta ya tiene una contraseña que la persona conoce (false = entró con Google). */
+    @Transactional(readOnly = true)
+    public boolean tieneContrasenaPropia(String correo) {
+        return usuarios.findByCorreo(correo.toLowerCase().trim())
+                .map(Usuario::isContrasenaPropia)
+                .orElse(true);
+    }
+
     @Transactional
     public void cambiarMiContrasena(
             String correo,
@@ -292,18 +301,20 @@ public class ServicioAutenticacion {
                 )
         );
 
-        if (!codificador.matches(
-                contrasenaActual,
-                usuario.getContrasena()
-        )) {
-            throw new IllegalArgumentException(
-                    "La contraseña actual no es correcta"
-            );
+        // Cuenta creada con Google: aún no tiene contraseña propia, así que no hay "actual" que pedir.
+        if (usuario.isContrasenaPropia()) {
+            if (contrasenaActual == null || contrasenaActual.isBlank()
+                    || !codificador.matches(contrasenaActual, usuario.getContrasena())) {
+                throw new IllegalArgumentException(
+                        "La contraseña actual no es correcta"
+                );
+            }
         }
 
         usuario.setContrasena(
                 codificador.encode(contrasenaNueva)
         );
+        usuario.setContrasenaPropia(true);
 
         usuarios.save(usuario);
     }
@@ -336,6 +347,7 @@ public class ServicioAutenticacion {
         usuario.setContrasena(
                 codificador.encode(nuevaContrasena)
         );
+        usuario.setContrasenaPropia(true);
 
         usuarios.save(usuario);
     }
@@ -367,6 +379,8 @@ public class ServicioAutenticacion {
                                             .toString()
                             )
                     );
+
+                    nuevo.setContrasenaPropia(false);
 
                     usuarios.save(nuevo);
                     return nuevo;

@@ -61,6 +61,12 @@ export default function NotificacionesVacio() {
         texto="Apenas salga una receta nueva, serás la primera en saber."
       />
       <Fila
+        fondo="#FFC2CF"
+        icono="heart-outline"
+        titulo="Reacciones"
+        texto="Cuando alguien le dé like o comente tus publicaciones."
+      />
+      <Fila
         fondo="#BEE3A5"
         icono="flag-outline"
         titulo="Tus reportes"
