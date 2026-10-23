@@ -1239,7 +1239,7 @@
     cont.appendChild(aviso2);
     var fallos = 0;
     function avisar(texto) { aviso2.textContent = texto; aviso2.hidden = false; }
-    if (!conFoto) avisar('El servidor todavía no envía las fotos de las recetas (campo imagenUrl). Falta actualizar el backend en Render.');
+    if (!conFoto) avisar('Tus recetas aún no tienen foto. Ábrelas y súbeles una imagen para que luzcan deliciosas en la app.');
     var muro = el('div', { clase: 'rc-wall' }), pie = el('span'), pager = el('div', { clase: 'rs-pg rc-pg' });
     cont.appendChild(el('div', { clase: 'rc-card' }, [muro, el('div', { clase: 'rc-pie' }, [pie, pager])]));
     var estado = { pagina: 1 };
