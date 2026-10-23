@@ -1202,6 +1202,7 @@
     var D_CHAT = 'M4 5h16v11H9l-5 4z';
     var D_CORAZON = 'M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z';
     var D_BASURA = 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3';
+    var D_LAPIZ = 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4';
     // Misma optimización que usa la app: Cloudinary entrega la foto liviana (ancho 500, calidad 80).
     function optimizar(url) {
       if (!url) return '';
@@ -1269,13 +1270,16 @@
         av.style.background = cu; av.style.color = cu === '#FF4D82' ? '#fff' : '#2B1020';
         var pc = el('span', { clase: 'rc-sp' + (d.c ? '' : ' cero'), title: 'Comentarios' }, [icono(D_CHAT), document.createTextNode(String(d.c))]);
         var pf = el('span', { clase: 'rc-sp fav' + (d.fav ? '' : ' cero'), title: 'Favoritos' }, [icono(D_CORAZON, true), document.createTextNode(String(d.fav))]);
-        var del = el('button', { type: 'button', clase: 'rc-x', 'data-id': d.id, title: 'Eliminar', 'aria-label': 'Eliminar ' + d.nom }, [icono(D_BASURA)]);
+        var ed = el('button', { type: 'button', clase: 'rc-sp', title: 'Editar receta', 'aria-label': 'Editar ' + d.nom,
+          style: 'margin-left:auto;border:0;cursor:pointer;background:#FF4D82;color:#fff;font-family:inherit' }, [icono(D_LAPIZ), document.createTextNode('Editar')]);
+        ed.addEventListener('click', function () { abrirNuevaReceta(d.id); });
+        var del = el('button', { type: 'button', clase: 'rc-x', style: 'margin-left:0', 'data-id': d.id, title: 'Eliminar', 'aria-label': 'Eliminar ' + d.nom }, [icono(D_BASURA)]);
         var tarjeta = el('article', { clase: 'rc-item', tabindex: '0', title: 'Abrir para editar', style: 'cursor:pointer' }, [
           portada(d),
           el('div', { clase: 'rc-body' }, [
             el('h3', { texto: d.nom }),
             el('div', { clase: 'rc-au' }, [av, el('span', { clase: 'rc-an', texto: d.aut }), el('small', { texto: d.fe })]),
-            el('div', { clase: 'rc-st' }, [pc, pf, del])
+            el('div', { clase: 'rc-st' }, [pc, pf, ed, del])
           ])
         ]);
         tarjeta.addEventListener('click', function (e) { if (e.target.closest('button')) return; abrirNuevaReceta(d.id); });
