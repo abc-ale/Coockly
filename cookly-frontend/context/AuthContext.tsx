@@ -7,6 +7,8 @@ import { router } from 'expo-router';
 import { api, despertarServidor, registrarNoAutorizado } from '../lib/api';
 import { supabase } from '../lib/supabase';
 import { actualizarPerfilSupabase } from '../lib/perfilSupabase';
+import { quitarPushToken } from '../notificaciones/registrarPush';
+import { cancelarRecordatorios } from '../lib/recordatorios';
 
 type Usuario = {
   nombre: string;
@@ -227,6 +229,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginConGoogle = useCallback(() => loginSocial('google'), [loginSocial]);
 
   const logout = useCallback(async () => {
+    // Primero, mientras la sesión sigue activa: el servidor necesita saber quién es.
+    await quitarPushToken();
+    await cancelarRecordatorios();
     setToken(null);
     setUsuario(null);
     await Promise.all([AsyncStorage.multiRemove(['cookly_token', 'cookly_user']), supabase.auth.signOut()]);

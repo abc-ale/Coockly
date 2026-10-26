@@ -82,25 +82,3 @@ export function Presionable({ children, style, escalaAlPresionar = 0.94, onPress
     </Pressable>
   );
 }
-
-/** Late suavemente sin parar (para llamar la atención sobre un botón). */
-export function Pulso({ children, style, intensidad = 1.04 }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; intensidad?: number }) {
-  const latido = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const bucle = Animated.loop(
-      Animated.sequence([
-        Animated.timing(latido, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(latido, { toValue: 0, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ])
-    );
-    bucle.start();
-    return () => bucle.stop();
-  }, [latido]);
-
-  return (
-    <Animated.View style={[style, { transform: [{ scale: latido.interpolate({ inputRange: [0, 1], outputRange: [1, intensidad] }) }] }]}>
-      {children}
-    </Animated.View>
-  );
-}

@@ -5,3 +5,4 @@ cookly-android/app/build/
 /local.properties
 *.apk
 *.aab
+.vscode/

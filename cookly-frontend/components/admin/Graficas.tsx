@@ -68,60 +68,6 @@ export function Segmentos<T extends string | number>({ opciones, valor, onCambio
 
 type PuntoBarra = { etiqueta: string; valor: number };
 
-export function GraficaBarras({ datos, color = colors.primaryDark, formato }: {
-  datos: PuntoBarra[];
-  color?: string;
-  formato?: (n: number) => string;
-}) {
-  const [seleccion, setSeleccion] = useState<number | null>(null);
-  const ALTO = 120;
-
-  if (datos.length === 0) return <Text style={estilos.vacio}>Todavía no hay datos.</Text>;
-
-  const maximo = Math.max(1, ...datos.map((d) => d.valor));
-  const mostrar = formato ?? ((n: number) => String(n));
-  const actual = seleccion !== null ? datos[seleccion] : null;
-  const medio = datos[Math.floor((datos.length - 1) / 2)];
-
-  return (
-    <View>
-      <Text style={estilos.lectura} accessibilityLiveRegion="polite">
-        {actual ? `${actual.etiqueta}: ${mostrar(actual.valor)}` : 'Toca una barra para ver el valor'}
-      </Text>
-      <View style={[estilos.barras, { height: ALTO }]}>
-        {datos.map((d, i) => {
-          const alto = d.valor > 0 ? Math.max(3, (d.valor / maximo) * ALTO) : 0;
-          return (
-            <Pressable
-              key={`${d.etiqueta}-${i}`}
-              style={estilos.barraZona}
-              onPress={() => setSeleccion(seleccion === i ? null : i)}
-              accessibilityLabel={`${d.etiqueta}: ${mostrar(d.valor)}`}
-            >
-              <View
-                style={{
-                  height: alto,
-                  backgroundColor: seleccion === i ? colors.text : color,
-                  borderTopLeftRadius: 3,
-                  borderTopRightRadius: 3,
-                  opacity: seleccion === null || seleccion === i ? 1 : 0.45,
-                }}
-              />
-            </Pressable>
-          );
-        })}
-      </View>
-      <View style={estilos.base} />
-      <View style={estilos.ejeX}>
-        <Text style={estilos.ejeTexto}>{datos[0].etiqueta}</Text>
-        <Text style={estilos.ejeTexto}>{datos.length > 2 ? medio.etiqueta : ''}</Text>
-        <Text style={estilos.ejeTexto}>{datos[datos.length - 1].etiqueta}</Text>
-      </View>
-      <Text style={estilos.maximo}>Máximo: {mostrar(maximo)}</Text>
-    </View>
-  );
-}
-
 /**
  * Gráfica de líneas hecha solo con View: cada tramo es una barrita fina girada entre dos puntos.
  * Toca la gráfica para ver el valor exacto de un día.
@@ -300,8 +246,6 @@ const estilos = StyleSheet.create({
   segmentoTextoActivo: { color: colors.primaryDark },
   vacio: { ...typography.body, color: colors.textMuted, paddingVertical: spacing.sm },
   lectura: { ...typography.bodySmall, color: colors.textMuted, marginBottom: spacing.sm, minHeight: 18 },
-  barras: { flexDirection: 'row', alignItems: 'flex-end', gap: 1 },
-  barraZona: { flex: 1, height: '100%', justifyContent: 'flex-end' },
   base: { height: 1, backgroundColor: colors.border },
   ejeX: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   ejeTexto: { ...typography.caption, color: colors.textMuted },

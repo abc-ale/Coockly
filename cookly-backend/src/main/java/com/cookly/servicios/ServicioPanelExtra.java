@@ -226,13 +226,4 @@ public class ServicioPanelExtra {
         jdbc.update("INSERT INTO ingredientes_revisados (ingrediente_id) VALUES (?) ON CONFLICT DO NOTHING", ingredienteId);
         auditoria.registrar(admin, "ALERGENOS_ACTUALIZADOS", n.get(0));
     }
-
-    /** Lo que usa la app: solo ingredientes ya revisados, con los ids de alergia que contienen. */
-    @Transactional(readOnly = true)
-    public List<Map<String, Object>> alergenosParaApp() {
-        return jdbc.queryForList(
-                "SELECT i.nombre, COALESCE((SELECT array_to_string(array_agg(ia.alergia_id ORDER BY ia.alergia_id), ',') "
-                        + "FROM ingredientes_alergias ia WHERE ia.ingrediente_id = i.id), '') AS alergias "
-                        + "FROM ingredientes i JOIN ingredientes_revisados r ON r.ingrediente_id = i.id");
-    }
 }
