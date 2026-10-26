@@ -23,7 +23,7 @@
 [data-seccion="usuarios"] .us-card .tabla-envoltura { border: 0; border-radius: 0; box-shadow: none; background: transparent; overflow: visible; margin: 0; padding: 0; }
 
 #tabla-usuarios { width: 100%; table-layout: fixed; border-collapse: collapse; }
-#tabla-usuarios .c-id { width: 76px; } #tabla-usuarios .c-us { width: 26%; } #tabla-usuarios .c-rol { width: 132px; }
+#tabla-usuarios .c-id { width: 96px; } #tabla-usuarios .c-us { width: 26%; } #tabla-usuarios .c-rol { width: 132px; }
 #tabla-usuarios .c-est { width: 100px; } #tabla-usuarios .c-reg { width: 118px; } #tabla-usuarios .c-rec { width: 82px; } #tabla-usuarios .c-ac { width: 56px; }
 #tabla-usuarios th { text-align: left; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: none; color: #7A6670; padding: 13px 16px; background: #FFF9FA; border-bottom: 1px solid #F7E6E8; white-space: nowrap; }
 #tabla-usuarios th:first-child { border-top-left-radius: 0; }
@@ -32,7 +32,7 @@
 #tabla-usuarios td::before { display: none; }
 #tabla-usuarios tbody tr:last-child td { border-bottom: 0; }
 #tabla-usuarios tbody tr:hover td { background: #FFFAFB; }
-#tabla-usuarios td.us-id { color: #7A6670; font-weight: 700; font-size: 13px; }
+#tabla-usuarios td.us-id { color: #7A6670; font-weight: 700; font-size: 13px; white-space: nowrap; overflow-wrap: normal; }
 #tabla-usuarios td.sin-resultados { text-align: center; color: #9A8690; padding: 28px 16px; }
 
 .us-p { display: flex; align-items: center; gap: 11px; min-width: 0; }
