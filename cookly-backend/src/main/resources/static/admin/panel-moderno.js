@@ -31,58 +31,6 @@
     });
   }
 
-  // ---- buscador global (Ctrl+K o "/")
-  var contenido = document.querySelector('.contenido') || document.querySelector('main');
-  if (contenido) {
-    var caja = el('div', 'buscador-global');
-    var campo = el('label', 'bg-campo');
-    var lupa = el('span', 'bg-lupa', '⌕');
-    var entrada = el('input'); entrada.type = 'search'; entrada.placeholder = 'Buscar usuario o receta'; entrada.setAttribute('aria-label', 'Buscar usuario o receta'); entrada.autocomplete = 'off';
-    var tecla = el('kbd', 'bg-tecla', 'Ctrl K');
-    campo.appendChild(lupa); campo.appendChild(entrada); campo.appendChild(tecla);
-    var opciones = el('div', 'bg-opciones'); opciones.hidden = true;
-    caja.appendChild(campo); caja.appendChild(opciones);
-    var cab0 = contenido.querySelector('.cabecera');
-    if (cab0) { var rango = cab0.querySelector('.segmentos'); cab0.insertBefore(caja, rango || null); }
-    else contenido.insertBefore(caja, contenido.firstChild);
-
-    var DESTINOS = [['usuarios', 'Usuarios'], ['recetas', 'Recetas']];
-    function ir(seccion, texto) {
-      var a = document.querySelector('a[data-nav="' + seccion + '"]');
-      if (a) a.click();
-      setTimeout(function () {
-        var sec = document.querySelector('[data-seccion="' + seccion + '"]');
-        var inp = sec && sec.querySelector('input[type="search"], input[type="text"], input:not([type])');
-        if (inp) { inp.value = texto; inp.dispatchEvent(new Event('input', { bubbles: true })); inp.focus(); }
-      }, 60);
-      cerrar();
-    }
-    function cerrar() { opciones.hidden = true; entrada.value = ''; entrada.blur(); }
-    function mostrar() {
-      var t = entrada.value.trim();
-      while (opciones.firstChild) opciones.removeChild(opciones.firstChild);
-      if (!t) { opciones.hidden = true; return; }
-      DESTINOS.forEach(function (d) {
-        var b = el('button', null, 'Buscar «' + t + '» en ' + d[1]); b.type = 'button';
-        b.addEventListener('mousedown', function (e) { e.preventDefault(); ir(d[0], t); });
-        opciones.appendChild(b);
-      });
-      opciones.hidden = false;
-    }
-    entrada.addEventListener('input', mostrar);
-    entrada.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') cerrar();
-      if (e.key === 'Enter' && entrada.value.trim()) ir('usuarios', entrada.value.trim());
-    });
-    entrada.addEventListener('blur', function () { setTimeout(function () { opciones.hidden = true; }, 150); });
-    document.addEventListener('keydown', function (e) {
-      var enCampo = /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '');
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); entrada.focus(); entrada.select(); }
-      else if (e.key === '/' && !enCampo) { e.preventDefault(); entrada.focus(); }
-    });
-    if (/Mac|iPhone|iPad/.test(navigator.platform)) tecla.textContent = '⌘ K';
-  }
-
   // ---- calendario
   var rejilla = document.querySelector('[data-seccion="resumen"] .rejilla');
   if (!rejilla) return;
