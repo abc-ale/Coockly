@@ -14,6 +14,8 @@ import java.util.zip.DeflaterOutputStream;
  * Genera un PDF con una tabla (A4 horizontal) sin librerías externas.
  * Usa las fuentes estándar Helvetica y Helvetica-Bold (incluidas en todos los lectores de PDF)
  * con codificación WinAnsi, que cubre tildes y la ñ.
+ * Colores de la paleta Cookly: rosa oscuro #D93A68 (títulos y encabezado), tinta #2B1220 (texto),
+ * gris #7A6670 (secundario) y blush suave (filas alternas).
  * El logo de Cookly se dibuja en la esquina superior derecha de la primera página
  * (recurso logo-cookly.rgbz: píxeles RGB comprimidos con zlib, 402 x 190).
  */
@@ -69,14 +71,14 @@ public final class GeneradorPdf {
 
         // Portada de la tabla: título, subtítulo y resumen (solo en la primera página)
         y -= 16;
-        texto(pagina, true, 16, MARGEN, y, titulo, 0.76, 0.36, 0.44);
+        texto(pagina, true, 16, MARGEN, y, titulo, 0.851, 0.227, 0.408);
         y -= 16;
         if (subtitulo != null && !subtitulo.isBlank()) {
-            texto(pagina, false, 9, MARGEN, y, subtitulo, 0.55, 0.45, 0.47);
+            texto(pagina, false, 9, MARGEN, y, subtitulo, 0.478, 0.400, 0.439);
             y -= 14;
         }
         for (String linea : resumen) {
-            texto(pagina, false, 9, MARGEN, y, linea, 0.18, 0.13, 0.14);
+            texto(pagina, false, 9, MARGEN, y, linea, 0.169, 0.071, 0.125);
             y -= 12;
         }
         y -= 10;
@@ -84,7 +86,7 @@ public final class GeneradorPdf {
         y = encabezado(pagina, encabezados, columnas, y);
 
         if (filas.isEmpty()) {
-            texto(pagina, false, 9, MARGEN + 4, y - 14, "No hay datos para mostrar.", 0.55, 0.45, 0.47);
+            texto(pagina, false, 9, MARGEN + 4, y - 14, "No hay datos para mostrar.", 0.478, 0.400, 0.439);
         }
 
         int numeroFila = 0;
@@ -94,13 +96,13 @@ public final class GeneradorPdf {
                 y = encabezado(pagina, encabezados, columnas, ALTO - MARGEN);
             }
             if (numeroFila % 2 == 1) {
-                relleno(pagina, MARGEN, y - ALTO_FILA, anchoUtil, ALTO_FILA, 1.0, 0.953, 0.965);
+                relleno(pagina, MARGEN, y - ALTO_FILA, anchoUtil, ALTO_FILA, 0.976, 0.925, 0.933);
             }
             double x = MARGEN;
             for (int c = 0; c < columnas.length; c++) {
                 String celda = c < fila.size() && fila.get(c) != null ? fila.get(c) : "";
                 texto(pagina, false, TAM_TEXTO, x + 4, y - 11,
-                        ajustar(celda, columnas[c] - 8, false), 0.18, 0.13, 0.14);
+                        ajustar(celda, columnas[c] - 8, false), 0.169, 0.071, 0.125);
                 x += columnas[c];
             }
             y -= ALTO_FILA;
@@ -109,9 +111,9 @@ public final class GeneradorPdf {
 
         int total = paginas.size();
         for (int i = 0; i < total; i++) {
-            texto(paginas.get(i), false, 7, MARGEN, 22, pie, 0.55, 0.45, 0.47);
+            texto(paginas.get(i), false, 7, MARGEN, 22, pie, 0.478, 0.400, 0.439);
             String num = "Página " + (i + 1) + " de " + total;
-            texto(paginas.get(i), false, 7, ANCHO - MARGEN - anchoTexto(num, 7, false), 22, num, 0.55, 0.45, 0.47);
+            texto(paginas.get(i), false, 7, ANCHO - MARGEN - anchoTexto(num, 7, false), 22, num, 0.478, 0.400, 0.439);
         }
         return ensamblar(paginas, titulo);
     }
@@ -129,7 +131,7 @@ public final class GeneradorPdf {
         for (double c : columnas) {
             ancho += c;
         }
-        relleno(p, MARGEN, y - ALTO_ENCABEZADO, ancho, ALTO_ENCABEZADO, 0.76, 0.36, 0.44);
+        relleno(p, MARGEN, y - ALTO_ENCABEZADO, ancho, ALTO_ENCABEZADO, 0.851, 0.227, 0.408);
         double x = MARGEN;
         for (int c = 0; c < columnas.length; c++) {
             texto(p, true, TAM_TEXTO, x + 4, y - 13, ajustar(titulos.get(c), columnas[c] - 8, true), 1, 1, 1);
