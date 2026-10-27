@@ -237,6 +237,7 @@ public final class GeneradorPdf {
 
     // ------------------------------------------------------------------ estructura del archivo
 
+    @SuppressWarnings("resource") // el compresor (Deflater) se libera con end() en el bloque finally
     private static byte[] ensamblar(List<StringBuilder> paginas, String titulo) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         List<Integer> posiciones = new ArrayList<>();
@@ -267,8 +268,11 @@ public final class GeneradorPdf {
 
             byte[] crudo = paginas.get(i).toString().getBytes(StandardCharsets.ISO_8859_1);
             ByteArrayOutputStream comprimido = new ByteArrayOutputStream();
-            try (DeflaterOutputStream d = new DeflaterOutputStream(comprimido, new Deflater(Deflater.BEST_COMPRESSION))) {
+            Deflater compresor = new Deflater(Deflater.BEST_COMPRESSION);
+            try (DeflaterOutputStream d = new DeflaterOutputStream(comprimido, compresor)) {
                 d.write(crudo);
+            } finally {
+                compresor.end();
             }
             byte[] datos = comprimido.toByteArray();
             posiciones.add(out.size());
