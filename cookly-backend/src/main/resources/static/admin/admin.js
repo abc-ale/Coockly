@@ -103,6 +103,12 @@
     var cabeceras = Object.assign({}, opciones.headers || {});
     if (estado.sesion) cabeceras.Authorization = 'Bearer ' + estado.sesion.token;
     return fetch(API + ruta, Object.assign({}, opciones, { headers: cabeceras })).then(function (r) {
+      // El servidor entrega un token renovado en cada petición: la sesión solo vence por inactividad.
+      var renovado = r.headers.get('X-Token-Nuevo');
+      if (renovado && estado.sesion && r.status !== 401) {
+        estado.sesion.token = renovado;
+        guardarSesion(estado.sesion);
+      }
       if (r.status === 401 && estado.sesion) {
         cerrarSesion('Tu sesión venció. Entra de nuevo.');
         throw new Error('sesion');

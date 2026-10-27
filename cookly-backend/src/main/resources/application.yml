@@ -37,8 +37,9 @@ server:
 seguridad:
   jwt:
     secreto: ${JWT_SECRETO}
-    # Usuarios: sesión larga (30 días). Administrador: 30 min, se renueva con la actividad.
-    expiracion-minutos: ${JWT_EXPIRACION_MINUTOS:43200}
+    # Usuarios: la sesión no vence (10 años); solo se cierra si la persona sale o desinstala la app.
+    # Administrador: vence tras 30 min SIN actividad (el servidor renueva el token en cada petición).
+    expiracion-minutos: ${JWT_EXPIRACION_MINUTOS:5256000}
     expiracion-admin-minutos: ${JWT_EXPIRACION_ADMIN_MINUTOS:30}
 
 cloudinary:

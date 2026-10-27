@@ -2,6 +2,7 @@ package com.cookly.utilidades;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,8 @@ import java.util.zip.DeflaterOutputStream;
  * Genera un PDF con una tabla (A4 horizontal) sin librerías externas.
  * Usa las fuentes estándar Helvetica y Helvetica-Bold (incluidas en todos los lectores de PDF)
  * con codificación WinAnsi, que cubre tildes y la ñ.
+ * El logo de Cookly se dibuja en la esquina superior derecha de la primera página
+ * (recurso logo-cookly.rgbz: píxeles RGB comprimidos con zlib, 402 x 190).
  */
 public final class GeneradorPdf {
 
@@ -22,6 +25,20 @@ public final class GeneradorPdf {
     private static final double ALTO_FILA = 16;
     private static final double ALTO_ENCABEZADO = 20;
     private static final double TAM_TEXTO = 8;
+
+    private static final int LOGO_ANCHO_PX = 402;
+    private static final int LOGO_ALTO_PX = 190;
+    private static final double LOGO_ALTO = 46;
+    private static final double LOGO_ANCHO = LOGO_ALTO * LOGO_ANCHO_PX / LOGO_ALTO_PX;
+    private static final byte[] LOGO = cargarLogo();
+
+    private static byte[] cargarLogo() {
+        try (InputStream in = GeneradorPdf.class.getResourceAsStream("/logo-cookly.rgbz")) {
+            return in == null ? null : in.readAllBytes();
+        } catch (IOException e) {
+            return null; // sin logo, el PDF se genera igual
+        }
+    }
 
     /** Anchos de Helvetica (milésimas de em) para los caracteres 32 a 126. */
     private static final int[] ANCHOS = {
@@ -43,6 +60,12 @@ public final class GeneradorPdf {
         List<StringBuilder> paginas = new ArrayList<>();
         StringBuilder pagina = nuevaPagina(paginas);
         double y = ALTO - MARGEN;
+
+        if (LOGO != null) {
+            pagina.append("q ").append(num(LOGO_ANCHO)).append(" 0 0 ").append(num(LOGO_ALTO)).append(' ')
+                  .append(num(ANCHO - MARGEN - LOGO_ANCHO)).append(' ').append(num(ALTO - MARGEN - LOGO_ALTO + 8))
+                  .append(" cm /Im1 Do Q\n");
+        }
 
         // Portada de la tabla: título, subtítulo y resumen (solo en la primera página)
         y -= 16;
@@ -216,6 +239,7 @@ public final class GeneradorPdf {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         List<Integer> posiciones = new ArrayList<>();
         int paginasN = paginas.size();
+        int idLogo = 6 + 2 * paginasN;
 
         escribir(out, "%PDF-1.4\n");
         out.write(new byte[] { '%', (byte) 0xE2, (byte) 0xE3, (byte) 0xCF, (byte) 0xD3, '\n' });
@@ -235,7 +259,9 @@ public final class GeneradorPdf {
             int idContenido = 7 + 2 * i;
             objeto(out, posiciones, idPagina,
                     "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + num(ANCHO) + " " + num(ALTO) + "] "
-                            + "/Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents " + idContenido + " 0 R >>");
+                            + "/Resources << /Font << /F1 3 0 R /F2 4 0 R >>"
+                            + (LOGO != null ? " /XObject << /Im1 " + idLogo + " 0 R >>" : "")
+                            + " >> /Contents " + idContenido + " 0 R >>");
 
             byte[] crudo = paginas.get(i).toString().getBytes(StandardCharsets.ISO_8859_1);
             ByteArrayOutputStream comprimido = new ByteArrayOutputStream();
@@ -246,6 +272,15 @@ public final class GeneradorPdf {
             posiciones.add(out.size());
             escribir(out, idContenido + " 0 obj\n<< /Length " + datos.length + " /Filter /FlateDecode >>\nstream\n");
             out.write(datos);
+            escribir(out, "\nendstream\nendobj\n");
+        }
+
+        if (LOGO != null) {
+            posiciones.add(out.size());
+            escribir(out, idLogo + " 0 obj\n<< /Type /XObject /Subtype /Image /Width " + LOGO_ANCHO_PX
+                    + " /Height " + LOGO_ALTO_PX + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /Length "
+                    + LOGO.length + " >>\nstream\n");
+            out.write(LOGO);
             escribir(out, "\nendstream\nendobj\n");
         }
 
