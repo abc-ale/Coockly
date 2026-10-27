@@ -32,41 +32,10 @@ async function llamar(metodo, ruta, { token, cuerpo, cabeceras } = {}) {
 }
 const ok = (r, ...validos) => assert.ok((validos.length ? validos : [200, 201, 204]).includes(r.estado), `HTTP ${r.estado}: ${r.texto.slice(0, 200)}`);
 
-// ------------------------------------------------------------------ servidor y catálogos públicos
+// ------------------------------------------------------------------ servidor
 test('salud: el servidor responde (puede tardar si estaba dormido)', async () => {
   const r = await llamar('GET', '/salud');
   ok(r, 200);
-});
-
-test('catálogos: etiquetas, restricciones y alergias', async () => {
-  const r = await llamar('GET', '/catalogos');
-  ok(r, 200);
-  for (const k of ['etiquetas', 'restricciones', 'alergias']) assert.ok(Array.isArray(r.json[k]), `falta ${k}`);
-  assert.ok(r.json.etiquetas.length > 0, 'no hay etiquetas');
-});
-
-test('recetas: la búsqueda devuelve recetas', async () => {
-  const r = await llamar('GET', '/recetas/buscar?texto=&pagina=0&tamano=20');
-  ok(r, 200);
-  assert.ok(Array.isArray(r.json.content) && r.json.content.length > 0, 'no hay recetas');
-  ctx.recetaId = r.json.content[0].id;
-});
-
-test('recetas: el detalle de una receta trae ingredientes y pasos', async () => {
-  const r = await llamar('GET', `/recetas/${ctx.recetaId}`);
-  ok(r, 200);
-  assert.ok(r.json.nombre);
-});
-
-test('recetas: buscar por texto que no existe devuelve lista vacía', async () => {
-  const r = await llamar('GET', '/recetas/buscar?texto=zzzxxxqqq&pagina=0&tamano=5');
-  ok(r, 200);
-  assert.equal(r.json.content.length, 0);
-});
-
-test('recetas: una receta inexistente da error 404', async () => {
-  const r = await llamar('GET', '/recetas/99999999');
-  ok(r, 404);
 });
 
 // ------------------------------------------------------------------ seguridad
@@ -104,6 +73,38 @@ test('registro: crea la cuenta y devuelve un token', async () => {
   assert.ok(r.json.token, 'no devolvió token');
   assert.equal(r.json.rol, 'USUARIO');
   ctx.tokenUsuario = r.json.token;
+});
+
+// Las recetas y catálogos exigen sesión (como en la app), por eso van después del registro.
+test('catálogos: etiquetas, restricciones y alergias', async () => {
+  const r = await llamar('GET', '/catalogos', { token: ctx.tokenUsuario });
+  ok(r, 200);
+  for (const k of ['etiquetas', 'restricciones', 'alergias']) assert.ok(Array.isArray(r.json[k]), `falta ${k}`);
+  assert.ok(r.json.etiquetas.length > 0, 'no hay etiquetas');
+});
+
+test('recetas: la búsqueda devuelve recetas', async () => {
+  const r = await llamar('GET', '/recetas/buscar?texto=&pagina=0&tamano=20', { token: ctx.tokenUsuario });
+  ok(r, 200);
+  assert.ok(Array.isArray(r.json.content) && r.json.content.length > 0, 'no hay recetas');
+  ctx.recetaId = r.json.content[0].id;
+});
+
+test('recetas: el detalle de una receta trae ingredientes y pasos', async () => {
+  const r = await llamar('GET', `/recetas/${ctx.recetaId}`, { token: ctx.tokenUsuario });
+  ok(r, 200);
+  assert.ok(r.json.nombre);
+});
+
+test('recetas: buscar por texto que no existe devuelve lista vacía', async () => {
+  const r = await llamar('GET', '/recetas/buscar?texto=zzzxxxqqq&pagina=0&tamano=5', { token: ctx.tokenUsuario });
+  ok(r, 200);
+  assert.equal(r.json.content.length, 0);
+});
+
+test('recetas: una receta inexistente da error 404', async () => {
+  const r = await llamar('GET', '/recetas/99999999', { token: ctx.tokenUsuario });
+  ok(r, 404);
 });
 
 test('registro: el mismo correo dos veces se rechaza', async () => {
@@ -145,7 +146,7 @@ test('perfil: cambiar contraseña con la actual incorrecta falla', async () => {
 });
 
 test('perfil: alergias y restricciones se guardan y se leen', async () => {
-  const cat = await llamar('GET', '/catalogos');
+  const cat = await llamar('GET', '/catalogos', { token: ctx.tokenUsuario });
   const idA = cat.json.alergias[0]?.id;
   const idR = cat.json.restricciones[0]?.id;
   ok(await llamar('PUT', '/perfil/alergias', { token: ctx.tokenUsuario, cuerpo: { ids: idA ? [idA] : [] } }), 200, 204);
