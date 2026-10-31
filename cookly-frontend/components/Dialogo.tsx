@@ -161,7 +161,12 @@ export function DialogoProvider({ children }: { children: React.ReactNode }) {
                       pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
                     ]}
                   >
-                    <Text style={[styles.botonTexto, { color: esSuave ? colors.primaryDark : colors.white }]}>
+                    <Text
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.8}
+                      style={[styles.botonTexto, { color: esSuave ? colors.primaryDark : colors.white }]}
+                    >
                       {b.text ?? 'Aceptar'}
                     </Text>
                   </Pressable>
@@ -219,9 +224,9 @@ const styles = StyleSheet.create({
   boton: {
     minHeight: 48,
     borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  botonTexto: { fontSize: 15, fontWeight: '700' },
+  botonTexto: { fontSize: 15, fontWeight: '700', textAlign: 'center' },
 });
