@@ -43,7 +43,8 @@ export default function AdminPanelScreen() {
   const ultimaPeticion = useRef(0);
 
   const cargar = useCallback(
-    async (esRefresco = false) => {
+    async (esRefrescoArg?: boolean) => {
+      let esRefresco = esRefrescoArg ?? false;
       const numero = ++ultimaPeticion.current;
       if (esRefresco) setRefrescando(true);
       else setCargando(true);

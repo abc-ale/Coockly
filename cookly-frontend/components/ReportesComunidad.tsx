@@ -76,7 +76,8 @@ export default function ReportesComunidad({
   const [error, setError] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState<string | null>(null);
 
-  const cargar = useCallback(async (esRefresco = false) => {
+  const cargar = useCallback(async (esRefrescoArg?: boolean) => {
+    let esRefresco = esRefrescoArg ?? false;
     if (esRefresco) setRefrescando(true);
     const { data, error: fallo } = await supabase
       .from('reportes_comunidad')
@@ -166,7 +167,7 @@ export default function ReportesComunidad({
       ListEmptyComponent={
         cargando ? (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
-        ) : error ? null : (
+        ) : error ? undefined : (
           <View style={estilos.vacio}>
             <Text style={estilos.vacioTitulo}>No hay reportes pendientes</Text>
             <Text style={estilos.vacioTexto}>

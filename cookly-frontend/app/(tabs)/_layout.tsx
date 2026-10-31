@@ -14,6 +14,10 @@ import { sincronizarPerfilComunidad } from '../../lib/avatar';
 const RUTAS_USUARIO = ['home', 'search', 'comunity', 'favorites', 'list'];
 const RUTAS_ADMIN = ['admin-panel', 'admin-usuarios', 'admin-reportes'];
 
+// Expo Router 58 ya no usa el prop initialRouteName: la pantalla inicial se declara aquí.
+// (Si entra un administrador, el efecto de más abajo lo lleva a su panel.)
+export const unstable_settings = { anchor: 'home' };
+
 export default function TabsLayout() {
   const { usuario, token, cargando } = useAuth();
   const router = useRouter();
@@ -77,7 +81,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
-      initialRouteName={esAdmin ? 'admin-panel' : 'home'}
+      backBehavior="initialRoute"
       screenOptions={{
         headerShown: false,
         freezeOnBlur: true, // las pestañas que no se ven dejan de re-renderizar
@@ -126,7 +130,7 @@ export default function TabsLayout() {
           title: 'Inicio',
           sceneStyle: { backgroundColor: colors.background, paddingTop: 0 },
           ...ocultarSi(esAdmin),
-          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "home" : "home-outline"} size={26} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "home" : "home-outline"} size={26} color={color as string} />,
         }}
       />
       <Tabs.Screen
@@ -134,7 +138,7 @@ export default function TabsLayout() {
         options={{
           title: 'Buscar',
           ...ocultarSi(esAdmin),
-          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "search" : "search-outline"} size={26} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "search" : "search-outline"} size={26} color={color as string} />,
         }}
       />
       {/* El archivo se llama comunity.tsx: el nombre aquí debe ser idéntico */}
@@ -143,7 +147,7 @@ export default function TabsLayout() {
         options={{
           title: 'Comunidad',
           ...ocultarSi(esAdmin),
-          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "people" : "people-outline"} size={26} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "people" : "people-outline"} size={26} color={color as string} />,
         }}
       />
       <Tabs.Screen
@@ -151,7 +155,7 @@ export default function TabsLayout() {
         options={{
           title: 'Favoritos',
           ...ocultarSi(esAdmin),
-          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "heart" : "heart-outline"} size={26} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "heart" : "heart-outline"} size={26} color={color as string} />,
         }}
       />
       <Tabs.Screen
@@ -159,7 +163,7 @@ export default function TabsLayout() {
         options={{
           title: 'Lista',
           ...ocultarSi(esAdmin),
-          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "cart" : "cart-outline"} size={26} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "cart" : "cart-outline"} size={26} color={color as string} />,
         }}
       />
 
@@ -169,7 +173,7 @@ export default function TabsLayout() {
         options={{
           title: 'Panel',
           ...ocultarSi(!esAdmin),
-          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "stats-chart" : "stats-chart-outline"} size={26} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "stats-chart" : "stats-chart-outline"} size={26} color={color as string} />,
         }}
       />
       <Tabs.Screen
@@ -177,7 +181,7 @@ export default function TabsLayout() {
         options={{
           title: 'Usuarios',
           ...ocultarSi(!esAdmin),
-          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "people-circle" : "people-circle-outline"} size={26} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "people-circle" : "people-circle-outline"} size={26} color={color as string} />,
         }}
       />
       <Tabs.Screen
@@ -185,7 +189,7 @@ export default function TabsLayout() {
         options={{
           title: 'Reportes',
           ...ocultarSi(!esAdmin),
-          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "flag" : "flag-outline"} size={26} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "flag" : "flag-outline"} size={26} color={color as string} />,
         }}
       />
 
@@ -194,7 +198,7 @@ export default function TabsLayout() {
         name="profile"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "person" : "person-outline"} size={26} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "person" : "person-outline"} size={26} color={color as string} />,
         }}
       />
     </Tabs>

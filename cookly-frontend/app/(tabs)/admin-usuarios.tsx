@@ -40,7 +40,8 @@ export default function AdminUsuariosScreen() {
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [exportando, setExportando] = useState<'xlsx' | 'pdf' | null>(null);
 
-  const cargar = useCallback(async (esRefresco = false) => {
+  const cargar = useCallback(async (esRefrescoArg?: boolean) => {
+    let esRefresco = esRefrescoArg ?? false;
     if (esRefresco) setRefrescando(true);
     try {
       setUsuarios(await listarUsuarios());

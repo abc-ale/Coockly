@@ -500,7 +500,9 @@ export default function ChatbotScreen() {
   };
 
   /** Procesa lo que dijo el usuario. `yaMostrado`: el mensaje del usuario ya está en pantalla (botones). */
-  async function enviar(contenido: string, esPorVoz = false, yaMostrado = false) {
+  async function enviar(contenido: string, esPorVozArg?: boolean, yaMostradoArg?: boolean) {
+    let esPorVoz = esPorVozArg ?? false;
+    let yaMostrado = yaMostradoArg ?? false;
     const limpio = contenido.trim();
     if (!limpio || cargando) return;
 
@@ -695,7 +697,7 @@ export default function ChatbotScreen() {
             )}
           </EntradaSuave>
         )}
-        ListFooterComponent={cargando ? <Escribiendo /> : null}
+        ListFooterComponent={cargando ? <Escribiendo /> : undefined}
       />
 
       {chips.length > 0 && !cargando ? (

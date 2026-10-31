@@ -66,7 +66,7 @@ export default function CommentsScreen() {
   const { ref: barraRef, margen: margenBarra, abierto: tecladoAbierto } = useBarraSobreTeclado();
   const [menuDe, setMenuDe] = useState<Comentario | null>(null); // comentario cuyo menú (⋯) está abierto
   const [editando, setEditando] = useState<Comentario | null>(null);
-  const campoRef = useRef<TextInput>(null);
+  const campoRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const [miId, setMiId] = useState<string | null>(null); // para mostrar "eliminar" solo en mis comentarios
   const [abiertos, setAbiertos] = useState<Set<string>>(new Set()); // comentarios con respuestas desplegadas
   const { postId } = useLocalSearchParams<{ postId: string }>();

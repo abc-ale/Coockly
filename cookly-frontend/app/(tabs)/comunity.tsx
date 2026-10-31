@@ -380,7 +380,7 @@ export default function CommunityScreen() {
         ListFooterComponent={
           cargandoMas ? (
             <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
-          ) : null
+          ) : undefined
         }
         refreshControl={
           <RefreshControl

@@ -84,7 +84,8 @@ export function buscarVibra(id?: string | null): Vibra | undefined {
 // ---- Recetas (se descargan una vez y se reutilizan) ----
 let cache: RecetaRuleta[] | null = null;
 
-export async function cargarRecetasRuleta(forzar = false): Promise<RecetaRuleta[]> {
+export async function cargarRecetasRuleta(forzarArg?: boolean): Promise<RecetaRuleta[]> {
+  const forzar = forzarArg ?? false;
   if (cache && !forzar) return cache;
   const { data } = await api.get('/recetas/buscar', { params: { texto: '', pagina: 0, tamano: 100 } });
   cache = (data?.content ?? []) as RecetaRuleta[];
