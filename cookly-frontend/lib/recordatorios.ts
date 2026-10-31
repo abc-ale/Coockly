@@ -1,11 +1,8 @@
 // lib/recordatorios.ts
-// Avisos que le llegan al usuario al celular aunque la app esté cerrada (estilo "¡Te extrañamos!").
-// Son RECORDATORIOS LOCALES: los programa la propia app, no hace falta servidor.
-//  - Todos los días a las 6 pm: "¿Qué cenamos hoy?" (mensajes que van rotando).
-//  - A los 3 días sin entrar: "¡Te extrañamos en la cocina!". A los 7: "Vuelve a ser chef".
-//  - Si dejó una receta a medias en Cocina guiada: "Tu receta quedó a medias".
-// Se reprograman cada vez que la app se abre o pasa a segundo plano, así los avisos de "te extrañamos"
-// solo llegan si de verdad no volvió a entrar.
+// Aviso local de "receta a medias": si el usuario deja una receta a medias en Cocina guiada, la app
+// le avisa 45 minutos después, aunque esté cerrada.
+// Los avisos diarios (8:00, 12:00 y 19:00) NO se programan aquí sino en notificaciones/programar.ts:
+// antes había dos programadores que se cancelaban entre sí y por eso los horarios salían desordenados.
 // Si el módulo nativo (expo-notifications) aún no está en tu APK, todo esto simplemente no hace nada.
 import { Platform } from 'react-native';
 import { leerProgreso } from './progresoCocina';
@@ -19,15 +16,7 @@ try {
 }
 
 const CANAL = 'cookly';
-const HORA_CENA = 18; // 6 pm
-
-const MENSAJES_CENA: [string, string][] = [
-  ['¿Qué cenamos hoy?', 'Tenemos ideas rápidas de menos de 30 minutos.'],
-  ['Hora de cocinar', 'Elige una receta y cena rico hoy.'],
-  ['Tu cocina te espera', 'Hoy es buen día para probar algo nuevo.'],
-  ['¿Ya pensaste qué comer?', 'Tu receta del día está lista para ti.'],
-  ['Vuelve a ser chef', 'Una receta, un delantal y cero excusas.'],
-];
+const ID_RECETA = 'receta-a-medias';
 
 let preparado = false;
 
@@ -73,47 +62,28 @@ function enFecha(date: Date) {
   return { type: N.SchedulableTriggerInputTypes?.DATE ?? 'date', date, channelId: CANAL };
 }
 
-async function programar(titulo: string, cuerpo: string, date: Date, data: Record<string, unknown> = {}) {
-  try {
-    await N.scheduleNotificationAsync({
-      content: { title: titulo, body: cuerpo, data, color: '#FF4D80' },
-      trigger: enFecha(date),
-    });
-  } catch {}
-}
-
-/** Borra los avisos programados y los vuelve a programar desde cero. Llamar al abrir la app y al salir de ella. */
+/**
+ * Programa (o quita) SOLO el aviso de "receta a medias". No toca los avisos diarios de
+ * notificaciones/programar.ts. Llamar al abrir la app y al salir de ella.
+ */
 export async function reprogramarRecordatorios() {
   if (!N) return;
   try {
     if (!(await pedirPermiso())) return;
-    await N.cancelAllScheduledNotificationsAsync();
+    try { await N.cancelScheduledNotificationAsync(ID_RECETA); } catch {}
 
-    const ahora = new Date();
-
-    // 1) "¿Qué cenamos hoy?": los próximos 7 días a las 6 pm, cada día con un mensaje distinto.
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + i, HORA_CENA, 0, 0);
-      if (d.getTime() <= ahora.getTime() + 60_000) continue;
-      const [t, c] = MENSAJES_CENA[(d.getDate() + i) % MENSAJES_CENA.length];
-      await programar(t, c, d, { tipo: 'cena' });
-    }
-
-    // 2) "Te extrañamos": solo llegan si pasan 3 / 7 días sin volver a abrir la app.
-    const en = (dias: number) => new Date(ahora.getTime() + dias * 86_400_000);
-    await programar('¡Te extrañamos en la cocina!', 'Tu sartén se siente solita. Vuelve a ser chef: tu receta del día te espera.', en(3), { tipo: 'extrano' });
-    await programar('Vuelve a ser chef', 'Hace una semana que no cocinas. ¡Hoy es un gran día para retomar!', en(7), { tipo: 'extrano' });
-
-    // 3) Receta a medias en Cocina guiada: aviso 45 minutos después de dejarla.
     const progreso = await leerProgreso();
-    if (progreso) {
-      await programar(
-        'Tu receta quedó a medias',
-        `${progreso.nombre} · paso ${progreso.paso + 1} de ${progreso.total}. ¡Ya casi lo tienes!`,
-        new Date(ahora.getTime() + 45 * 60_000),
-        { tipo: 'receta', recetaId: progreso.recetaId }
-      );
-    }
+    if (!progreso) return;
+    await N.scheduleNotificationAsync({
+      identifier: ID_RECETA,
+      content: {
+        title: 'Tu receta quedó a medias',
+        body: `${progreso.nombre} · paso ${progreso.paso + 1} de ${progreso.total}. ¡Ya casi lo tienes!`,
+        data: { tipo: 'receta', recetaId: progreso.recetaId },
+        color: '#FF4D80',
+      },
+      trigger: enFecha(new Date(Date.now() + 45 * 60_000)),
+    });
   } catch {}
 }
 

@@ -1,4 +1,5 @@
-// Programa las notificaciones locales de Cookly (mañana, tarde y noche) rotando los mensajes.
+// Programa las notificaciones locales de Cookly (8:00, 12:00 y 19:00) rotando los mensajes.
+// Es el ÚNICO lugar que programa los avisos diarios (lib/recordatorios.ts solo maneja el de "receta a medias").
 // Se llama al abrir la app y cada vez que vuelve a primer plano: cancela lo anterior y reprograma
 // los próximos días. Como el teléfono no puede revisar el uso en el momento de disparar, la lógica
 // es: cada vez que el usuario abre la app se reinicia todo; si NO la vuelve a abrir, las
@@ -8,10 +9,11 @@ import { Platform } from 'react-native';
 import { MENSAJES, Franja, Tipo } from './mensajes';
 
 // ---- Ajustes (cámbialos aquí) ----
+// Un mensaje al día en cada franja: 8:00 a. m., 12:00 p. m. y 7:00 p. m.
 const HORARIOS: Record<Franja, { hora: number; minuto: number }> = {
-  manana: { hora: 8, minuto: 30 },
-  tarde: { hora: 13, minuto: 30 },
-  noche: { hora: 19, minuto: 30 },
+  manana: { hora: 8, minuto: 0 },
+  tarde: { hora: 12, minuto: 0 },
+  noche: { hora: 19, minuto: 0 },
 };
 const DIAS_ADELANTE = 7;        // si no abre la app en 7 días, deja de avisarle
 const DIA_DESDE_QUE_EXTRANA = 1; // 1 = mañana en la tarde/noche ya usa mensajes "te extraño" si no entró; 2 = espera un día más
