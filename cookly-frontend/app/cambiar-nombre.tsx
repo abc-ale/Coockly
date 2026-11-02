@@ -21,7 +21,7 @@ export default function CambiarNombreScreen() {
   const [nombre, setNombre] = useState(usuario?.nombre ?? '');
   const [enfocado, setEnfocado] = useState(false);
   const [guardando, setGuardando] = useState(false);
-  const campoRef = useRef<TextInput>(null);
+  const campoRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const [miAvatar, setMiAvatar] = useState<Avatar | null>(null);
   useEffect(() => {
     cargarAvatar(usuario?.correo).then(setMiAvatar);

@@ -70,7 +70,7 @@ export default function ResenasScreen() {
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [menuC, setMenuC] = useState<Comentario | null>(null); // comentario con el menú (⋯) abierto
   const [editandoC, setEditandoC] = useState<Comentario | null>(null);
-  const campoRef = useRef<TextInput>(null);
+  const campoRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const [cargando, setCargando] = useState(true);
   const [fallo, setFallo] = useState(false);
   const [verTodas, setVerTodas] = useState(false);

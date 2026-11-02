@@ -80,7 +80,8 @@ export default function ListaCompraScreen() {
     listasRef.current = listas;
   }, [listas]);
 
-  const cargar = useCallback(async (silencioso = false) => {
+  const cargar = useCallback(async (silenciosoArg?: boolean) => {
+    let silencioso = silenciosoArg ?? false;
     if (!silencioso) setCargando(true);
     try {
       const { data } = await api.get('/listas-compra');

@@ -25,7 +25,8 @@ export default function FavoritesScreen() {
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
 
-  const cargar = useCallback(async (silencioso = false) => {
+  const cargar = useCallback(async (silenciosoArg?: boolean) => {
+    let silencioso = silenciosoArg ?? false;
     if (!silencioso) setCargando(true);
     try {
       const { data } = await api.get('/recetas/favoritos');

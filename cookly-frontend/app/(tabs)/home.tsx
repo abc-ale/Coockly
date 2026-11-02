@@ -79,7 +79,7 @@ export default function HomeScreen() {
   // Cantidad de notificaciones sin leer: el puntito rosado de la campana solo se ve si es mayor que 0.
   const [notificacionesSinLeer, setNotificacionesSinLeer] = useState(0);
   const [progreso, setProgreso] = useState<ProgresoCocina | null>(null);
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const yTodas = useRef(0);
 
   // Memoria de lo ya cargado por categoría/búsqueda: al volver a una categoría se ve al instante.
@@ -87,45 +87,55 @@ export default function HomeScreen() {
   const favoritosCargados = useRef(false);
 
   // `silencioso`: al deslizar para refrescar no se muestran los esqueletos.
-  const buscarRecetas = useCallback(async (busqueda: string, etiquetaId: number | null, silencioso = false) => {
+  // Escrita con .then (sin async/await): en Expo SDK 58 la versión async devolvía la respuesta vacía.
+  const buscarRecetas = useCallback((busqueda: string, etiquetaId: number | null, silencioso?: boolean): Promise<void> => {
+    let callado = !!silencioso;
     const clave = `${etiquetaId ?? 'todas'}|${busqueda}`;
     const guardada = memoria.current.get(clave);
-    if (guardada && !silencioso) {
+    if (guardada && !callado) {
       // Ya la teníamos: se muestra de inmediato y se actualiza por detrás sin esqueletos.
       setRecetas(guardada);
       idsActuales.current = guardada.map((x) => x.id);
       setCargando(false);
-      silencioso = true;
+      callado = true;
     }
-    if (!silencioso) setCargando(true);
-    try {
-      const pedidoRecetas =
-        etiquetaId !== null
-          ? api.get(`/recetas/por-etiqueta/${etiquetaId}`, { params: { pagina: 0, tamano: 20 } })
-          : api.get('/recetas/buscar', { params: { texto: busqueda, pagina: 0, tamano: 20 } });
-      // Los favoritos solo se piden la primera vez (después se actualizan al volver a Inicio).
-      const pedidoFavoritos = favoritosCargados.current ? Promise.resolve(null) : api.get('/recetas/favoritos');
-      const [resFavoritos, resRecetas] = await Promise.all([pedidoFavoritos, pedidoRecetas]);
-      if (resFavoritos) {
-        favoritosCargados.current = true;
-        setFavoritosIds(new Set<number>(resFavoritos.data.map((r: any) => r.id)));
-      }
+    if (!callado) setCargando(true);
 
-      const lista: TarjetaReceta[] = resRecetas.data.content ?? [];
-      memoria.current.set(clave, lista);
-      setRecetas(lista);
-      idsActuales.current = lista.map((x) => x.id);
-      // Si el servidor ya manda el promedio no hace falta pedirlo aparte (servidores antiguos sí lo necesitan).
-      cargarPromedios(lista.filter((x) => x.promedio === undefined || x.promedio === null).map((x) => x.id));
-      precargarImagenes(lista.map((x: any) => x.portada), 500);
-    } catch (error: any) {
-      if (!guardada) {
-        console.log('ERROR RECETAS', error?.response?.status, JSON.stringify(error?.response?.data), error?.message);
-        Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudieron cargar las recetas.');
-      }
-    } finally {
-      setCargando(false);
-    }
+    const pedido =
+      etiquetaId !== null
+        ? api.get(`/recetas/por-etiqueta/${etiquetaId}`, { params: { pagina: 0, tamano: 20 } })
+        : api.get('/recetas/buscar', { params: { texto: busqueda, pagina: 0, tamano: 20 } });
+
+    return pedido
+      .then((resRecetas) => {
+        const lista: TarjetaReceta[] = resRecetas.data.content ?? [];
+        memoria.current.set(clave, lista);
+        setRecetas(lista);
+        idsActuales.current = lista.map((x) => x.id);
+        // Si el servidor ya manda el promedio no hace falta pedirlo aparte (servidores antiguos sí lo necesitan).
+        cargarPromedios(lista.filter((x) => x.promedio === undefined || x.promedio === null).map((x) => x.id));
+        precargarImagenes(lista.map((x: any) => x.portada), 500);
+
+        // Los favoritos solo se piden la primera vez (después se actualizan al volver a Inicio).
+        if (!favoritosCargados.current) {
+          api
+            .get('/recetas/favoritos')
+            .then((resFavoritos) => {
+              favoritosCargados.current = true;
+              setFavoritosIds(new Set<number>(resFavoritos.data.map((r: any) => r.id)));
+            })
+            .catch(() => {});
+        }
+      })
+      .catch((error: any) => {
+        if (!guardada) {
+          console.log('ERROR RECETAS', error?.response?.status, error?.message);
+          Alert.alert('Error', error?.response?.data?.mensaje || 'No se pudieron cargar las recetas.');
+        }
+      })
+      .finally(() => {
+        setCargando(false);
+      });
   }, [cargarPromedios]);
 
   useEffect(() => {

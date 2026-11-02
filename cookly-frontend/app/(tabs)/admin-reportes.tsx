@@ -18,7 +18,8 @@ export default function AdminReportesScreen() {
   const [ocupado, setOcupado] = useState<number | null>(null);
   const [vista, setVista] = useState<Vista>('recetas');
 
-  const cargar = useCallback(async (esRefresco = false) => {
+  const cargar = useCallback(async (esRefrescoArg?: boolean) => {
+    let esRefresco = esRefrescoArg ?? false;
     if (esRefresco) setRefrescando(true);
     try {
       setReportes(await listarReportes());
@@ -85,7 +86,7 @@ export default function AdminReportesScreen() {
       ListEmptyComponent={
         cargando ? (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
-        ) : error ? null : (
+        ) : error ? undefined : (
           <View style={estilos.vacio}>
             <Text style={estilos.vacioTitulo}>No hay reportes pendientes</Text>
             <Text style={estilos.vacioTexto}>Cuando alguien reporte una receta, aparecerá aquí.</Text>
