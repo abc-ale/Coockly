@@ -27,7 +27,7 @@ spring:
       max-request-size: 25MB
 
 server:
-  port: ${PORT:8080}
+  port: ${PORT:9090}
   forward-headers-strategy: framework
   # Respuestas JSON comprimidas: menos datos por la red móvil.
   compression:

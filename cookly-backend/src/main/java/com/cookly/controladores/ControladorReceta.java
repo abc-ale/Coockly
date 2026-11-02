@@ -18,13 +18,16 @@ public class ControladorReceta {
     private final RepositorioReceta recetas;
     private final RepositorioUsuario usuarios;
     private final RepositorioFavorito favoritos;
+    private final RepositorioRecetaEtiqueta recetasEtiquetas;
 
     public ControladorReceta(ServicioReceta servicio, RepositorioReceta recetas,
-                             RepositorioUsuario usuarios, RepositorioFavorito favoritos) {
+                             RepositorioUsuario usuarios, RepositorioFavorito favoritos,
+                             RepositorioRecetaEtiqueta recetasEtiquetas) {
         this.servicio = servicio;
         this.recetas = recetas;
         this.usuarios = usuarios;
         this.favoritos = favoritos;
+        this.recetasEtiquetas = recetasEtiquetas;
     }
 
     @PostMapping("/menu-express")
@@ -55,14 +58,22 @@ public class ControladorReceta {
         return servicio.porEtiqueta(etiquetaId, pagina, tamano);
     }
 
+    @GetMapping("/favoritos")
+    public List<TarjetaReceta> favoritos(Authentication autenticacion) {
+        return servicio.tarjetas(favoritos.buscarRecetasPorCorreo(autenticacion.getName()));
+    }
+
     @GetMapping("/{id}")
     public Receta detalle(@PathVariable Long id) {
         return recetas.findById(id).orElseThrow(() -> new NoSuchElementException("Receta no encontrada"));
     }
 
-    @GetMapping("/favoritos")
-    public List<TarjetaReceta> favoritos(Authentication autenticacion) {
-        return servicio.tarjetas(favoritos.buscarRecetasPorCorreo(autenticacion.getName()));
+    /** Etiquetas de una receta (Postres, Saludables...). Las usa el componente EtiquetasReceta de la app. */
+    @GetMapping("/{id}/etiquetas")
+    public List<Etiqueta> etiquetasDeReceta(@PathVariable Long id) {
+        return recetasEtiquetas.findByRecetaId(id).stream()
+                .map(RecetaEtiqueta::getEtiqueta)
+                .toList();
     }
 
     @PostMapping("/{id}/favorito")
