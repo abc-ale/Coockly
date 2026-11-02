@@ -21,18 +21,6 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// DIAG (temporal): primer interceptor de respuesta, ve lo que devuelve el adaptador de axios
-api.interceptors.response.use(
-  (r) => {
-    console.log('DIAG ANTES:', r === undefined ? 'UNDEFINED' : r.status, r?.config?.url);
-    return r;
-  },
-  (e) => {
-    console.log('DIAG ANTES error:', e?.message);
-    return Promise.reject(e);
-  }
-);
-
 // ---- Despertar el servidor ----
 let despertando: Promise<void> | null = null;
 
@@ -101,17 +89,5 @@ api.interceptors.response.use(
       return api(config);
     }
     return Promise.reject(error);
-  }
-);
-
-// DIAG (temporal): último interceptor de respuesta, ve lo que sale después de los tuyos
-api.interceptors.response.use(
-  (r) => {
-    console.log('DIAG DESPUES:', r === undefined ? 'UNDEFINED' : r.status);
-    return r;
-  },
-  (e) => {
-    console.log('DIAG DESPUES error:', e?.message);
-    return Promise.reject(e);
   }
 );

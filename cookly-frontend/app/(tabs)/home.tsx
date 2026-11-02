@@ -108,7 +108,6 @@ export default function HomeScreen() {
 
     return pedido
       .then((resRecetas) => {
-        console.log('RECETAS status:', resRecetas?.status);
         const lista: TarjetaReceta[] = resRecetas.data.content ?? [];
         memoria.current.set(clave, lista);
         setRecetas(lista);
