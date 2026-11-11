@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZAP por Informe de Escaneo Checkmarx</title>
+<link
+	href="2026-11-11-ZAP-Report-/normalize/normalize.css" rel="stylesheet">
+<link
+	href="2026-11-11-ZAP-Report-/themes/original/main.css" rel="stylesheet">
+<link
+	href="2026-11-11-ZAP-Report-/themes/original/colors.css" rel="stylesheet">
+</head>
+<body>
+	<header>
+		<h1>ZAP por Informe de Escaneo Checkmarx</h1>
+		<p>
+			<span>Generated with</span> <a href="https://zaproxy.org"><img
+				src="2026-11-11-ZAP-Report-/zap32x32.png" alt="The ZAP logo" class="zap-logo">ZAP</a>
+			<span>on mié 11 nov 2026, at 02:27:15</span>
+		</p>
+		<p>ZAP Versión: 2.17.0</p>
+		<p>
+			ZAP by <a href="https://checkmarx.com/">Checkmarx</a>
+		</p>
+	</header>
+
+	<main>
+
+		<section id="contents" class="contents">
+			<h2>Contents</h2>
+			<nav>
+				<ol>
+					<li><a
+						href="#about-this-report">About This Report</a>
+						<ol>
+							
+							<li><a
+								href="#report-parameters">Report Parameters</a></li>
+						</ol></li>
+					<data-th-block>
+					<li><a
+						href="#summaries">Summaries</a>
+						<ol>
+							<li><a
+								href="#risk-confidence-counts">Alert Counts by Risk and Confidence</a></li>
+							<li><a
+								href="#site-risk-counts">Alert Counts by Site and Risk</a></li>
+							<li><a
+								href="#alert-type-counts">Alert Counts by Alert Type</a></li>
+							<li><a
+								href="#insights">Insights</a></li>
+						</ol></li>
+					<li><a
+						href="#alerts">Alerts</a>
+						<ol>
+							
+							 
+							
+							
+							
+							
+							<li><a
+								href="#alerts--risk-2-confidence-3"><span>Risk</span>=<span
+									class="risk-level">Medio</span>, <span>Confidence</span>=<span
+									class="confidence-level">Alta</span> <span>(1)</span></a></li>
+							
+							
+							
+							
+							  
+							 
+							
+							
+							
+							
+							
+							
+							<li><a
+								href="#alerts--risk-0-confidence-2"><span>Risk</span>=<span
+									class="risk-level">Informativo</span>, <span>Confidence</span>=<span
+									class="confidence-level">Media</span> <span>(2)</span></a></li>
+							
+							
+							  
+						</ol></li>
+					<li><a
+						href="#appendix">Appendix</a>
+						<ol>
+							<li><a
+								href="#alert-types">Alert Types</a></li>
+						</ol></li>
+					</data-th-block>
+				</ol>
+			</nav>
+		</section>
+
+		<section
+			id="about-this-report" class="about-this-report">
+			<h2>About This Report</h2>
+
+			
+
+			<section
+				id="report-parameters">
+				<h3>Report Parameters</h3>
+				<div class="report-parameters--container">
+					<h4>Contexts</h4>
+					
+					
+					<p>No contexts were selected, so all contexts were included by default.</p>
+					  
+
+					<h4>Sites</h4>
+					
+					<p>The following sites were included:</p>
+					<ul class="sites-list">
+						<li><span class="site">http://localhost:9090</span></li>
+					</ul>
+					
+					<p>(If no sites were selected, all sites were included by default.)</p>
+					<p>An included site must also be within one of the included contexts for its data to be included in the report.</p>
+
+					<h4>Risk levels</h4>
+					<p>
+						<span>Included</span>:
+						 
+						<span class="included-risk-codes"><span class="risk-level">Alto</span>, <span class="risk-level">Medio</span>, <span class="risk-level">Bajo</span>, <span class="risk-level">Informativo</span></span>
+					</p>
+					<p>
+						<span>Excluded</span>:
+						 <span>None</span>
+						
+					</p>
+
+					<h4>Confidence levels</h4>
+					<p>
+						<span>Included</span>:
+						
+						
+						<span class="included-confidence-codes"><span class="confidence-level">Confirmado por Usuario</span>, <span class="confidence-level">Alta</span>, <span class="confidence-level">Media</span>, <span class="confidence-level">Baja</span></span>
+					</p>
+					<p>
+						<span>Excluded</span>:
+						
+						
+						<span class="included-confidence-codes"> <span class="confidence-level">Confirmado por Usuario</span>, <span class="confidence-level">Alta</span>, <span class="confidence-level">Media</span>, <span class="confidence-level">Baja</span>, <span class="confidence-level">Falso positivo</span></span>
+					</p>
+				</div>
+			</section>
+		</section>
+
+		
+		<section>
+			
+		</section>
+		
+		<section id="summaries" class="summaries">
+			<h2>Summaries</h2>
+
+			<section
+				id="risk-confidence-counts">
+				<h3>Alert Counts by Risk and Confidence</h3>
+				<table class="risk-confidence-counts-table">
+					<caption>
+						<p>This table shows the number of alerts for each level of risk and confidence included in the report.</p>
+						<p>(The percentages in brackets represent the count as a percentage of the total number of alerts included in the report, rounded to one decimal place.)</p>
+					</caption>
+					<colgroup>
+						<col>
+						<col>
+					</colgroup>
+					<colgroup>
+						<col
+							style="width: 14.0%"><col
+							style="width: 14.0%"><col
+							style="width: 14.0%"><col
+							style="width: 14.0%">
+						<col style="width: 14.0%">
+					</colgroup>
+					<thead>
+						<tr>
+							<td colspan="2" rowspan="2"></td>
+							<th scope="colgroup"
+								colspan="5">Confidence</th>
+						</tr>
+						<tr>
+							<th scope="col">Confirmado por Usuario</th>
+							<th scope="col">Alta</th>
+							<th scope="col">Media</th>
+							<th scope="col">Baja</th>
+							<th scope="col">Total</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th scope="rowgroup"
+								rowspan="5">Risk</th>
+							<th scope="row">Alto</th>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span class="additional-info-percentages">(0,0 %)</span></td>
+						</tr>
+						<tr>
+							
+							<th scope="row">Medio</th>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>1</span><br> <span
+								class="additional-info-percentages">(33,3 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>1</span><br> <span class="additional-info-percentages">(33,3 %)</span></td>
+						</tr>
+						<tr>
+							
+							<th scope="row">Bajo</th>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span class="additional-info-percentages">(0,0 %)</span></td>
+						</tr>
+						<tr>
+							
+							<th scope="row">Informativo</th>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>2</span><br> <span
+								class="additional-info-percentages">(66,7 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>2</span><br> <span class="additional-info-percentages">(66,7 %)</span></td>
+						</tr>
+						<tr>
+							<th scope="row">Total</th>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>1</span><br> <span
+								class="additional-info-percentages">(33,3 %)</span></td>
+							<td><span>2</span><br> <span
+								class="additional-info-percentages">(66,7 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>3</span><br> <span
+								class="additional-info-percentages">(100%)</span></td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+
+			<section
+				id="site-risk-counts">
+				<h3>Alert Counts by Site and Risk</h3>
+				<table class="site-risk-counts-table">
+					<caption>
+						<p>This table shows, for each site for which one or more alerts were raised, the number of alerts raised at each risk level.</p>
+						<p>Alerts with a confidence level of &quot;False Positive&quot; have been excluded from these counts.</p>
+						<p>(The numbers in brackets are the number of alerts raised for the site at or above that risk level.)</p>
+					</caption>
+					<colgroup>
+						<col>
+						<col>
+					</colgroup>
+					<colgroup>
+						<col
+							style="width: 16.25%"><col
+							style="width: 16.25%"><col
+							style="width: 16.25%"><col
+							style="width: 16.25%">
+					</colgroup>
+					<thead>
+						<tr>
+							<td colspan="2" rowspan="2"></td>
+							<th scope="colgroup" colspan="4">Risk</th>
+						</tr>
+						<tr>
+							<th scope="col">
+								<span>Alto</span><br>  <span
+									class="additional-info-percentages">(= Alto)</span>  
+							</th>
+							<th scope="col">
+								<span>Medio</span><br>   <span
+									class="additional-info-percentages">(&gt;= Medio)</span> 
+							</th>
+							<th scope="col">
+								<span>Bajo</span><br>   <span
+									class="additional-info-percentages">(&gt;= Bajo)</span> 
+							</th>
+							<th scope="col">
+								<span>Informativo</span><br>   <span
+									class="additional-info-percentages">(&gt;= Informativo)</span> 
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th scope="rowgroup"
+								rowspan="1">Site</th>
+							<th scope="row">http://localhost:9090</th>
+							
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0)</span></td>
+							<td><span>1</span><br> <span
+								class="additional-info-percentages">(1)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(1)</span></td>
+							<td><span>2</span><br> <span
+								class="additional-info-percentages">(3)</span></td>
+							
+						</tr>
+					</tbody>
+				</table>
+			</section>
+
+			<section
+				id="alert-type-counts">
+				<h3>Alert Counts by Alert Type</h3>
+				<table class="alert-type-counts-table">
+					<caption>
+						<p>This table shows the number of alerts of each alert type, together with the alert type&#39;s risk level.</p>
+						<p>(The percentages in brackets represent each count as a percentage, rounded to one decimal place, of the total number of alerts included in this report.)</p>
+					</caption>
+					<thead>
+						<tr>
+							<th scope="col">Alert type</th>
+							<th scope="col">Risk</th>
+							<th scope="col">Count</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th scope="row"><a
+								href="#alert-type-0">CSP: Failure to Define Directive with No Fallback</a></th>
+							<td class="risk-level">Medio</td>
+							<td><span>2</span><br> <span
+								class="additional-info-percentages">(66,7 %)</span></td>
+						</tr>
+						<tr>
+							<th scope="row"><a
+								href="#alert-type-1">Aplicación Web Moderna</a></th>
+							<td class="risk-level">Informativo</td>
+							<td><span>2</span><br> <span
+								class="additional-info-percentages">(66,7 %)</span></td>
+						</tr>
+						<tr>
+							<th scope="row"><a
+								href="#alert-type-2">Divulgación de información - Comentarios sospechosos</a></th>
+							<td class="risk-level">Informativo</td>
+							<td><span>5</span><br> <span
+								class="additional-info-percentages">(166,7 %)</span></td>
+						</tr>
+					</tbody>
+					<tfoot>
+						<tr>
+							<th scope="row">Total</th>
+							<td></td>
+							<td>3</td>
+						</tr>
+					</tfoot>
+				</table>
+			</section>
+			
+			<section
+				id="insights">
+				<h3 class="left-header">Insights</h3>
+				
+				<table class="insights-table">
+						<caption>
+						<p>This table shows information that is likely to be very relevant to you, but which is not related to vulnerabilities, or potentially even related to the application in question.</p>
+					</caption>
+					<thead>
+					<tr>
+						<th scope="col">Level</th>
+						<th scope="col">Razón</th>
+						<th scope="col">Site</th>
+						<th scope="col">Descripción</th>
+						<th scope="col">Statistic</th>
+					</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+						<td class="risk-1">
+							<div>Bajo</div>
+						</td>
+						<td>
+							<div>Advertencia</div>
+						</td>
+						<td>
+							<div></div>
+						</td>
+						<td>
+							<div>ZAP warnings logged - see the zap.log file for details</div>
+						</td>
+						<td align="center">
+							<div>1   </div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Información</div>
+						</td>
+						<td>
+							<div>Informativo</div>
+						</td>
+						<td>
+							<div>http://localhost:9090</div>
+						</td>
+						<td>
+							<div>Percentage of responses with status code 2xx</div>
+						</td>
+						<td align="center">
+							<div>97 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Información</div>
+						</td>
+						<td>
+							<div>Informativo</div>
+						</td>
+						<td>
+							<div>http://localhost:9090</div>
+						</td>
+						<td>
+							<div>Percentage of responses with status code 3xx</div>
+						</td>
+						<td align="center">
+							<div>3 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Información</div>
+						</td>
+						<td>
+							<div>Informativo</div>
+						</td>
+						<td>
+							<div>http://localhost:9090</div>
+						</td>
+						<td>
+							<div>Percentage of responses with status code 4xx</div>
+						</td>
+						<td align="center">
+							<div>1 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Información</div>
+						</td>
+						<td>
+							<div>Informativo</div>
+						</td>
+						<td>
+							<div>http://localhost:9090</div>
+						</td>
+						<td>
+							<div>Percentage of endpoints with content type font/woff2</div>
+						</td>
+						<td align="center">
+							<div>12 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Información</div>
+						</td>
+						<td>
+							<div>Informativo</div>
+						</td>
+						<td>
+							<div>http://localhost:9090</div>
+						</td>
+						<td>
+							<div>Percentage of endpoints with content type image/png</div>
+						</td>
+						<td align="center">
+							<div>12 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Información</div>
+						</td>
+						<td>
+							<div>Informativo</div>
+						</td>
+						<td>
+							<div>http://localhost:9090</div>
+						</td>
+						<td>
+							<div>Percentage of endpoints with content type text/css</div>
+						</td>
+						<td align="center">
+							<div>41 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Información</div>
+						</td>
+						<td>
+							<div>Informativo</div>
+						</td>
+						<td>
+							<div>http://localhost:9090</div>
+						</td>
+						<td>
+							<div>Percentage of endpoints with content type text/html</div>
+						</td>
+						<td align="center">
+							<div>4 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Información</div>
+						</td>
+						<td>
+							<div>Informativo</div>
+						</td>
+						<td>
+							<div>http://localhost:9090</div>
+						</td>
+						<td>
+							<div>Percentage of endpoints with content type text/javascript</div>
+						</td>
+						<td align="center">
+							<div>20 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Información</div>
+						</td>
+						<td>
+							<div>Informativo</div>
+						</td>
+						<td>
+							<div>http://localhost:9090</div>
+						</td>
+						<td>
+							<div>Percentage of endpoints with method GET</div>
+						</td>
+						<td align="center">
+							<div>100 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Información</div>
+						</td>
+						<td>
+							<div>Informativo</div>
+						</td>
+						<td>
+							<div>http://localhost:9090</div>
+						</td>
+						<td>
+							<div>Count of total endpoints</div>
+						</td>
+						<td align="center">
+							<div>24   </div>
+						</td>
+						</tr>
+					
+					</tbody>
+				</table>
+			</section>
+		</section>
+
+		<section id="alerts" class="alerts">
+			<h2>Alerts</h2>
+			<ol>
+				
+				 
+				 
+				
+				
+				<li id="alerts--risk-2-confidence-3">
+					<h3>
+						<span>Risk</span>=<span
+							class="risk-level">Medio</span>, <span>Confidence</span>=<span
+							class="confidence-level">Alta</span> <span>(1)</span>
+					</h3>
+					<ol>
+						
+						<li class="alerts--site-li">
+							<h4>
+								<span class="site">http://localhost:9090</span> <span>(1)</span>
+							</h4>
+							<ol>
+								
+								<li>
+									<h5>
+										<a
+											href="#alert-type-0">CSP: Failure to Define Directive with No Fallback</a> <span>(1)</span>
+									</h5>
+									<ol>
+										<li><details>
+												<summary>
+													<span class="request-method-n-url">GET http://localhost:9090</span>
+												</summary>
+												
+<table class="alerts-table">
+	<tr>
+		<th scope="row">Alert tags</th>
+		<td>
+			<ul class="alert-tags-list">
+				<li>
+					<span><a href="https://owasp.org/Top10/2021/A05_2021-Security_Misconfiguration/">OWASP_2021_A05</a></span> 
+				</li>
+				<li>
+					 <span>POLICY_QA_STD = </span>
+				</li>
+				<li>
+					 <span>POLICY_PENTEST = </span>
+				</li>
+				<li>
+					<span><a href="https://www.zaproxy.org/docs/desktop/addons/common-library/alerttags/#systemic">SYSTEMIC</a></span> 
+				</li>
+				<li>
+					<span><a href="https://cwe.mitre.org/data/definitions/693.html">CWE-693</a></span> 
+				</li>
+				<li>
+					<span><a href="https://owasp.org/www-project-top-ten/2017/A6_2017-Security_Misconfiguration.html">OWASP_2017_A06</a></span> 
+				</li>
+				<li>
+					<span><a href="https://owasp.org/Top10/2025/A02_2025-Security_Misconfiguration/">OWASP_2025_A02</a></span> 
+				</li>
+				<li>
+					 <span>POLICY_DEV_STD = </span>
+				</li>
+			</ul>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">Alert description</th>
+		<td> 
+<p>The Content Security Policy fails to define one of the directives that has no fallback. Missing/excluding them is the same as allowing anything.</p>
+ </td>
+	</tr>
+	<tr>
+		<th scope="row">Other info</th>
+		<td> 
+<p>The directive(s): frame-ancestors, form-action is/are among the directives that do not fallback to default-src.</p>
+ </td>
+	</tr>
+	<tr>
+		<th scope="row">Request</th>
+		<td><details open="open">
+				<summary>Request line and header section (228 bytes)</summary>
+				
+				<pre><code>GET http://localhost:9090 HTTP/1.1
+host: localhost:9090
+user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36
+pragma: no-cache
+cache-control: no-cache
+
+</code></pre>
+				
+				
+			</details> <details class="request-body" open="open">
+				<summary>Request body (0 bytes)</summary>
+				
+				<pre><code></code></pre>
+				
+				
+			</details></td>
+	</tr>
+	<tr>
+		<th scope="row">Response</th>
+		<td><details open="open">
+				<summary>Status line and header section (544 bytes)</summary>
+				
+				<pre><code>HTTP/1.1 200
+Vary: origin,access-control-request-method,access-control-request-headers,accept-encoding
+Cache-Control: no-cache
+Last-Modified: Tue, 10 Nov 2026 20:31:12 GMT
+Accept-Ranges: bytes
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+X-Frame-Options: DENY
+Content-Security-Policy: default-src &#39;self&#39;; img-src &#39;self&#39; data: https://torfbgyqvvyajmtbyuvb.supabase.co https://res.cloudinary.com; connect-src &#39;self&#39; https://api.cloudinary.com
+Content-Type: text/html
+Content-Length: 18178
+Date: Wed, 11 Nov 2026 07:21:47 GMT
+
+</code></pre>
+				
+				
+			</details> <details class="response-body">
+				<summary>Response body (18178 bytes)</summary>
+				
+				<pre><code>&lt;!doctype html&gt;
+&lt;html lang=&quot;es&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;meta name=&quot;robots&quot; content=&quot;noindex, nofollow&quot;&gt;
+  &lt;title&gt;Cookly · Panel administrativo&lt;/title&gt;
+  &lt;link rel=&quot;icon&quot; type=&quot;image/png&quot; href=&quot;img/favicon.png&quot;&gt;
+  &lt;link rel=&quot;preload&quot; href=&quot;fonts/dm-sans-latin-400-normal.woff2&quot; as=&quot;font&quot; type=&quot;font/woff2&quot; crossorigin&gt;
+  &lt;link rel=&quot;preload&quot; href=&quot;fonts/dm-sans-latin-700-normal.woff2&quot; as=&quot;font&quot; type=&quot;font/woff2&quot; crossorigin&gt;
+  &lt;link rel=&quot;preload&quot; href=&quot;fonts/Fredoka-600.woff2&quot; as=&quot;font&quot; type=&quot;font/woff2&quot; crossorigin&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;admin.css?v=11&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;login-moderno.css?v=4&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;panel-moderno.css?v=4&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;resumen-moderno.css?v=9&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;comunidad-moderno.css?v=3&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;historial-moderno.css?v=4&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;resenas-moderno.css?v=2&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;usuarios-moderno.css?v=4&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;comentarios-moderno.css?v=1&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;recetas-moderno.css?v=5&quot;&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+  &lt;!-- ============ Inicio de sesión ============ --&gt;
+  &lt;div id=&quot;vista-acceso&quot; class=&quot;lg&quot; hidden&gt;
+    &lt;aside class=&quot;lg-panel&quot; aria-hidden=&quot;true&quot;&gt;
+      &lt;i class=&quot;lg-g lg-g1&quot;&gt;&lt;/i&gt;&lt;i class=&quot;lg-g lg-g2&quot;&gt;&lt;/i&gt;
+      &lt;div class=&quot;lg-luz&quot;&gt;&lt;/div&gt;
+      &lt;div class=&quot;lg-tira&quot;&gt;
+        &lt;img class=&quot;lg-eco&quot; src=&quot;https://res.cloudinary.com/pjbmwoxn/image/upload/q_auto,f_auto/v1792472115/login-borde.webp&quot; data-nube=&quot;https://res.cloudinary.com/pjbmwoxn/image/upload/v1792472115/login-borde.webp&quot; data-local=&quot;img/login-borde.webp&quot; alt=&quot;&quot; decoding=&quot;async&quot;&gt;
+        &lt;img class=&quot;lg-base&quot; src=&quot;https://res.cloudinary.com/pjbmwoxn/image/upload/q_auto,f_auto/v1792472115/login-borde.webp&quot; data-nube=&quot;https://res.cloudinary.com/pjbmwoxn/image/upload/v1792472115/login-borde.webp&quot; data-local=&quot;img/login-borde.webp&quot; alt=&quot;&quot; decoding=&quot;async&quot;&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;lg-hero&quot;&gt;
+        &lt;h2 class=&quot;lg-lema&quot;&gt;Tu cocina,&lt;br&gt;&lt;em&gt;bajo control.&lt;/em&gt;&lt;/h2&gt;
+        &lt;p class=&quot;lg-txt&quot;&gt;Recetas, usuarios y comunidad en un solo lugar.&lt;/p&gt;
+        &lt;div class=&quot;lg-pills&quot;&gt;
+          &lt;span class=&quot;lg-pill&quot;&gt;&lt;i&gt;&lt;svg viewBox=&quot;0 0 24 24&quot;&gt;&lt;path d=&quot;M4 11h16M6 11a6 6 0 0 1 12 0M5 11v5a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-5&quot;/&gt;&lt;/svg&gt;&lt;/i&gt;Recetas&lt;/span&gt;
+          &lt;span class=&quot;lg-pill&quot;&gt;&lt;i&gt;&lt;svg viewBox=&quot;0 0 24 24&quot;&gt;&lt;circle cx=&quot;9&quot; cy=&quot;8&quot; r=&quot;3.2&quot;/&gt;&lt;path d=&quot;M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 5.8M17.5 14a5 5 0 0 1 3 5&quot;/&gt;&lt;/svg&gt;&lt;/i&gt;Usuarios&lt;/span&gt;
+          &lt;span class=&quot;lg-pill&quot;&gt;&lt;i&gt;&lt;svg viewBox=&quot;0 0 24 24&quot;&gt;&lt;path d=&quot;M4 5h16v11H9l-5 4z&quot;/&gt;&lt;/svg&gt;&lt;/i&gt;Comunidad&lt;/span&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/aside&gt;
+
+    &lt;div class=&quot;lg-b1&quot; aria-hidden=&quot;true&quot;&gt;&lt;/div&gt;&lt;div class=&quot;lg-b2&quot; aria-hidden=&quot;true&quot;&gt;&lt;/div&gt;
+
+    &lt;section class=&quot;lg-col&quot;&gt;
+      &lt;div class=&quot;lg-caja&quot;&gt;
+        &lt;p class=&quot;lg-logo&quot;&gt;&lt;img src=&quot;img/isotipo-rosa.png&quot; alt=&quot;&quot;&gt;&lt;span&gt;ookly&lt;/span&gt;&lt;/p&gt;
+
+        &lt;form id=&quot;form-acceso&quot; class=&quot;lg-form&quot; novalidate&gt;
+          &lt;p class=&quot;lg-saludo&quot;&gt;&lt;i&gt;&lt;/i&gt;&lt;span id=&quot;lg-saludo&quot;&gt;Hola, chef&lt;/span&gt;&lt;/p&gt;
+          &lt;h1&gt;¡Bienvenido &lt;em&gt;de nuevo!&lt;/em&gt;&lt;/h1&gt;
+          &lt;p class=&quot;lg-ayuda&quot;&gt;Entra con la cuenta de administrador del panel.&lt;/p&gt;
+
+          &lt;div class=&quot;lg-campo&quot;&gt;
+            &lt;input id=&quot;acceso-correo&quot; type=&quot;email&quot; autocomplete=&quot;username&quot; placeholder=&quot;tucorreo@gmail.com&quot; required&gt;
+            &lt;label for=&quot;acceso-correo&quot;&gt;Correo&lt;/label&gt;
+          &lt;/div&gt;
+
+          &lt;div class=&quot;lg-campo&quot;&gt;
+            &lt;input id=&quot;acceso-contrasena&quot; type=&quot;password&quot; autocomplete=&quot;current-password&quot; placeholder=&quot;Ingresa tu contraseña&quot; required&gt;
+            &lt;label for=&quot;acceso-contrasena&quot;&gt;Contraseña&lt;/label&gt;
+            &lt;button type=&quot;button&quot; id=&quot;ojo-acceso&quot; class=&quot;ojo&quot; aria-label=&quot;Mostrar contraseña&quot;&gt;
+              &lt;svg viewBox=&quot;0 0 24 24&quot; width=&quot;20&quot; height=&quot;20&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z&quot;/&gt;&lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;2.5&quot;/&gt;&lt;path class=&quot;ojo-tachado&quot; d=&quot;M3 3l18 18&quot;/&gt;&lt;/svg&gt;
+            &lt;/button&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;lg-ing&quot; id=&quot;lg-ing&quot; aria-hidden=&quot;true&quot;&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;/div&gt;
+          &lt;p class=&quot;lg-caps&quot; id=&quot;lg-caps&quot; hidden&gt;⇪ Bloq Mayús está activado&lt;/p&gt;
+
+          &lt;p id=&quot;acceso-error&quot; class=&quot;error-linea&quot; role=&quot;alert&quot; hidden&gt;&lt;/p&gt;
+          &lt;a href=&quot;#&quot; id=&quot;enlace-olvide&quot; class=&quot;lg-olvide&quot;&gt;¿Olvidaste tu contraseña?&lt;/a&gt;
+          &lt;button type=&quot;submit&quot; id=&quot;acceso-boton&quot; class=&quot;boton primario ancho lg-btn&quot;&gt;Entrar&lt;/button&gt;
+          &lt;p class=&quot;lg-nota&quot;&gt;Acceso solo para administradores de Cookly&lt;/p&gt;
+        &lt;/form&gt;
+
+        &lt;form id=&quot;form-olvide&quot; class=&quot;lg-form&quot; novalidate hidden&gt;
+          &lt;h1&gt;Recuperar &lt;em&gt;contraseña&lt;/em&gt;&lt;/h1&gt;
+          &lt;p class=&quot;lg-ayuda&quot;&gt;Escribe el correo de la cuenta de administrador. Te enviaremos un enlace válido por 15 minutos.&lt;/p&gt;
+
+          &lt;div class=&quot;lg-campo&quot;&gt;
+            &lt;input id=&quot;olvide-correo&quot; type=&quot;email&quot; autocomplete=&quot;username&quot; placeholder=&quot;tucorreo@gmail.com&quot; required&gt;
+            &lt;label for=&quot;olvide-correo&quot;&gt;Correo&lt;/label&gt;
+          &lt;/div&gt;
+
+          &lt;p id=&quot;olvide-mensaje&quot; class=&quot;error-linea&quot; role=&quot;alert&quot; hidden&gt;&lt;/p&gt;
+          &lt;button type=&quot;submit&quot; id=&quot;olvide-boton&quot; class=&quot;boton primario ancho lg-btn&quot;&gt;Enviar enlace&lt;/button&gt;
+          &lt;a href=&quot;#&quot; id=&quot;enlace-volver&quot; class=&quot;lg-volver&quot;&gt;← Volver a iniciar sesión&lt;/a&gt;
+        &lt;/form&gt;
+      &lt;/div&gt;
+    &lt;/section&gt;
+    &lt;p class=&quot;lg-pie&quot;&gt;Cookly · Panel administrativo&lt;/p&gt;
+  &lt;/div&gt;
+
+  &lt;!-- ============ Panel ============ --&gt;
+  &lt;div id=&quot;vista-panel&quot; class=&quot;panel&quot; hidden&gt;
+    &lt;header class=&quot;barra-movil&quot;&gt;
+      &lt;button type=&quot;button&quot; id=&quot;btn-menu&quot; class=&quot;hamburguesa&quot; aria-label=&quot;Abrir menú&quot; aria-expanded=&quot;false&quot; aria-controls=&quot;lateral&quot;&gt;
+        &lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;
+      &lt;/button&gt;
+      &lt;p class=&quot;barra-movil-marca&quot;&gt;&lt;img src=&quot;img/isotipo-claro.png&quot; alt=&quot;&quot;&gt;&lt;span&gt;ookly&lt;/span&gt;&lt;/p&gt;
+    &lt;/header&gt;
+    &lt;div id=&quot;velo&quot; class=&quot;velo&quot; hidden&gt;&lt;/div&gt;
+    &lt;aside class=&quot;lateral&quot; id=&quot;lateral&quot;&gt;
+      &lt;div class=&quot;marca&quot;&gt;
+        &lt;img src=&quot;img/isotipo-claro.png&quot; alt=&quot;&quot;&gt;
+        &lt;div class=&quot;marca-texto&quot;&gt;
+          &lt;span class=&quot;marca-nombre&quot;&gt;ookly&lt;/span&gt;
+          &lt;span class=&quot;marca-sub&quot;&gt;Panel administrativo&lt;/span&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      &lt;nav class=&quot;navegacion&quot; aria-label=&quot;Secciones del panel&quot;&gt;
+        &lt;a href=&quot;#resumen&quot; data-nav=&quot;resumen&quot;&gt;Resumen&lt;/a&gt;
+        &lt;a href=&quot;#usuarios&quot; data-nav=&quot;usuarios&quot;&gt;Usuarios&lt;/a&gt;
+        &lt;a href=&quot;#uso&quot; data-nav=&quot;uso&quot;&gt;Uso de la app&lt;/a&gt;
+        &lt;a href=&quot;#reportes-comunidad&quot; data-nav=&quot;reportes-comunidad&quot;&gt;Reportes de comunidad &lt;span id=&quot;insignia-reportes-comunidad&quot; class=&quot;insignia&quot; hidden&gt;&lt;/span&gt;&lt;/a&gt;
+        &lt;a href=&quot;#comentarios&quot; data-nav=&quot;comentarios&quot;&gt;Comentarios&lt;/a&gt;
+        &lt;a href=&quot;#resenas&quot; data-nav=&quot;resenas&quot;&gt;Reseñas&lt;/a&gt;
+        &lt;a href=&quot;#recetas&quot; data-nav=&quot;recetas&quot;&gt;Recetas&lt;/a&gt;
+        &lt;a href=&quot;#historial&quot; data-nav=&quot;historial&quot;&gt;Historial&lt;/a&gt;
+        &lt;a href=&quot;#respaldo&quot; data-nav=&quot;respaldo&quot;&gt;Respaldo&lt;/a&gt;
+      &lt;/nav&gt;
+      &lt;div class=&quot;lateral-pie&quot;&gt;
+        &lt;p id=&quot;admin-nombre&quot; class=&quot;lateral-nombre&quot;&gt;&lt;/p&gt;
+        &lt;button type=&quot;button&quot; id=&quot;btn-salir&quot; class=&quot;boton texto&quot;&gt;Cerrar sesión&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/aside&gt;
+
+    &lt;main class=&quot;contenido&quot; id=&quot;contenido&quot; tabindex=&quot;-1&quot;&gt;
+      &lt;header class=&quot;cabecera&quot;&gt;
+        &lt;div&gt;
+          &lt;h1 id=&quot;titulo-seccion&quot;&gt;&lt;/h1&gt;
+          &lt;p id=&quot;subtitulo-seccion&quot; class=&quot;cabecera-sub&quot;&gt;&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div id=&quot;selector-rango&quot; class=&quot;segmentos&quot; role=&quot;group&quot; aria-label=&quot;Rango de días&quot; hidden&gt;
+          &lt;button type=&quot;button&quot; data-dias=&quot;7&quot;&gt;7 días&lt;/button&gt;
+          &lt;button type=&quot;button&quot; data-dias=&quot;30&quot; aria-pressed=&quot;true&quot;&gt;30 días&lt;/button&gt;
+          &lt;button type=&quot;button&quot; data-dias=&quot;90&quot;&gt;90 días&lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/header&gt;
+
+      &lt;!-- Resumen --&gt;
+      &lt;section data-seccion=&quot;resumen&quot; hidden&gt;
+        &lt;div id=&quot;resumen-mod&quot;&gt;&lt;/div&gt;
+        &lt;div id=&quot;cifras-resumen&quot; class=&quot;cifras&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
+        &lt;dl id=&quot;datos-resumen&quot; class=&quot;datos&quot;&gt;&lt;/dl&gt;
+        &lt;div class=&quot;rejilla&quot;&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Usuarios nuevos por día&lt;/h2&gt;
+            &lt;div class=&quot;lienzo&quot;&gt;&lt;canvas id=&quot;g-usuarios&quot; role=&quot;img&quot; aria-label=&quot;Gráfica de usuarios nuevos por día&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Recetas nuevas por día&lt;/h2&gt;
+            &lt;div class=&quot;lienzo&quot;&gt;&lt;canvas id=&quot;g-recetas&quot; role=&quot;img&quot; aria-label=&quot;Gráfica de recetas nuevas por día&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Recetas más vistas&lt;/h2&gt;
+            &lt;div class=&quot;lienzo alto&quot;&gt;&lt;canvas id=&quot;g-vistas&quot; role=&quot;img&quot; aria-label=&quot;Recetas más vistas&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+            &lt;p id=&quot;vacio-vistas&quot; class=&quot;vacio&quot; hidden&gt;Todavía no hay vistas registradas.&lt;/p&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Recetas más guardadas en favoritos&lt;/h2&gt;
+            &lt;div class=&quot;lienzo alto&quot;&gt;&lt;canvas id=&quot;g-favoritas&quot; role=&quot;img&quot; aria-label=&quot;Recetas más guardadas en favoritos&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+            &lt;p id=&quot;vacio-favoritas&quot; class=&quot;vacio&quot; hidden&gt;Todavía no hay favoritos.&lt;/p&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Cuentas por estado&lt;/h2&gt;
+            &lt;div class=&quot;lienzo alto&quot;&gt;&lt;canvas id=&quot;g-estado&quot; role=&quot;img&quot; aria-label=&quot;Cuentas activas e inactivas&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+          &lt;/article&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Usuarios --&gt;
+      &lt;section data-seccion=&quot;usuarios&quot; hidden&gt;
+        &lt;div class=&quot;us-top&quot;&gt;
+          &lt;div class=&quot;us-dwn&quot;&gt;
+            &lt;button type=&quot;button&quot; id=&quot;btn-descargar&quot; class=&quot;us-dbtn&quot; aria-haspopup=&quot;true&quot; aria-expanded=&quot;false&quot;&gt;Descargar &lt;span aria-hidden=&quot;true&quot;&gt;▾&lt;/span&gt;&lt;/button&gt;
+            &lt;div class=&quot;us-menu&quot; id=&quot;us-menu&quot; hidden&gt;
+              &lt;button type=&quot;button&quot; id=&quot;btn-excel&quot;&gt;Descargar Excel&lt;/button&gt;
+              &lt;button type=&quot;button&quot; id=&quot;btn-pdf&quot;&gt;Descargar PDF&lt;/button&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div id=&quot;u-tiles&quot; class=&quot;us-tiles&quot;&gt;&lt;/div&gt;
+        &lt;div class=&quot;us-card&quot;&gt;
+          &lt;div class=&quot;herramientas&quot;&gt;
+            &lt;div class=&quot;campo&quot;&gt;
+              &lt;label for=&quot;u-buscar&quot; class=&quot;solo-lectores&quot;&gt;Buscar usuario&lt;/label&gt;
+              &lt;input id=&quot;u-buscar&quot; type=&quot;search&quot; placeholder=&quot;Buscar por nombre o correo&quot; autocomplete=&quot;off&quot;&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;campo&quot;&gt;
+              &lt;label for=&quot;u-rol&quot; class=&quot;solo-lectores&quot;&gt;Rol&lt;/label&gt;
+              &lt;select id=&quot;u-rol&quot;&gt;
+                &lt;option value=&quot;&quot;&gt;Todos los roles&lt;/option&gt;
+                &lt;option value=&quot;USUARIO&quot;&gt;Usuarios&lt;/option&gt;
+                &lt;option value=&quot;ADMINISTRADOR&quot;&gt;Administradores&lt;/option&gt;
+              &lt;/select&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;campo&quot;&gt;
+              &lt;label for=&quot;u-estado&quot; class=&quot;solo-lectores&quot;&gt;Estado&lt;/label&gt;
+              &lt;select id=&quot;u-estado&quot;&gt;
+                &lt;option value=&quot;&quot;&gt;Todos los estados&lt;/option&gt;
+                &lt;option value=&quot;activo&quot;&gt;Activos&lt;/option&gt;
+                &lt;option value=&quot;inactivo&quot;&gt;Inactivos&lt;/option&gt;
+              &lt;/select&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;tabla-envoltura&quot;&gt;
+            &lt;table id=&quot;tabla-usuarios&quot;&gt;
+              &lt;caption class=&quot;solo-lectores&quot;&gt;Lista de usuarios con su tiempo de uso&lt;/caption&gt;
+              &lt;colgroup&gt;&lt;col class=&quot;c-id&quot;&gt;&lt;col class=&quot;c-us&quot;&gt;&lt;col class=&quot;c-rol&quot;&gt;&lt;col class=&quot;c-est&quot;&gt;&lt;col&gt;&lt;col class=&quot;c-reg&quot;&gt;&lt;col class=&quot;c-rec&quot;&gt;&lt;col class=&quot;c-ac&quot;&gt;&lt;/colgroup&gt;
+              &lt;thead&gt;
+                &lt;tr&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;orden&quot; data-orden=&quot;id&quot;&gt;ID&lt;/button&gt;&lt;/th&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;orden&quot; data-orden=&quot;nombre&quot;&gt;Usuario&lt;/button&gt;&lt;/th&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;orden&quot; data-orden=&quot;rol&quot;&gt;Rol&lt;/button&gt;&lt;/th&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;orden&quot; data-orden=&quot;activo&quot;&gt;Estado&lt;/button&gt;&lt;/th&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;orden&quot; data-orden=&quot;segundosUso&quot;&gt;Tiempo de uso&lt;/button&gt;&lt;/th&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;orden&quot; data-orden=&quot;creadoEn&quot;&gt;Registro&lt;/button&gt;&lt;/th&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;orden&quot; data-orden=&quot;recetas&quot;&gt;Recetas&lt;/button&gt;&lt;/th&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;span class=&quot;solo-lectores&quot;&gt;Acciones&lt;/span&gt;&lt;/th&gt;
+                &lt;/tr&gt;
+              &lt;/thead&gt;
+              &lt;tbody&gt;&lt;/tbody&gt;
+            &lt;/table&gt;
+          &lt;/div&gt;
+          &lt;div id=&quot;u-paginacion&quot; class=&quot;paginacion&quot;&gt;&lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Uso de la app --&gt;
+      &lt;section data-seccion=&quot;uso&quot; hidden&gt;
+        &lt;div id=&quot;uso-mod&quot;&gt;&lt;/div&gt;
+        &lt;div id=&quot;cifras-uso&quot; class=&quot;cifras&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
+        &lt;div class=&quot;rejilla&quot;&gt;
+          &lt;article class=&quot;tarjeta doble&quot;&gt;
+            &lt;h2&gt;Tiempo de uso por día&lt;/h2&gt;
+            &lt;div class=&quot;lienzo&quot;&gt;&lt;canvas id=&quot;g-uso&quot; role=&quot;img&quot; aria-label=&quot;Minutos de uso y personas activas por día&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Horas de mayor uso&lt;/h2&gt;
+            &lt;div class=&quot;lienzo alto&quot;&gt;&lt;canvas id=&quot;g-horas&quot; role=&quot;img&quot; aria-label=&quot;Sesiones iniciadas por hora del día&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Quién usa más la app&lt;/h2&gt;
+            &lt;div class=&quot;lienzo alto&quot;&gt;&lt;canvas id=&quot;g-top-usuarios&quot; role=&quot;img&quot; aria-label=&quot;Usuarios con más minutos de uso&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+            &lt;p id=&quot;vacio-top-usuarios&quot; class=&quot;vacio&quot; hidden&gt;Todavía no hay uso registrado.&lt;/p&gt;
+          &lt;/article&gt;
+        &lt;/div&gt;
+        &lt;p class=&quot;nota&quot;&gt;
+          El tiempo se mide mientras la app está abierta en primer plano: la app avisa al servidor cada 30 segundos.
+          Una sesión termina cuando pasan más de 100 segundos sin avisos. Solo cuentan las personas que ya actualizaron la app.
+        &lt;/p&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Reportes de comunidad --&gt;
+      &lt;section data-seccion=&quot;reportes-comunidad&quot; hidden&gt;
+        &lt;div id=&quot;lista-reportes-comunidad&quot; class=&quot;lista-reportes&quot;&gt;&lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Comentarios --&gt;
+      &lt;section data-seccion=&quot;comentarios&quot; hidden&gt;
+        &lt;div class=&quot;herramientas&quot;&gt;&lt;div class=&quot;campo&quot;&gt;&lt;label for=&quot;c-buscar&quot; class=&quot;solo-lectores&quot;&gt;Buscar comentario&lt;/label&gt;
+          &lt;input id=&quot;c-buscar&quot; type=&quot;search&quot; placeholder=&quot;Buscar por texto, autor o correo&quot; autocomplete=&quot;off&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+        &lt;div id=&quot;lista-comentarios&quot;&gt;&lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Reseñas --&gt;
+      &lt;section data-seccion=&quot;resenas&quot; hidden&gt;
+        &lt;div class=&quot;herramientas&quot;&gt;&lt;div class=&quot;campo&quot;&gt;&lt;label for=&quot;rs-buscar&quot; class=&quot;solo-lectores&quot;&gt;Buscar reseña&lt;/label&gt;
+          &lt;input id=&quot;rs-buscar&quot; type=&quot;search&quot; placeholder=&quot;Buscar por opinión, autor, correo o receta&quot; autocomplete=&quot;off&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+        &lt;div id=&quot;lista-resenas&quot;&gt;&lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Recetas --&gt;
+      &lt;section data-seccion=&quot;recetas&quot; hidden&gt;
+        &lt;div class=&quot;herramientas&quot;&gt;&lt;div class=&quot;campo&quot;&gt;&lt;label for=&quot;re-buscar&quot; class=&quot;solo-lectores&quot;&gt;Buscar receta&lt;/label&gt;
+          &lt;input id=&quot;re-buscar&quot; type=&quot;search&quot; placeholder=&quot;Buscar por receta, autor o correo&quot; autocomplete=&quot;off&quot;&gt;&lt;/div&gt;
+          &lt;button id=&quot;btn-nueva-receta&quot; type=&quot;button&quot; class=&quot;nr-nueva&quot;&gt;+ Nueva receta&lt;/button&gt;&lt;/div&gt;
+        &lt;div id=&quot;lista-recetas&quot;&gt;&lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Historial --&gt;
+      &lt;section data-seccion=&quot;historial&quot; hidden&gt;
+        &lt;div id=&quot;lista-historial&quot;&gt;&lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Respaldo --&gt;
+      &lt;section data-seccion=&quot;respaldo&quot; hidden&gt;
+        &lt;div class=&quot;rejilla&quot;&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Respaldo de los datos&lt;/h2&gt;
+            &lt;p id=&quot;respaldo-info&quot; class=&quot;texto-suave&quot;&gt;Cargando…&lt;/p&gt;
+            &lt;button type=&quot;button&quot; id=&quot;btn-respaldo&quot; class=&quot;boton primario&quot;&gt;Descargar respaldo&lt;/button&gt;
+            &lt;p class=&quot;nota&quot;&gt;El archivo incluye las contraseñas cifradas y los correos de todas las personas. Guárdalo en un lugar privado.&lt;/p&gt;
+            &lt;details class=&quot;detalle-tablas&quot;&gt;
+              &lt;summary&gt;Ver filas por tabla&lt;/summary&gt;
+              &lt;table id=&quot;tabla-respaldo&quot;&gt;&lt;thead&gt;&lt;tr&gt;&lt;th scope=&quot;col&quot;&gt;Tabla&lt;/th&gt;&lt;th scope=&quot;col&quot; class=&quot;num&quot;&gt;Filas&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&lt;/tbody&gt;&lt;/table&gt;
+            &lt;/details&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Recuperar datos desde un respaldo&lt;/h2&gt;
+            &lt;p class=&quot;texto-suave&quot;&gt;
+              Vuelve a crear los datos del archivo que ya no estén en la base de datos, por ejemplo recetas borradas por error.
+              &lt;strong&gt;No borra ni cambia nada de lo que existe hoy.&lt;/strong&gt; Si algo falla, no se cambia nada.
+            &lt;/p&gt;
+            &lt;form id=&quot;form-restaurar&quot; novalidate&gt;
+              &lt;label for=&quot;r-archivo&quot;&gt;Archivo de respaldo (.json)&lt;/label&gt;
+              &lt;input id=&quot;r-archivo&quot; type=&quot;file&quot; accept=&quot;.json,application/json&quot; required&gt;
+              &lt;label for=&quot;r-confirmar&quot;&gt;Para confirmar, escribe RESTAURAR&lt;/label&gt;
+              &lt;input id=&quot;r-confirmar&quot; type=&quot;text&quot; autocomplete=&quot;off&quot; spellcheck=&quot;false&quot; required&gt;
+              &lt;button type=&quot;submit&quot; id=&quot;btn-restaurar&quot; class=&quot;boton secundario&quot;&gt;Recuperar datos&lt;/button&gt;
+            &lt;/form&gt;
+            &lt;div id=&quot;r-resultado&quot; class=&quot;resultado&quot; role=&quot;status&quot; hidden&gt;&lt;/div&gt;
+          &lt;/article&gt;
+        &lt;/div&gt;
+        &lt;p class=&quot;nota&quot;&gt;
+          Los respaldos que descargas aquí cubren los datos de la aplicación. Para copias completas de la base de datos
+          (con restauración a un punto en el tiempo) usa los respaldos propios de Supabase en tu plan.
+        &lt;/p&gt;
+      &lt;/section&gt;
+    &lt;/main&gt;
+  &lt;/div&gt;
+
+  &lt;div id=&quot;avisos&quot; class=&quot;avisos&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
+
+  &lt;script src=&quot;admin.js?v=43&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;login-moderno.js?v=2&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;menu-movil.js?v=2&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;panel-moderno.js?v=4&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;resumen-moderno.js?v=18&quot;&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+				
+				
+			</details></td>
+	</tr>
+	<tr>
+		<th scope="row">Parameter</th>
+		<td><pre><code>Content-Security-Policy</code></pre></td>
+	</tr>
+	
+	<tr>
+		<th scope="row">Evidence</th>
+		<td><pre><code>default-src &#39;self&#39;; img-src &#39;self&#39; data: https://torfbgyqvvyajmtbyuvb.supabase.co https://res.cloudinary.com; connect-src &#39;self&#39; https://api.cloudinary.com</code></pre></td>
+	</tr>
+	<tr>
+		<th scope="row">Solution</th>
+		<td> 
+<p>Asegúrese de que su servidor web, servidor de aplicación, balanceador de carga, etc. está configurado apropiadamente para establecer la cabecera de Política de Seguridad de Contenido.</p>
+ </td>
+	</tr>
+</table>
+
+											</details></li>
+									</ol>
+								</li>
+								
+							</ol>
+						</li>
+						
+					</ol>
+				</li>
+				
+				
+				
+				
+				  
+				 
+				 
+				
+				
+				
+				
+				<li id="alerts--risk-0-confidence-2">
+					<h3>
+						<span>Risk</span>=<span
+							class="risk-level">Informativo</span>, <span>Confidence</span>=<span
+							class="confidence-level">Media</span> <span>(2)</span>
+					</h3>
+					<ol>
+						
+						<li class="alerts--site-li">
+							<h4>
+								<span class="site">http://localhost:9090</span> <span>(2)</span>
+							</h4>
+							<ol>
+								
+								<li>
+									<h5>
+										<a
+											href="#alert-type-1">Aplicación Web Moderna</a> <span>(1)</span>
+									</h5>
+									<ol>
+										<li><details>
+												<summary>
+													<span class="request-method-n-url">GET http://localhost:9090</span>
+												</summary>
+												
+<table class="alerts-table">
+	<tr>
+		<th scope="row">Alert tags</th>
+		<td>
+			<ul class="alert-tags-list">
+				<li>
+					 <span>POLICY_QA_STD = </span>
+				</li>
+				<li>
+					 <span>POLICY_PENTEST = </span>
+				</li>
+				<li>
+					<span><a href="https://www.zaproxy.org/docs/desktop/addons/common-library/alerttags/#systemic">SYSTEMIC</a></span> 
+				</li>
+				<li>
+					 <span>POLICY_DEV_STD = </span>
+				</li>
+			</ul>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">Alert description</th>
+		<td> 
+<p>The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.</p>
+ </td>
+	</tr>
+	<tr>
+		<th scope="row">Other info</th>
+		<td> 
+<p>Se han encontrado enlaces que no tienen atributos href tradicionales, lo que indica que se trata de una aplicación web moderna.</p>
+ </td>
+	</tr>
+	<tr>
+		<th scope="row">Request</th>
+		<td><details open="open">
+				<summary>Request line and header section (228 bytes)</summary>
+				
+				<pre><code>GET http://localhost:9090 HTTP/1.1
+host: localhost:9090
+user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36
+pragma: no-cache
+cache-control: no-cache
+
+</code></pre>
+				
+				
+			</details> <details class="request-body" open="open">
+				<summary>Request body (0 bytes)</summary>
+				
+				<pre><code></code></pre>
+				
+				
+			</details></td>
+	</tr>
+	<tr>
+		<th scope="row">Response</th>
+		<td><details open="open">
+				<summary>Status line and header section (544 bytes)</summary>
+				
+				<pre><code>HTTP/1.1 200
+Vary: origin,access-control-request-method,access-control-request-headers,accept-encoding
+Cache-Control: no-cache
+Last-Modified: Tue, 10 Nov 2026 20:31:12 GMT
+Accept-Ranges: bytes
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+X-Frame-Options: DENY
+Content-Security-Policy: default-src &#39;self&#39;; img-src &#39;self&#39; data: https://torfbgyqvvyajmtbyuvb.supabase.co https://res.cloudinary.com; connect-src &#39;self&#39; https://api.cloudinary.com
+Content-Type: text/html
+Content-Length: 18178
+Date: Wed, 11 Nov 2026 07:21:47 GMT
+
+</code></pre>
+				
+				
+			</details> <details class="response-body">
+				<summary>Response body (18178 bytes)</summary>
+				
+				<pre><code>&lt;!doctype html&gt;
+&lt;html lang=&quot;es&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;meta name=&quot;robots&quot; content=&quot;noindex, nofollow&quot;&gt;
+  &lt;title&gt;Cookly · Panel administrativo&lt;/title&gt;
+  &lt;link rel=&quot;icon&quot; type=&quot;image/png&quot; href=&quot;img/favicon.png&quot;&gt;
+  &lt;link rel=&quot;preload&quot; href=&quot;fonts/dm-sans-latin-400-normal.woff2&quot; as=&quot;font&quot; type=&quot;font/woff2&quot; crossorigin&gt;
+  &lt;link rel=&quot;preload&quot; href=&quot;fonts/dm-sans-latin-700-normal.woff2&quot; as=&quot;font&quot; type=&quot;font/woff2&quot; crossorigin&gt;
+  &lt;link rel=&quot;preload&quot; href=&quot;fonts/Fredoka-600.woff2&quot; as=&quot;font&quot; type=&quot;font/woff2&quot; crossorigin&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;admin.css?v=11&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;login-moderno.css?v=4&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;panel-moderno.css?v=4&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;resumen-moderno.css?v=9&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;comunidad-moderno.css?v=3&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;historial-moderno.css?v=4&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;resenas-moderno.css?v=2&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;usuarios-moderno.css?v=4&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;comentarios-moderno.css?v=1&quot;&gt;
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;recetas-moderno.css?v=5&quot;&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+  &lt;!-- ============ Inicio de sesión ============ --&gt;
+  &lt;div id=&quot;vista-acceso&quot; class=&quot;lg&quot; hidden&gt;
+    &lt;aside class=&quot;lg-panel&quot; aria-hidden=&quot;true&quot;&gt;
+      &lt;i class=&quot;lg-g lg-g1&quot;&gt;&lt;/i&gt;&lt;i class=&quot;lg-g lg-g2&quot;&gt;&lt;/i&gt;
+      &lt;div class=&quot;lg-luz&quot;&gt;&lt;/div&gt;
+      &lt;div class=&quot;lg-tira&quot;&gt;
+        &lt;img class=&quot;lg-eco&quot; src=&quot;https://res.cloudinary.com/pjbmwoxn/image/upload/q_auto,f_auto/v1792472115/login-borde.webp&quot; data-nube=&quot;https://res.cloudinary.com/pjbmwoxn/image/upload/v1792472115/login-borde.webp&quot; data-local=&quot;img/login-borde.webp&quot; alt=&quot;&quot; decoding=&quot;async&quot;&gt;
+        &lt;img class=&quot;lg-base&quot; src=&quot;https://res.cloudinary.com/pjbmwoxn/image/upload/q_auto,f_auto/v1792472115/login-borde.webp&quot; data-nube=&quot;https://res.cloudinary.com/pjbmwoxn/image/upload/v1792472115/login-borde.webp&quot; data-local=&quot;img/login-borde.webp&quot; alt=&quot;&quot; decoding=&quot;async&quot;&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;lg-hero&quot;&gt;
+        &lt;h2 class=&quot;lg-lema&quot;&gt;Tu cocina,&lt;br&gt;&lt;em&gt;bajo control.&lt;/em&gt;&lt;/h2&gt;
+        &lt;p class=&quot;lg-txt&quot;&gt;Recetas, usuarios y comunidad en un solo lugar.&lt;/p&gt;
+        &lt;div class=&quot;lg-pills&quot;&gt;
+          &lt;span class=&quot;lg-pill&quot;&gt;&lt;i&gt;&lt;svg viewBox=&quot;0 0 24 24&quot;&gt;&lt;path d=&quot;M4 11h16M6 11a6 6 0 0 1 12 0M5 11v5a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-5&quot;/&gt;&lt;/svg&gt;&lt;/i&gt;Recetas&lt;/span&gt;
+          &lt;span class=&quot;lg-pill&quot;&gt;&lt;i&gt;&lt;svg viewBox=&quot;0 0 24 24&quot;&gt;&lt;circle cx=&quot;9&quot; cy=&quot;8&quot; r=&quot;3.2&quot;/&gt;&lt;path d=&quot;M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 5.8M17.5 14a5 5 0 0 1 3 5&quot;/&gt;&lt;/svg&gt;&lt;/i&gt;Usuarios&lt;/span&gt;
+          &lt;span class=&quot;lg-pill&quot;&gt;&lt;i&gt;&lt;svg viewBox=&quot;0 0 24 24&quot;&gt;&lt;path d=&quot;M4 5h16v11H9l-5 4z&quot;/&gt;&lt;/svg&gt;&lt;/i&gt;Comunidad&lt;/span&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/aside&gt;
+
+    &lt;div class=&quot;lg-b1&quot; aria-hidden=&quot;true&quot;&gt;&lt;/div&gt;&lt;div class=&quot;lg-b2&quot; aria-hidden=&quot;true&quot;&gt;&lt;/div&gt;
+
+    &lt;section class=&quot;lg-col&quot;&gt;
+      &lt;div class=&quot;lg-caja&quot;&gt;
+        &lt;p class=&quot;lg-logo&quot;&gt;&lt;img src=&quot;img/isotipo-rosa.png&quot; alt=&quot;&quot;&gt;&lt;span&gt;ookly&lt;/span&gt;&lt;/p&gt;
+
+        &lt;form id=&quot;form-acceso&quot; class=&quot;lg-form&quot; novalidate&gt;
+          &lt;p class=&quot;lg-saludo&quot;&gt;&lt;i&gt;&lt;/i&gt;&lt;span id=&quot;lg-saludo&quot;&gt;Hola, chef&lt;/span&gt;&lt;/p&gt;
+          &lt;h1&gt;¡Bienvenido &lt;em&gt;de nuevo!&lt;/em&gt;&lt;/h1&gt;
+          &lt;p class=&quot;lg-ayuda&quot;&gt;Entra con la cuenta de administrador del panel.&lt;/p&gt;
+
+          &lt;div class=&quot;lg-campo&quot;&gt;
+            &lt;input id=&quot;acceso-correo&quot; type=&quot;email&quot; autocomplete=&quot;username&quot; placeholder=&quot;tucorreo@gmail.com&quot; required&gt;
+            &lt;label for=&quot;acceso-correo&quot;&gt;Correo&lt;/label&gt;
+          &lt;/div&gt;
+
+          &lt;div class=&quot;lg-campo&quot;&gt;
+            &lt;input id=&quot;acceso-contrasena&quot; type=&quot;password&quot; autocomplete=&quot;current-password&quot; placeholder=&quot;Ingresa tu contraseña&quot; required&gt;
+            &lt;label for=&quot;acceso-contrasena&quot;&gt;Contraseña&lt;/label&gt;
+            &lt;button type=&quot;button&quot; id=&quot;ojo-acceso&quot; class=&quot;ojo&quot; aria-label=&quot;Mostrar contraseña&quot;&gt;
+              &lt;svg viewBox=&quot;0 0 24 24&quot; width=&quot;20&quot; height=&quot;20&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z&quot;/&gt;&lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;2.5&quot;/&gt;&lt;path class=&quot;ojo-tachado&quot; d=&quot;M3 3l18 18&quot;/&gt;&lt;/svg&gt;
+            &lt;/button&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;lg-ing&quot; id=&quot;lg-ing&quot; aria-hidden=&quot;true&quot;&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;/div&gt;
+          &lt;p class=&quot;lg-caps&quot; id=&quot;lg-caps&quot; hidden&gt;⇪ Bloq Mayús está activado&lt;/p&gt;
+
+          &lt;p id=&quot;acceso-error&quot; class=&quot;error-linea&quot; role=&quot;alert&quot; hidden&gt;&lt;/p&gt;
+          &lt;a href=&quot;#&quot; id=&quot;enlace-olvide&quot; class=&quot;lg-olvide&quot;&gt;¿Olvidaste tu contraseña?&lt;/a&gt;
+          &lt;button type=&quot;submit&quot; id=&quot;acceso-boton&quot; class=&quot;boton primario ancho lg-btn&quot;&gt;Entrar&lt;/button&gt;
+          &lt;p class=&quot;lg-nota&quot;&gt;Acceso solo para administradores de Cookly&lt;/p&gt;
+        &lt;/form&gt;
+
+        &lt;form id=&quot;form-olvide&quot; class=&quot;lg-form&quot; novalidate hidden&gt;
+          &lt;h1&gt;Recuperar &lt;em&gt;contraseña&lt;/em&gt;&lt;/h1&gt;
+          &lt;p class=&quot;lg-ayuda&quot;&gt;Escribe el correo de la cuenta de administrador. Te enviaremos un enlace válido por 15 minutos.&lt;/p&gt;
+
+          &lt;div class=&quot;lg-campo&quot;&gt;
+            &lt;input id=&quot;olvide-correo&quot; type=&quot;email&quot; autocomplete=&quot;username&quot; placeholder=&quot;tucorreo@gmail.com&quot; required&gt;
+            &lt;label for=&quot;olvide-correo&quot;&gt;Correo&lt;/label&gt;
+          &lt;/div&gt;
+
+          &lt;p id=&quot;olvide-mensaje&quot; class=&quot;error-linea&quot; role=&quot;alert&quot; hidden&gt;&lt;/p&gt;
+          &lt;button type=&quot;submit&quot; id=&quot;olvide-boton&quot; class=&quot;boton primario ancho lg-btn&quot;&gt;Enviar enlace&lt;/button&gt;
+          &lt;a href=&quot;#&quot; id=&quot;enlace-volver&quot; class=&quot;lg-volver&quot;&gt;← Volver a iniciar sesión&lt;/a&gt;
+        &lt;/form&gt;
+      &lt;/div&gt;
+    &lt;/section&gt;
+    &lt;p class=&quot;lg-pie&quot;&gt;Cookly · Panel administrativo&lt;/p&gt;
+  &lt;/div&gt;
+
+  &lt;!-- ============ Panel ============ --&gt;
+  &lt;div id=&quot;vista-panel&quot; class=&quot;panel&quot; hidden&gt;
+    &lt;header class=&quot;barra-movil&quot;&gt;
+      &lt;button type=&quot;button&quot; id=&quot;btn-menu&quot; class=&quot;hamburguesa&quot; aria-label=&quot;Abrir menú&quot; aria-expanded=&quot;false&quot; aria-controls=&quot;lateral&quot;&gt;
+        &lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;
+      &lt;/button&gt;
+      &lt;p class=&quot;barra-movil-marca&quot;&gt;&lt;img src=&quot;img/isotipo-claro.png&quot; alt=&quot;&quot;&gt;&lt;span&gt;ookly&lt;/span&gt;&lt;/p&gt;
+    &lt;/header&gt;
+    &lt;div id=&quot;velo&quot; class=&quot;velo&quot; hidden&gt;&lt;/div&gt;
+    &lt;aside class=&quot;lateral&quot; id=&quot;lateral&quot;&gt;
+      &lt;div class=&quot;marca&quot;&gt;
+        &lt;img src=&quot;img/isotipo-claro.png&quot; alt=&quot;&quot;&gt;
+        &lt;div class=&quot;marca-texto&quot;&gt;
+          &lt;span class=&quot;marca-nombre&quot;&gt;ookly&lt;/span&gt;
+          &lt;span class=&quot;marca-sub&quot;&gt;Panel administrativo&lt;/span&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      &lt;nav class=&quot;navegacion&quot; aria-label=&quot;Secciones del panel&quot;&gt;
+        &lt;a href=&quot;#resumen&quot; data-nav=&quot;resumen&quot;&gt;Resumen&lt;/a&gt;
+        &lt;a href=&quot;#usuarios&quot; data-nav=&quot;usuarios&quot;&gt;Usuarios&lt;/a&gt;
+        &lt;a href=&quot;#uso&quot; data-nav=&quot;uso&quot;&gt;Uso de la app&lt;/a&gt;
+        &lt;a href=&quot;#reportes-comunidad&quot; data-nav=&quot;reportes-comunidad&quot;&gt;Reportes de comunidad &lt;span id=&quot;insignia-reportes-comunidad&quot; class=&quot;insignia&quot; hidden&gt;&lt;/span&gt;&lt;/a&gt;
+        &lt;a href=&quot;#comentarios&quot; data-nav=&quot;comentarios&quot;&gt;Comentarios&lt;/a&gt;
+        &lt;a href=&quot;#resenas&quot; data-nav=&quot;resenas&quot;&gt;Reseñas&lt;/a&gt;
+        &lt;a href=&quot;#recetas&quot; data-nav=&quot;recetas&quot;&gt;Recetas&lt;/a&gt;
+        &lt;a href=&quot;#historial&quot; data-nav=&quot;historial&quot;&gt;Historial&lt;/a&gt;
+        &lt;a href=&quot;#respaldo&quot; data-nav=&quot;respaldo&quot;&gt;Respaldo&lt;/a&gt;
+      &lt;/nav&gt;
+      &lt;div class=&quot;lateral-pie&quot;&gt;
+        &lt;p id=&quot;admin-nombre&quot; class=&quot;lateral-nombre&quot;&gt;&lt;/p&gt;
+        &lt;button type=&quot;button&quot; id=&quot;btn-salir&quot; class=&quot;boton texto&quot;&gt;Cerrar sesión&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/aside&gt;
+
+    &lt;main class=&quot;contenido&quot; id=&quot;contenido&quot; tabindex=&quot;-1&quot;&gt;
+      &lt;header class=&quot;cabecera&quot;&gt;
+        &lt;div&gt;
+          &lt;h1 id=&quot;titulo-seccion&quot;&gt;&lt;/h1&gt;
+          &lt;p id=&quot;subtitulo-seccion&quot; class=&quot;cabecera-sub&quot;&gt;&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div id=&quot;selector-rango&quot; class=&quot;segmentos&quot; role=&quot;group&quot; aria-label=&quot;Rango de días&quot; hidden&gt;
+          &lt;button type=&quot;button&quot; data-dias=&quot;7&quot;&gt;7 días&lt;/button&gt;
+          &lt;button type=&quot;button&quot; data-dias=&quot;30&quot; aria-pressed=&quot;true&quot;&gt;30 días&lt;/button&gt;
+          &lt;button type=&quot;button&quot; data-dias=&quot;90&quot;&gt;90 días&lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/header&gt;
+
+      &lt;!-- Resumen --&gt;
+      &lt;section data-seccion=&quot;resumen&quot; hidden&gt;
+        &lt;div id=&quot;resumen-mod&quot;&gt;&lt;/div&gt;
+        &lt;div id=&quot;cifras-resumen&quot; class=&quot;cifras&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
+        &lt;dl id=&quot;datos-resumen&quot; class=&quot;datos&quot;&gt;&lt;/dl&gt;
+        &lt;div class=&quot;rejilla&quot;&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Usuarios nuevos por día&lt;/h2&gt;
+            &lt;div class=&quot;lienzo&quot;&gt;&lt;canvas id=&quot;g-usuarios&quot; role=&quot;img&quot; aria-label=&quot;Gráfica de usuarios nuevos por día&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Recetas nuevas por día&lt;/h2&gt;
+            &lt;div class=&quot;lienzo&quot;&gt;&lt;canvas id=&quot;g-recetas&quot; role=&quot;img&quot; aria-label=&quot;Gráfica de recetas nuevas por día&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Recetas más vistas&lt;/h2&gt;
+            &lt;div class=&quot;lienzo alto&quot;&gt;&lt;canvas id=&quot;g-vistas&quot; role=&quot;img&quot; aria-label=&quot;Recetas más vistas&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+            &lt;p id=&quot;vacio-vistas&quot; class=&quot;vacio&quot; hidden&gt;Todavía no hay vistas registradas.&lt;/p&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Recetas más guardadas en favoritos&lt;/h2&gt;
+            &lt;div class=&quot;lienzo alto&quot;&gt;&lt;canvas id=&quot;g-favoritas&quot; role=&quot;img&quot; aria-label=&quot;Recetas más guardadas en favoritos&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+            &lt;p id=&quot;vacio-favoritas&quot; class=&quot;vacio&quot; hidden&gt;Todavía no hay favoritos.&lt;/p&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Cuentas por estado&lt;/h2&gt;
+            &lt;div class=&quot;lienzo alto&quot;&gt;&lt;canvas id=&quot;g-estado&quot; role=&quot;img&quot; aria-label=&quot;Cuentas activas e inactivas&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+          &lt;/article&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Usuarios --&gt;
+      &lt;section data-seccion=&quot;usuarios&quot; hidden&gt;
+        &lt;div class=&quot;us-top&quot;&gt;
+          &lt;div class=&quot;us-dwn&quot;&gt;
+            &lt;button type=&quot;button&quot; id=&quot;btn-descargar&quot; class=&quot;us-dbtn&quot; aria-haspopup=&quot;true&quot; aria-expanded=&quot;false&quot;&gt;Descargar &lt;span aria-hidden=&quot;true&quot;&gt;▾&lt;/span&gt;&lt;/button&gt;
+            &lt;div class=&quot;us-menu&quot; id=&quot;us-menu&quot; hidden&gt;
+              &lt;button type=&quot;button&quot; id=&quot;btn-excel&quot;&gt;Descargar Excel&lt;/button&gt;
+              &lt;button type=&quot;button&quot; id=&quot;btn-pdf&quot;&gt;Descargar PDF&lt;/button&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div id=&quot;u-tiles&quot; class=&quot;us-tiles&quot;&gt;&lt;/div&gt;
+        &lt;div class=&quot;us-card&quot;&gt;
+          &lt;div class=&quot;herramientas&quot;&gt;
+            &lt;div class=&quot;campo&quot;&gt;
+              &lt;label for=&quot;u-buscar&quot; class=&quot;solo-lectores&quot;&gt;Buscar usuario&lt;/label&gt;
+              &lt;input id=&quot;u-buscar&quot; type=&quot;search&quot; placeholder=&quot;Buscar por nombre o correo&quot; autocomplete=&quot;off&quot;&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;campo&quot;&gt;
+              &lt;label for=&quot;u-rol&quot; class=&quot;solo-lectores&quot;&gt;Rol&lt;/label&gt;
+              &lt;select id=&quot;u-rol&quot;&gt;
+                &lt;option value=&quot;&quot;&gt;Todos los roles&lt;/option&gt;
+                &lt;option value=&quot;USUARIO&quot;&gt;Usuarios&lt;/option&gt;
+                &lt;option value=&quot;ADMINISTRADOR&quot;&gt;Administradores&lt;/option&gt;
+              &lt;/select&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;campo&quot;&gt;
+              &lt;label for=&quot;u-estado&quot; class=&quot;solo-lectores&quot;&gt;Estado&lt;/label&gt;
+              &lt;select id=&quot;u-estado&quot;&gt;
+                &lt;option value=&quot;&quot;&gt;Todos los estados&lt;/option&gt;
+                &lt;option value=&quot;activo&quot;&gt;Activos&lt;/option&gt;
+                &lt;option value=&quot;inactivo&quot;&gt;Inactivos&lt;/option&gt;
+              &lt;/select&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;tabla-envoltura&quot;&gt;
+            &lt;table id=&quot;tabla-usuarios&quot;&gt;
+              &lt;caption class=&quot;solo-lectores&quot;&gt;Lista de usuarios con su tiempo de uso&lt;/caption&gt;
+              &lt;colgroup&gt;&lt;col class=&quot;c-id&quot;&gt;&lt;col class=&quot;c-us&quot;&gt;&lt;col class=&quot;c-rol&quot;&gt;&lt;col class=&quot;c-est&quot;&gt;&lt;col&gt;&lt;col class=&quot;c-reg&quot;&gt;&lt;col class=&quot;c-rec&quot;&gt;&lt;col class=&quot;c-ac&quot;&gt;&lt;/colgroup&gt;
+              &lt;thead&gt;
+                &lt;tr&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;orden&quot; data-orden=&quot;id&quot;&gt;ID&lt;/button&gt;&lt;/th&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;orden&quot; data-orden=&quot;nombre&quot;&gt;Usuario&lt;/button&gt;&lt;/th&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;orden&quot; data-orden=&quot;rol&quot;&gt;Rol&lt;/button&gt;&lt;/th&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;orden&quot; data-orden=&quot;activo&quot;&gt;Estado&lt;/button&gt;&lt;/th&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;orden&quot; data-orden=&quot;segundosUso&quot;&gt;Tiempo de uso&lt;/button&gt;&lt;/th&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;orden&quot; data-orden=&quot;creadoEn&quot;&gt;Registro&lt;/button&gt;&lt;/th&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;orden&quot; data-orden=&quot;recetas&quot;&gt;Recetas&lt;/button&gt;&lt;/th&gt;
+                  &lt;th scope=&quot;col&quot;&gt;&lt;span class=&quot;solo-lectores&quot;&gt;Acciones&lt;/span&gt;&lt;/th&gt;
+                &lt;/tr&gt;
+              &lt;/thead&gt;
+              &lt;tbody&gt;&lt;/tbody&gt;
+            &lt;/table&gt;
+          &lt;/div&gt;
+          &lt;div id=&quot;u-paginacion&quot; class=&quot;paginacion&quot;&gt;&lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Uso de la app --&gt;
+      &lt;section data-seccion=&quot;uso&quot; hidden&gt;
+        &lt;div id=&quot;uso-mod&quot;&gt;&lt;/div&gt;
+        &lt;div id=&quot;cifras-uso&quot; class=&quot;cifras&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
+        &lt;div class=&quot;rejilla&quot;&gt;
+          &lt;article class=&quot;tarjeta doble&quot;&gt;
+            &lt;h2&gt;Tiempo de uso por día&lt;/h2&gt;
+            &lt;div class=&quot;lienzo&quot;&gt;&lt;canvas id=&quot;g-uso&quot; role=&quot;img&quot; aria-label=&quot;Minutos de uso y personas activas por día&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Horas de mayor uso&lt;/h2&gt;
+            &lt;div class=&quot;lienzo alto&quot;&gt;&lt;canvas id=&quot;g-horas&quot; role=&quot;img&quot; aria-label=&quot;Sesiones iniciadas por hora del día&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Quién usa más la app&lt;/h2&gt;
+            &lt;div class=&quot;lienzo alto&quot;&gt;&lt;canvas id=&quot;g-top-usuarios&quot; role=&quot;img&quot; aria-label=&quot;Usuarios con más minutos de uso&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
+            &lt;p id=&quot;vacio-top-usuarios&quot; class=&quot;vacio&quot; hidden&gt;Todavía no hay uso registrado.&lt;/p&gt;
+          &lt;/article&gt;
+        &lt;/div&gt;
+        &lt;p class=&quot;nota&quot;&gt;
+          El tiempo se mide mientras la app está abierta en primer plano: la app avisa al servidor cada 30 segundos.
+          Una sesión termina cuando pasan más de 100 segundos sin avisos. Solo cuentan las personas que ya actualizaron la app.
+        &lt;/p&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Reportes de comunidad --&gt;
+      &lt;section data-seccion=&quot;reportes-comunidad&quot; hidden&gt;
+        &lt;div id=&quot;lista-reportes-comunidad&quot; class=&quot;lista-reportes&quot;&gt;&lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Comentarios --&gt;
+      &lt;section data-seccion=&quot;comentarios&quot; hidden&gt;
+        &lt;div class=&quot;herramientas&quot;&gt;&lt;div class=&quot;campo&quot;&gt;&lt;label for=&quot;c-buscar&quot; class=&quot;solo-lectores&quot;&gt;Buscar comentario&lt;/label&gt;
+          &lt;input id=&quot;c-buscar&quot; type=&quot;search&quot; placeholder=&quot;Buscar por texto, autor o correo&quot; autocomplete=&quot;off&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+        &lt;div id=&quot;lista-comentarios&quot;&gt;&lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Reseñas --&gt;
+      &lt;section data-seccion=&quot;resenas&quot; hidden&gt;
+        &lt;div class=&quot;herramientas&quot;&gt;&lt;div class=&quot;campo&quot;&gt;&lt;label for=&quot;rs-buscar&quot; class=&quot;solo-lectores&quot;&gt;Buscar reseña&lt;/label&gt;
+          &lt;input id=&quot;rs-buscar&quot; type=&quot;search&quot; placeholder=&quot;Buscar por opinión, autor, correo o receta&quot; autocomplete=&quot;off&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+        &lt;div id=&quot;lista-resenas&quot;&gt;&lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Recetas --&gt;
+      &lt;section data-seccion=&quot;recetas&quot; hidden&gt;
+        &lt;div class=&quot;herramientas&quot;&gt;&lt;div class=&quot;campo&quot;&gt;&lt;label for=&quot;re-buscar&quot; class=&quot;solo-lectores&quot;&gt;Buscar receta&lt;/label&gt;
+          &lt;input id=&quot;re-buscar&quot; type=&quot;search&quot; placeholder=&quot;Buscar por receta, autor o correo&quot; autocomplete=&quot;off&quot;&gt;&lt;/div&gt;
+          &lt;button id=&quot;btn-nueva-receta&quot; type=&quot;button&quot; class=&quot;nr-nueva&quot;&gt;+ Nueva receta&lt;/button&gt;&lt;/div&gt;
+        &lt;div id=&quot;lista-recetas&quot;&gt;&lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Historial --&gt;
+      &lt;section data-seccion=&quot;historial&quot; hidden&gt;
+        &lt;div id=&quot;lista-historial&quot;&gt;&lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;!-- Respaldo --&gt;
+      &lt;section data-seccion=&quot;respaldo&quot; hidden&gt;
+        &lt;div class=&quot;rejilla&quot;&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Respaldo de los datos&lt;/h2&gt;
+            &lt;p id=&quot;respaldo-info&quot; class=&quot;texto-suave&quot;&gt;Cargando…&lt;/p&gt;
+            &lt;button type=&quot;button&quot; id=&quot;btn-respaldo&quot; class=&quot;boton primario&quot;&gt;Descargar respaldo&lt;/button&gt;
+            &lt;p class=&quot;nota&quot;&gt;El archivo incluye las contraseñas cifradas y los correos de todas las personas. Guárdalo en un lugar privado.&lt;/p&gt;
+            &lt;details class=&quot;detalle-tablas&quot;&gt;
+              &lt;summary&gt;Ver filas por tabla&lt;/summary&gt;
+              &lt;table id=&quot;tabla-respaldo&quot;&gt;&lt;thead&gt;&lt;tr&gt;&lt;th scope=&quot;col&quot;&gt;Tabla&lt;/th&gt;&lt;th scope=&quot;col&quot; class=&quot;num&quot;&gt;Filas&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&lt;/tbody&gt;&lt;/table&gt;
+            &lt;/details&gt;
+          &lt;/article&gt;
+          &lt;article class=&quot;tarjeta&quot;&gt;
+            &lt;h2&gt;Recuperar datos desde un respaldo&lt;/h2&gt;
+            &lt;p class=&quot;texto-suave&quot;&gt;
+              Vuelve a crear los datos del archivo que ya no estén en la base de datos, por ejemplo recetas borradas por error.
+              &lt;strong&gt;No borra ni cambia nada de lo que existe hoy.&lt;/strong&gt; Si algo falla, no se cambia nada.
+            &lt;/p&gt;
+            &lt;form id=&quot;form-restaurar&quot; novalidate&gt;
+              &lt;label for=&quot;r-archivo&quot;&gt;Archivo de respaldo (.json)&lt;/label&gt;
+              &lt;input id=&quot;r-archivo&quot; type=&quot;file&quot; accept=&quot;.json,application/json&quot; required&gt;
+              &lt;label for=&quot;r-confirmar&quot;&gt;Para confirmar, escribe RESTAURAR&lt;/label&gt;
+              &lt;input id=&quot;r-confirmar&quot; type=&quot;text&quot; autocomplete=&quot;off&quot; spellcheck=&quot;false&quot; required&gt;
+              &lt;button type=&quot;submit&quot; id=&quot;btn-restaurar&quot; class=&quot;boton secundario&quot;&gt;Recuperar datos&lt;/button&gt;
+            &lt;/form&gt;
+            &lt;div id=&quot;r-resultado&quot; class=&quot;resultado&quot; role=&quot;status&quot; hidden&gt;&lt;/div&gt;
+          &lt;/article&gt;
+        &lt;/div&gt;
+        &lt;p class=&quot;nota&quot;&gt;
+          Los respaldos que descargas aquí cubren los datos de la aplicación. Para copias completas de la base de datos
+          (con restauración a un punto en el tiempo) usa los respaldos propios de Supabase en tu plan.
+        &lt;/p&gt;
+      &lt;/section&gt;
+    &lt;/main&gt;
+  &lt;/div&gt;
+
+  &lt;div id=&quot;avisos&quot; class=&quot;avisos&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
+
+  &lt;script src=&quot;admin.js?v=43&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;login-moderno.js?v=2&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;menu-movil.js?v=2&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;panel-moderno.js?v=4&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;resumen-moderno.js?v=18&quot;&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+				
+				
+			</details></td>
+	</tr>
+	
+	
+	<tr>
+		<th scope="row">Evidence</th>
+		<td><pre><code>&lt;a href=&quot;#&quot; id=&quot;enlace-olvide&quot; class=&quot;lg-olvide&quot;&gt;¿Olvidaste tu contraseña?&lt;/a&gt;</code></pre></td>
+	</tr>
+	<tr>
+		<th scope="row">Solution</th>
+		<td> 
+<p>Se trata de una alerta informativa, por lo que no es necesario realizar ningún cambio.</p>
+ </td>
+	</tr>
+</table>
+
+											</details></li>
+									</ol>
+								</li>
+								
+								<li>
+									<h5>
+										<a
+											href="#alert-type-2">Divulgación de información - Comentarios sospechosos</a> <span>(1)</span>
+									</h5>
+									<ol>
+										<li><details>
+												<summary>
+													<span class="request-method-n-url">GET http://localhost:9090/admin/panel-moderno.js?v=4</span>
+												</summary>
+												
+<table class="alerts-table">
+	<tr>
+		<th scope="row">Alert tags</th>
+		<td>
+			<ul class="alert-tags-list">
+				<li>
+					<span><a href="https://owasp.org/Top10/2021/A01_2021-Broken_Access_Control/">OWASP_2021_A01</a></span> 
+				</li>
+				<li>
+					 <span>POLICY_PENTEST = </span>
+				</li>
+				<li>
+					<span><a href="https://cwe.mitre.org/data/definitions/615.html">CWE-615</a></span> 
+				</li>
+				<li>
+					<span><a href="https://owasp.org/www-project-web-security-testing-guide/v42/4-Web_Application_Security_Testing/01-Information_Gathering/05-Review_Webpage_Content_for_Information_Leakage">WSTG-v42-INFO-05</a></span> 
+				</li>
+				<li>
+					<span><a href="https://owasp.org/www-project-top-ten/2017/A3_2017-Sensitive_Data_Exposure.html">OWASP_2017_A03</a></span> 
+				</li>
+				<li>
+					<span><a href="https://owasp.org/Top10/2025/A01_2025-Broken_Access_Control/">OWASP_2025_A01</a></span> 
+				</li>
+			</ul>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">Alert description</th>
+		<td> 
+<p>The response appears to contain suspicious comments which may help an attacker.</p>
+ </td>
+	</tr>
+	<tr>
+		<th scope="row">Other info</th>
+		<td> 
+<p>The following pattern was used: \bADMIN\b and was detected in likely comment: &quot;// ---- rango inicial: 7 días (admin.js ya arranca con 7)&quot;, see evidence field for the suspicious comment/snippet.</p>
+ </td>
+	</tr>
+	<tr>
+		<th scope="row">Request</th>
+		<td><details open="open">
+				<summary>Request line and header section (304 bytes)</summary>
+				
+				<pre><code>GET http://localhost:9090/admin/panel-moderno.js?v=4 HTTP/1.1
+host: localhost:9090
+user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36
+pragma: no-cache
+cache-control: no-cache
+referer: http://localhost:9090/admin/index.html
+
+</code></pre>
+				
+				
+			</details> <details class="request-body" open="open">
+				<summary>Request body (0 bytes)</summary>
+				
+				<pre><code></code></pre>
+				
+				
+			</details></td>
+	</tr>
+	<tr>
+		<th scope="row">Response</th>
+		<td><details open="open">
+				<summary>Status line and header section (563 bytes)</summary>
+				
+				<pre><code>HTTP/1.1 200
+Vary: origin,access-control-request-method,access-control-request-headers,accept-encoding
+Cache-Control: max-age=604800, public
+Last-Modified: Tue, 10 Nov 2026 20:31:12 GMT
+Accept-Ranges: bytes
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+X-Frame-Options: DENY
+Content-Security-Policy: default-src &#39;self&#39;; img-src &#39;self&#39; data: https://torfbgyqvvyajmtbyuvb.supabase.co https://res.cloudinary.com; connect-src &#39;self&#39; https://api.cloudinary.com
+Content-Type: text/javascript
+Content-Length: 4195
+Date: Wed, 11 Nov 2026 07:21:48 GMT
+
+</code></pre>
+				
+				
+			</details> <details class="response-body">
+				<summary>Response body (4195 bytes)</summary>
+				
+				<pre><code>/* Cookly · Panel administrativo · Diseño moderno
+   - Agrupa el menú lateral (General, Moderación, Comunidad, Contenido, Sistema).
+   - Deja marcado &quot;7 días&quot; como rango inicial (las gráficas muestran cada día de la semana).
+   - Agrega un calendario al Resumen.
+   Todo el texto se inserta con textContent. Si algo no existe en la página, simplemente no hace nada. */
+(function () {
+  &#39;use strict&#39;;
+
+  function el(etiqueta, clase, texto) {
+    var n = document.createElement(etiqueta);
+    if (clase) n.className = clase;
+    if (texto !== undefined) n.textContent = texto;
+    return n;
+  }
+
+  // ---- menú con grupos
+  var grupos = { resumen: &#39;General&#39;, &#39;reportes-comunidad&#39;: &#39;Moderación&#39;, comentarios: &#39;Contenido&#39;, historial: &#39;Sistema&#39; };
+  var nav = document.querySelector(&#39;.navegacion&#39;);
+  if (nav &amp;&amp; !nav.querySelector(&#39;.grp&#39;)) {
+    Object.keys(grupos).forEach(function (k) {
+      var a = nav.querySelector(&#39;a[data-nav=&quot;&#39; + k + &#39;&quot;]&#39;);
+      if (a) nav.insertBefore(el(&#39;p&#39;, &#39;grp&#39;, grupos[k]), a);
+    });
+  }
+
+  // ---- rango inicial: 7 días (admin.js ya arranca con 7)
+  var selector = document.getElementById(&#39;selector-rango&#39;);
+  if (selector) {
+    Array.prototype.forEach.call(selector.querySelectorAll(&#39;button[data-dias]&#39;), function (b) {
+      b.setAttribute(&#39;aria-pressed&#39;, b.getAttribute(&#39;data-dias&#39;) === &#39;7&#39; ? &#39;true&#39; : &#39;false&#39;);
+    });
+  }
+
+  // ---- calendario
+  var rejilla = document.querySelector(&#39;[data-seccion=&quot;resumen&quot;] .rejilla&#39;);
+  if (!rejilla) return;
+
+  var MESES = [&#39;Enero&#39;, &#39;Febrero&#39;, &#39;Marzo&#39;, &#39;Abril&#39;, &#39;Mayo&#39;, &#39;Junio&#39;, &#39;Julio&#39;, &#39;Agosto&#39;, &#39;Septiembre&#39;, &#39;Octubre&#39;, &#39;Noviembre&#39;, &#39;Diciembre&#39;];
+  var SEMANA = [&#39;L&#39;, &#39;M&#39;, &#39;X&#39;, &#39;J&#39;, &#39;V&#39;, &#39;S&#39;, &#39;D&#39;];
+  var hoy = new Date();
+  var vista = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+
+  var tarjeta = el(&#39;article&#39;, &#39;tarjeta calendario&#39;);
+  var cab = el(&#39;div&#39;, &#39;cal-cab&#39;);
+  var titulo = el(&#39;h2&#39;, null, &#39;&#39;);
+  var flechas = el(&#39;div&#39;, &#39;cal-flechas&#39;);
+  var ant = el(&#39;button&#39;, null, &#39;‹&#39;); ant.type = &#39;button&#39;; ant.setAttribute(&#39;aria-label&#39;, &#39;Mes anterior&#39;);
+  var sig = el(&#39;button&#39;, null, &#39;›&#39;); sig.type = &#39;button&#39;; sig.setAttribute(&#39;aria-label&#39;, &#39;Mes siguiente&#39;);
+  flechas.appendChild(ant); flechas.appendChild(sig);
+  cab.appendChild(titulo); cab.appendChild(flechas);
+  var cuadro = el(&#39;div&#39;, &#39;cal-rejilla&#39;);
+  var leyenda = el(&#39;div&#39;, &#39;cal-leyenda&#39;);
+  var l1 = el(&#39;span&#39;); l1.appendChild(el(&#39;i&#39;)); l1.firstChild.style.background = &#39;#FF4D80&#39;; l1.appendChild(document.createTextNode(&#39;Hoy&#39;));
+  var l2 = el(&#39;span&#39;); l2.appendChild(el(&#39;i&#39;)); l2.firstChild.style.background = &#39;#FFD866&#39;; l2.appendChild(document.createTextNode(&#39;Últimos 7 días&#39;));
+  leyenda.appendChild(l1); leyenda.appendChild(l2);
+  tarjeta.appendChild(cab); tarjeta.appendChild(cuadro); tarjeta.appendChild(leyenda);
+  rejilla.appendChild(tarjeta);
+
+  function mismoDia(a, b) { return a.getFullYear() === b.getFullYear() &amp;&amp; a.getMonth() === b.getMonth() &amp;&amp; a.getDate() === b.getDate(); }
+
+  function pintar() {
+    titulo.textContent = MESES[vista.getMonth()] + &#39; &#39; + vista.getFullYear();
+    while (cuadro.firstChild) cuadro.removeChild(cuadro.firstChild);
+    SEMANA.forEach(function (s) { cuadro.appendChild(el(&#39;span&#39;, &#39;sem&#39;, s)); });
+    var primero = (new Date(vista.getFullYear(), vista.getMonth(), 1).getDay() + 6) % 7; // lunes = 0
+    var total = new Date(vista.getFullYear(), vista.getMonth() + 1, 0).getDate();
+    for (var i = 0; i &lt; primero; i++) cuadro.appendChild(el(&#39;span&#39;, &#39;dia&#39;, &#39;&#39;));
+    var inicio7 = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 6);
+    for (var d = 1; d &lt;= total; d++) {
+      var f = new Date(vista.getFullYear(), vista.getMonth(), d);
+      var clase = &#39;dia&#39;;
+      if (mismoDia(f, hoy)) clase += &#39; hoy&#39;;
+      else if (f &gt;= inicio7 &amp;&amp; f &lt;= hoy) clase += &#39; reciente&#39;;
+      cuadro.appendChild(el(&#39;span&#39;, clase, String(d)));
+    }
+  }
+
+  ant.addEventListener(&#39;click&#39;, function () { vista = new Date(vista.getFullYear(), vista.getMonth() - 1, 1); pintar(); });
+  sig.addEventListener(&#39;click&#39;, function () { vista = new Date(vista.getFullYear(), vista.getMonth() + 1, 1); pintar(); });
+  pintar();
+})();</code></pre>
+				
+				
+			</details></td>
+	</tr>
+	
+	
+	<tr>
+		<th scope="row">Evidence</th>
+		<td><pre><code>go inicial: 7 días (admin.js ya arranca con 7</code></pre></td>
+	</tr>
+	<tr>
+		<th scope="row">Solution</th>
+		<td> 
+<p>Eliminar todos los comentarios que muestren información que pueda ayudar a un atacante y solucionar el problema al que se refieren.</p>
+ </td>
+	</tr>
+</table>
+
+											</details></li>
+									</ol>
+								</li>
+								
+							</ol>
+						</li>
+						
+					</ol>
+				</li>
+				
+				
+				  
+			</ol>
+		</section>
+
+		<section id="appendix" class="appendix">
+			<h2>Appendix</h2>
+
+			<section id="alert-types" class="alert-types">
+				<h3>Alert Types</h3>
+				<p class="alert-types-intro">This section contains additional information on the types of alerts in the report.</p>
+				<ol>
+					<li
+						id="alert-type-0">
+						<h4>CSP: Failure to Define Directive with No Fallback</h4>
+						<table class="alert-types-table">
+							<tr>
+								<th scope="row">Source</th>
+								<td>
+									
+									   <span>raised by a passive scanner</span> <span>(<a
+										href="https://www.zaproxy.org/docs/alerts/10055/">CSP</a>)
+									</span>   
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">CWE ID</th>
+								<td><a
+									href="https://cwe.mitre.org/data/definitions/693.html">693</a></td>
+							</tr>
+							<tr>
+								<th scope="row">WASC ID</th>
+								<td>15</td>
+							</tr>
+							<tr>
+								<th scope="row">Reference</th>
+								<td>
+									<ol>
+										<li><a
+											href="https://www.w3.org/TR/CSP/">https://www.w3.org/TR/CSP/</a></li>
+										<li><a
+											href="https://caniuse.com/#search=content+security+policy">https://caniuse.com/#search=content+security+policy</a></li>
+										<li><a
+											href="https://content-security-policy.com/">https://content-security-policy.com/</a></li>
+										<li><a
+											href="https://github.com/HtmlUnit/htmlunit-csp">https://github.com/HtmlUnit/htmlunit-csp</a></li>
+										<li><a
+											href="https://web.dev/articles/csp#resource-options">https://web.dev/articles/csp#resource-options</a></li>
+									</ol>
+								</td>
+							</tr>
+						</table>
+					</li>
+					<li
+						id="alert-type-1">
+						<h4>Aplicación Web Moderna</h4>
+						<table class="alert-types-table">
+							<tr>
+								<th scope="row">Source</th>
+								<td>
+									
+									   <span>raised by a passive scanner</span> <span>(<a
+										href="https://www.zaproxy.org/docs/alerts/10109/">Aplicación Web Moderna</a>)
+									</span>   
+								</td>
+							</tr>
+							
+							
+							
+						</table>
+					</li>
+					<li
+						id="alert-type-2">
+						<h4>Divulgación de información - Comentarios sospechosos</h4>
+						<table class="alert-types-table">
+							<tr>
+								<th scope="row">Source</th>
+								<td>
+									
+									   <span>raised by a passive scanner</span> <span>(<a
+										href="https://www.zaproxy.org/docs/alerts/10027/">Divulgación de información - Comentarios sospechosos</a>)
+									</span>   
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">CWE ID</th>
+								<td><a
+									href="https://cwe.mitre.org/data/definitions/615.html">615</a></td>
+							</tr>
+							<tr>
+								<th scope="row">WASC ID</th>
+								<td>13</td>
+							</tr>
+							
+						</table>
+					</li>
+				</ol>
+			</section>
+		</section>
+		 
+	</main>
+</body>
+</html>
+
+
+
