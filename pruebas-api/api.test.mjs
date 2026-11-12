@@ -2,7 +2,7 @@
 //
 // Uso (desde la carpeta pruebas-api):
 //   BASE_URL=https://cookly-api-sb9w.onrender.com \
-//   ADMIN_CORREO=cooklyapp.oficial@gmail.com ADMIN_CONTRASENA=... \
+//   ADMIN_CORREO=admin@ejemplo.com ADMIN_CONTRASENA=... \
 //   node --test api.test.mjs
 //
 // Necesita Node 20 o superior. Sin BASE_URL se usa http://localhost:8080.

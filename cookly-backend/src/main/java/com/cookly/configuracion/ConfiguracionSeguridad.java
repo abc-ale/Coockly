@@ -27,8 +27,10 @@ public class ConfiguracionSeguridad {
                 .cors(c -> c.configurationSource(cors()))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Solo el propio sitio, más imágenes del Supabase de Cookly (fotos de Comunidad en el panel).
+                // frame-ancestors 'none' impide que otra web incruste el panel (clickjacking);
+                // form-action 'self' impide que un formulario envíe datos a otro sitio.
                 .headers(h -> h.contentSecurityPolicy(c -> c.policyDirectives(
-                        "default-src 'self'; img-src 'self' data: https://torfbgyqvvyajmtbyuvb.supabase.co https://res.cloudinary.com; connect-src 'self' https://api.cloudinary.com")))
+                        "default-src 'self'; img-src 'self' data: https://torfbgyqvvyajmtbyuvb.supabase.co https://res.cloudinary.com; connect-src 'self' https://api.cloudinary.com; frame-ancestors 'none'; form-action 'self'")))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(
                                 "/api/v1/autenticacion/**",
