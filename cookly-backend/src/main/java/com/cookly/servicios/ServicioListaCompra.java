@@ -42,9 +42,10 @@ public class ServicioListaCompra {
     @Transactional
     public ListaCompra generarDesdeMenu(String correo, Long menuId, String nombreLista) {
         var usuario = usuarios.findByCorreo(correo).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-        var menu = menus.findById(menuId).orElseThrow(() -> new IllegalArgumentException("Menú no encontrado"));
+        var menu = menus.findById(menuId).orElseThrow(() -> new NoSuchElementException("Menú no encontrado"));
+        // Si el menú es de otra persona se responde igual que si no existiera (404): no se revela que existe.
         if (!menu.getUsuario().getId().equals(usuario.getId()))
-            throw new IllegalArgumentException("Ese menú no te pertenece");
+            throw new NoSuchElementException("Menú no encontrado");
 
         var lista = new ListaCompra(usuario, nombreLista);
         lista.setMenu(menu);
@@ -75,9 +76,9 @@ public class ServicioListaCompra {
     }
 
     @Transactional
-    public ElementoListaCompra agregarItem(Long listaId, Long ingredienteId, String nombrePersonalizado,
+    public ElementoListaCompra agregarItem(String correo, Long listaId, Long ingredienteId, String nombrePersonalizado,
                                             Double cantidad, String unidad) {
-        var lista = listas.findById(listaId).orElseThrow(() -> new IllegalArgumentException("Lista no encontrada"));
+        var lista = listaPropia(correo, listaId);
         Ingrediente ingrediente = null;
         if (ingredienteId != null) {
             ingrediente = ingredientes.findById(ingredienteId).orElseThrow(() -> new IllegalArgumentException("Ingrediente no encontrado"));
@@ -88,18 +89,22 @@ public class ServicioListaCompra {
     }
 
     @Transactional
-    public void marcarComprado(Long itemId, boolean comprado) {
-        var item = elementos.findById(itemId).orElseThrow(() -> new IllegalArgumentException("Elemento no encontrado"));
+    public void marcarComprado(String correo, Long itemId, boolean comprado) {
+        var item = elementos.findById(itemId).orElseThrow(() -> new NoSuchElementException("Elemento no encontrado"));
+        listaPropia(correo, item.getLista().getId());
         item.setComprado(comprado);
         elementos.save(item);
     }
 
-    /** Devuelve la lista solo si es de esa persona (así nadie borra ni toca las listas de otra). */
+    /**
+     * Devuelve la lista solo si es de esa persona (así nadie ve, borra ni toca las listas de otra).
+     * Si no existe o es de otro usuario se responde lo mismo (404): así no se revela qué listas existen.
+     */
     private ListaCompra listaPropia(String correo, Long listaId) {
         var usuario = usuarios.findByCorreo(correo).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-        var lista = listas.findById(listaId).orElseThrow(() -> new IllegalArgumentException("Lista no encontrada"));
+        var lista = listas.findById(listaId).orElseThrow(() -> new NoSuchElementException("Lista no encontrada"));
         if (!lista.getUsuario().getId().equals(usuario.getId()))
-            throw new IllegalArgumentException("Esa lista no te pertenece");
+            throw new NoSuchElementException("Lista no encontrada");
         return lista;
     }
 

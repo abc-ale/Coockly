@@ -36,13 +36,14 @@ public class ControladorListaCompra {
 
     @PostMapping("/{listaId}/elementos")
     @ResponseStatus(HttpStatus.CREATED)
-    public ElementoListaCompra agregarItem(@PathVariable Long listaId, @RequestBody SolicitudElementoListaCompra s) {
-        return servicio.agregarItem(listaId, s.ingredienteId(), s.nombrePersonalizado(), s.cantidad(), s.unidad());
+    public ElementoListaCompra agregarItem(@PathVariable Long listaId, @RequestBody SolicitudElementoListaCompra s,
+                                           Authentication autenticacion) {
+        return servicio.agregarItem(autenticacion.getName(), listaId, s.ingredienteId(), s.nombrePersonalizado(), s.cantidad(), s.unidad());
     }
 
     @PutMapping("/elementos/{itemId}/comprado")
-    public void marcarComprado(@PathVariable Long itemId, @RequestParam boolean valor) {
-        servicio.marcarComprado(itemId, valor);
+    public void marcarComprado(@PathVariable Long itemId, @RequestParam boolean valor, Authentication autenticacion) {
+        servicio.marcarComprado(autenticacion.getName(), itemId, valor);
     }
 
     @DeleteMapping("/{listaId}")
