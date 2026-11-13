@@ -2,7 +2,7 @@
 //
 // Uso (desde la carpeta pruebas-api):
 //   BASE_URL=https://cookly-api-sb9w.onrender.com \
-//   ADMIN_CORREO=cooklyapp.oficial@gmail.com ADMIN_CONTRASENA=... \
+//   ADMIN_CORREO=admin@ejemplo.com ADMIN_CONTRASENA=... \
 //   node --test api.test.mjs
 //
 // Necesita Node 20 o superior. Sin BASE_URL se usa http://localhost:8080.
@@ -251,6 +251,52 @@ test('menú express: sugiere recetas con pocos ingredientes', async () => {
 test('menú express: sin ingredientes se rechaza', async () => {
   const r = await llamar('POST', '/recetas/menu-express', { token: ctx.tokenUsuario, cuerpo: { ingredientes: [] } });
   ok(r, 400);
+});
+
+// ------------------------------------------------------------------ aislamiento entre usuarios (listas y menús)
+test('seguridad: un usuario no puede ver ni tocar la lista de compras ni el menú de otro', async () => {
+  // Usuario B (ajeno): se registra aparte.
+  const b = { nombre: 'QA Ajeno', correo: `qa.b.${sufijo}@cookly-prueba.com`, contrasena: 'ClaveSegura123' };
+  const rb = await llamar('POST', '/autenticacion/registro', { cuerpo: b });
+  ok(rb, 200, 201);
+  const tokenB = rb.json.token;
+
+  // El usuario A (dueño) crea su lista con un elemento y su menú.
+  const lista = await llamar('POST', '/listas-compra', { token: ctx.tokenUsuario, cuerpo: { nombre: 'Lista privada A' } });
+  ok(lista, 201);
+  const item = await llamar('POST', `/listas-compra/${lista.json.id}/elementos`, { token: ctx.tokenUsuario, cuerpo: { nombrePersonalizado: 'Sal', cantidad: 1, unidad: 'kg' } });
+  ok(item, 201);
+
+  // El usuario B intenta de todo sobre lo de A: debe recibir 404 en cada intento.
+  ok(await llamar('POST', `/listas-compra/${lista.json.id}/elementos`, { token: tokenB, cuerpo: { nombrePersonalizado: 'Intruso', cantidad: 1, unidad: 'u' } }), 404);
+  ok(await llamar('PUT', `/listas-compra/elementos/${item.json.id}/comprado?valor=true`, { token: tokenB }), 404);
+  ok(await llamar('DELETE', `/listas-compra/elementos/${item.json.id}`, { token: tokenB }), 404);
+  ok(await llamar('DELETE', `/listas-compra/${lista.json.id}/elementos`, { token: tokenB }), 404);
+  ok(await llamar('DELETE', `/listas-compra/${lista.json.id}`, { token: tokenB }), 404);
+  if (ctx.menuId) {
+    ok(await llamar('POST', `/menus/${ctx.menuId}/elementos`, { token: tokenB, cuerpo: { recetaId: ctx.recetaId, diaSemana: 1, tipoComida: 'ALMUERZO' } }), 404);
+    ok(await llamar('POST', `/listas-compra/generar-desde-menu/${ctx.menuId}`, { token: tokenB }), 404);
+  }
+
+  // B no ve la lista de A en su propio listado.
+  const suyas = await llamar('GET', '/listas-compra', { token: tokenB });
+  ok(suyas, 200);
+  assert.ok(!suyas.json.some((x) => x.id === lista.json.id), 'la lista de A aparece en la de B');
+
+  // Y la lista de A sigue intacta.
+  const mias = await llamar('GET', '/listas-compra', { token: ctx.tokenUsuario });
+  const intacta = mias.json.find((x) => x.id === lista.json.id);
+  assert.ok(intacta, 'la lista de A desapareció');
+  assert.equal(intacta.elementos.length, 1);
+  assert.equal(intacta.elementos[0].comprado, false);
+  ok(await llamar('DELETE', `/listas-compra/${lista.json.id}`, { token: ctx.tokenUsuario }), 200, 204);
+});
+
+test('errores: no se muestran detalles internos (ni trazas ni rutas de clases)', async () => {
+  const r = await llamar('GET', '/recetas/abc');            // id inválido
+  assert.ok(r.estado >= 400 && r.estado < 600, `HTTP ${r.estado}`);
+  const prohibidos = ['org.springframework', 'java.lang', 'at com.cookly', 'Exception', 'stacktrace', 'SQL'];
+  for (const p of prohibidos) assert.ok(!r.texto.includes(p), `La respuesta expone "${p}": ${r.texto.slice(0, 200)}`);
 });
 
 // ------------------------------------------------------------------ notificaciones y uso

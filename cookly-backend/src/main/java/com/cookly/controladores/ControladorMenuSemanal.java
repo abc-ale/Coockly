@@ -24,11 +24,14 @@ public class ControladorMenuSemanal {
 
     @PostMapping("/{menuId}/elementos")
     @ResponseStatus(HttpStatus.CREATED)
-    public ElementoMenuSemanal agregarReceta(@PathVariable Long menuId, @Valid @RequestBody SolicitudElementoMenu s) {
-        return servicio.agregarReceta(menuId, s.recetaId(), s.diaSemana(), s.tipoComida());
+    public ElementoMenuSemanal agregarReceta(@PathVariable Long menuId, @Valid @RequestBody SolicitudElementoMenu s,
+                                             Authentication autenticacion) {
+        return servicio.agregarReceta(autenticacion.getName(), menuId, s.recetaId(), s.diaSemana(), s.tipoComida());
     }
 
     @DeleteMapping("/elementos/{elementoId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void quitarReceta(@PathVariable Long elementoId) { servicio.quitarReceta(elementoId); }
+    public void quitarReceta(@PathVariable Long elementoId, Authentication autenticacion) {
+        servicio.quitarReceta(autenticacion.getName(), elementoId);
+    }
 }
