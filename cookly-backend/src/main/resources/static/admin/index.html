@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Cookly · Panel administrativo</title>
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="preload" href="fonts/dm-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/dm-sans-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/Fredoka-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="admin.css?v=11">
+  <link rel="stylesheet" href="login-moderno.css?v=4">
+  <link rel="stylesheet" href="panel-moderno.css?v=4">
+  <link rel="stylesheet" href="resumen-moderno.css?v=9">
+  <link rel="stylesheet" href="comunidad-moderno.css?v=3">
+  <link rel="stylesheet" href="historial-moderno.css?v=4">
+  <link rel="stylesheet" href="resenas-moderno.css?v=2">
+  <link rel="stylesheet" href="usuarios-moderno.css?v=4">
+  <link rel="stylesheet" href="comentarios-moderno.css?v=1">
+  <link rel="stylesheet" href="recetas-moderno.css?v=5">
+</head>
+<body>
+
+  <!-- ============ Inicio de sesión ============ -->
+  <div id="vista-acceso" class="lg" hidden>
+    <aside class="lg-panel" aria-hidden="true">
+      <i class="lg-g lg-g1"></i><i class="lg-g lg-g2"></i>
+      <div class="lg-luz"></div>
+      <div class="lg-tira">
+        <img class="lg-eco" src="https://res.cloudinary.com/pjbmwoxn/image/upload/q_auto,f_auto/v1792472115/login-borde.webp" data-nube="https://res.cloudinary.com/pjbmwoxn/image/upload/v1792472115/login-borde.webp" data-local="img/login-borde.webp" alt="" decoding="async">
+        <img class="lg-base" src="https://res.cloudinary.com/pjbmwoxn/image/upload/q_auto,f_auto/v1792472115/login-borde.webp" data-nube="https://res.cloudinary.com/pjbmwoxn/image/upload/v1792472115/login-borde.webp" data-local="img/login-borde.webp" alt="" decoding="async">
+      </div>
+      <div class="lg-hero">
+        <h2 class="lg-lema">Tu cocina,<br><em>bajo control.</em></h2>
+        <p class="lg-txt">Recetas, usuarios y comunidad en un solo lugar.</p>
+        <div class="lg-pills">
+          <span class="lg-pill"><i><svg viewBox="0 0 24 24"><path d="M4 11h16M6 11a6 6 0 0 1 12 0M5 11v5a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-5"/></svg></i>Recetas</span>
+          <span class="lg-pill"><i><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 5.8M17.5 14a5 5 0 0 1 3 5"/></svg></i>Usuarios</span>
+          <span class="lg-pill"><i><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg></i>Comunidad</span>
+        </div>
+      </div>
+    </aside>
+
+    <div class="lg-b1" aria-hidden="true"></div><div class="lg-b2" aria-hidden="true"></div>
+
+    <section class="lg-col">
+      <div class="lg-caja">
+        <p class="lg-logo"><img src="img/isotipo-rosa.png" alt=""><span>ookly</span></p>
+
+        <form id="form-acceso" class="lg-form" novalidate>
+          <p class="lg-saludo"><i></i><span id="lg-saludo">Hola, chef</span></p>
+          <h1>¡Bienvenido <em>de nuevo!</em></h1>
+          <p class="lg-ayuda">Entra con la cuenta de administrador del panel.</p>
+
+          <div class="lg-campo">
+            <input id="acceso-correo" type="email" autocomplete="username" placeholder="tucorreo@gmail.com" required>
+            <label for="acceso-correo">Correo</label>
+          </div>
+
+          <div class="lg-campo">
+            <input id="acceso-contrasena" type="password" autocomplete="current-password" placeholder="Ingresa tu contraseña" required>
+            <label for="acceso-contrasena">Contraseña</label>
+            <button type="button" id="ojo-acceso" class="ojo" aria-label="Mostrar contraseña">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/><path class="ojo-tachado" d="M3 3l18 18"/></svg>
+            </button>
+          </div>
+          <div class="lg-ing" id="lg-ing" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <p class="lg-caps" id="lg-caps" hidden>⇪ Bloq Mayús está activado</p>
+
+          <p id="acceso-error" class="error-linea" role="alert" hidden></p>
+          <a href="#" id="enlace-olvide" class="lg-olvide">¿Olvidaste tu contraseña?</a>
+          <button type="submit" id="acceso-boton" class="boton primario ancho lg-btn">Entrar</button>
+          <p class="lg-nota">Acceso solo para administradores de Cookly</p>
+        </form>
+
+        <form id="form-olvide" class="lg-form" novalidate hidden>
+          <h1>Recuperar <em>contraseña</em></h1>
+          <p class="lg-ayuda">Escribe el correo de la cuenta de administrador. Te enviaremos un enlace válido por 15 minutos.</p>
+
+          <div class="lg-campo">
+            <input id="olvide-correo" type="email" autocomplete="username" placeholder="tucorreo@gmail.com" required>
+            <label for="olvide-correo">Correo</label>
+          </div>
+
+          <p id="olvide-mensaje" class="error-linea" role="alert" hidden></p>
+          <button type="submit" id="olvide-boton" class="boton primario ancho lg-btn">Enviar enlace</button>
+          <a href="#" id="enlace-volver" class="lg-volver">← Volver a iniciar sesión</a>
+        </form>
+      </div>
+    </section>
+    <p class="lg-pie">Cookly · Panel administrativo</p>
+  </div>
+
+  <!-- ============ Panel ============ -->
+  <div id="vista-panel" class="panel" hidden>
+    <header class="barra-movil">
+      <button type="button" id="btn-menu" class="hamburguesa" aria-label="Abrir menú" aria-expanded="false" aria-controls="lateral">
+        <span></span><span></span><span></span>
+      </button>
+      <p class="barra-movil-marca"><img src="img/isotipo-claro.png" alt=""><span>ookly</span></p>
+    </header>
+    <div id="velo" class="velo" hidden></div>
+    <aside class="lateral" id="lateral">
+      <div class="marca">
+        <img src="img/isotipo-claro.png" alt="">
+        <div class="marca-texto">
+          <span class="marca-nombre">ookly</span>
+          <span class="marca-sub">Panel administrativo</span>
+        </div>
+      </div>
+      <nav class="navegacion" aria-label="Secciones del panel">
+        <a href="#resumen" data-nav="resumen">Resumen</a>
+        <a href="#usuarios" data-nav="usuarios">Usuarios</a>
+        <a href="#uso" data-nav="uso">Uso de la app</a>
+        <a href="#reportes-comunidad" data-nav="reportes-comunidad">Reportes de comunidad <span id="insignia-reportes-comunidad" class="insignia" hidden></span></a>
+        <a href="#comentarios" data-nav="comentarios">Comentarios</a>
+        <a href="#resenas" data-nav="resenas">Reseñas</a>
+        <a href="#recetas" data-nav="recetas">Recetas</a>
+        <a href="#historial" data-nav="historial">Historial</a>
+        <a href="#respaldo" data-nav="respaldo">Respaldo</a>
+      </nav>
+      <div class="lateral-pie">
+        <p id="admin-nombre" class="lateral-nombre"></p>
+        <button type="button" id="btn-salir" class="boton texto">Cerrar sesión</button>
+      </div>
+    </aside>
+
+    <main class="contenido" id="contenido" tabindex="-1">
+      <header class="cabecera">
+        <div>
+          <h1 id="titulo-seccion"></h1>
+          <p id="subtitulo-seccion" class="cabecera-sub"></p>
+        </div>
+        <div id="selector-rango" class="segmentos" role="group" aria-label="Rango de días" hidden>
+          <button type="button" data-dias="7">7 días</button>
+          <button type="button" data-dias="30" aria-pressed="true">30 días</button>
+          <button type="button" data-dias="90">90 días</button>
+        </div>
+      </header>
+
+      <!-- Resumen -->
+      <section data-seccion="resumen" hidden>
+        <div id="resumen-mod"></div>
+        <div id="cifras-resumen" class="cifras" aria-live="polite"></div>
+        <dl id="datos-resumen" class="datos"></dl>
+        <div class="rejilla">
+          <article class="tarjeta">
+            <h2>Usuarios nuevos por día</h2>
+            <div class="lienzo"><canvas id="g-usuarios" role="img" aria-label="Gráfica de usuarios nuevos por día"></canvas></div>
+          </article>
+          <article class="tarjeta">
+            <h2>Recetas nuevas por día</h2>
+            <div class="lienzo"><canvas id="g-recetas" role="img" aria-label="Gráfica de recetas nuevas por día"></canvas></div>
+          </article>
+          <article class="tarjeta">
+            <h2>Recetas más vistas</h2>
+            <div class="lienzo alto"><canvas id="g-vistas" role="img" aria-label="Recetas más vistas"></canvas></div>
+            <p id="vacio-vistas" class="vacio" hidden>Todavía no hay vistas registradas.</p>
+          </article>
+          <article class="tarjeta">
+            <h2>Recetas más guardadas en favoritos</h2>
+            <div class="lienzo alto"><canvas id="g-favoritas" role="img" aria-label="Recetas más guardadas en favoritos"></canvas></div>
+            <p id="vacio-favoritas" class="vacio" hidden>Todavía no hay favoritos.</p>
+          </article>
+          <article class="tarjeta">
+            <h2>Cuentas por estado</h2>
+            <div class="lienzo alto"><canvas id="g-estado" role="img" aria-label="Cuentas activas e inactivas"></canvas></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Usuarios -->
+      <section data-seccion="usuarios" hidden>
+        <div class="us-top">
+          <div class="us-dwn">
+            <button type="button" id="btn-descargar" class="us-dbtn" aria-haspopup="true" aria-expanded="false">Descargar <span aria-hidden="true">▾</span></button>
+            <div class="us-menu" id="us-menu" hidden>
+              <button type="button" id="btn-excel">Descargar Excel</button>
+              <button type="button" id="btn-pdf">Descargar PDF</button>
+            </div>
+          </div>
+        </div>
+        <div id="u-tiles" class="us-tiles"></div>
+        <div class="us-card">
+          <div class="herramientas">
+            <div class="campo">
+              <label for="u-buscar" class="solo-lectores">Buscar usuario</label>
+              <input id="u-buscar" type="search" placeholder="Buscar por nombre o correo" autocomplete="off">
+            </div>
+            <div class="campo">
+              <label for="u-rol" class="solo-lectores">Rol</label>
+              <select id="u-rol">
+                <option value="">Todos los roles</option>
+                <option value="USUARIO">Usuarios</option>
+                <option value="ADMINISTRADOR">Administradores</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label for="u-estado" class="solo-lectores">Estado</label>
+              <select id="u-estado">
+                <option value="">Todos los estados</option>
+                <option value="activo">Activos</option>
+                <option value="inactivo">Inactivos</option>
+              </select>
+            </div>
+          </div>
+          <div class="tabla-envoltura">
+            <table id="tabla-usuarios">
+              <caption class="solo-lectores">Lista de usuarios con su tiempo de uso</caption>
+              <colgroup><col class="c-id"><col class="c-us"><col class="c-rol"><col class="c-est"><col><col class="c-reg"><col class="c-rec"><col class="c-ac"></colgroup>
+              <thead>
+                <tr>
+                  <th scope="col"><button type="button" class="orden" data-orden="id">ID</button></th>
+                  <th scope="col"><button type="button" class="orden" data-orden="nombre">Usuario</button></th>
+                  <th scope="col"><button type="button" class="orden" data-orden="rol">Rol</button></th>
+                  <th scope="col"><button type="button" class="orden" data-orden="activo">Estado</button></th>
+                  <th scope="col"><button type="button" class="orden" data-orden="segundosUso">Tiempo de uso</button></th>
+                  <th scope="col"><button type="button" class="orden" data-orden="creadoEn">Registro</button></th>
+                  <th scope="col"><button type="button" class="orden" data-orden="recetas">Recetas</button></th>
+                  <th scope="col"><span class="solo-lectores">Acciones</span></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="u-paginacion" class="paginacion"></div>
+        </div>
+      </section>
+
+      <!-- Uso de la app -->
+      <section data-seccion="uso" hidden>
+        <div id="uso-mod"></div>
+        <div id="cifras-uso" class="cifras" aria-live="polite"></div>
+        <div class="rejilla">
+          <article class="tarjeta doble">
+            <h2>Tiempo de uso por día</h2>
+            <div class="lienzo"><canvas id="g-uso" role="img" aria-label="Minutos de uso y personas activas por día"></canvas></div>
+          </article>
+          <article class="tarjeta">
+            <h2>Horas de mayor uso</h2>
+            <div class="lienzo alto"><canvas id="g-horas" role="img" aria-label="Sesiones iniciadas por hora del día"></canvas></div>
+          </article>
+          <article class="tarjeta">
+            <h2>Quién usa más la app</h2>
+            <div class="lienzo alto"><canvas id="g-top-usuarios" role="img" aria-label="Usuarios con más minutos de uso"></canvas></div>
+            <p id="vacio-top-usuarios" class="vacio" hidden>Todavía no hay uso registrado.</p>
+          </article>
+        </div>
+        <p class="nota">
+          El tiempo se mide mientras la app está abierta en primer plano: la app avisa al servidor cada 30 segundos.
+          Una sesión termina cuando pasan más de 100 segundos sin avisos. Solo cuentan las personas que ya actualizaron la app.
+        </p>
+      </section>
+
+      <!-- Reportes de comunidad -->
+      <section data-seccion="reportes-comunidad" hidden>
+        <div id="lista-reportes-comunidad" class="lista-reportes"></div>
+      </section>
+
+      <!-- Comentarios -->
+      <section data-seccion="comentarios" hidden>
+        <div class="herramientas"><div class="campo"><label for="c-buscar" class="solo-lectores">Buscar comentario</label>
+          <input id="c-buscar" type="search" placeholder="Buscar por texto, autor o correo" autocomplete="off"></div></div>
+        <div id="lista-comentarios"></div>
+      </section>
+
+      <!-- Reseñas -->
+      <section data-seccion="resenas" hidden>
+        <div class="herramientas"><div class="campo"><label for="rs-buscar" class="solo-lectores">Buscar reseña</label>
+          <input id="rs-buscar" type="search" placeholder="Buscar por opinión, autor, correo o receta" autocomplete="off"></div></div>
+        <div id="lista-resenas"></div>
+      </section>
+
+      <!-- Recetas -->
+      <section data-seccion="recetas" hidden>
+        <div class="herramientas"><div class="campo"><label for="re-buscar" class="solo-lectores">Buscar receta</label>
+          <input id="re-buscar" type="search" placeholder="Buscar por receta, autor o correo" autocomplete="off"></div>
+          <button id="btn-nueva-receta" type="button" class="nr-nueva">+ Nueva receta</button></div>
+        <div id="lista-recetas"></div>
+      </section>
+
+      <!-- Historial -->
+      <section data-seccion="historial" hidden>
+        <div id="lista-historial"></div>
+      </section>
+
+      <!-- Respaldo -->
+      <section data-seccion="respaldo" hidden>
+        <div class="rejilla">
+          <article class="tarjeta">
+            <h2>Respaldo de los datos</h2>
+            <p id="respaldo-info" class="texto-suave">Cargando…</p>
+            <button type="button" id="btn-respaldo" class="boton primario">Descargar respaldo</button>
+            <p class="nota">El archivo incluye las contraseñas cifradas y los correos de todas las personas. Guárdalo en un lugar privado.</p>
+            <details class="detalle-tablas">
+              <summary>Ver filas por tabla</summary>
+              <table id="tabla-respaldo"><thead><tr><th scope="col">Tabla</th><th scope="col" class="num">Filas</th></tr></thead><tbody></tbody></table>
+            </details>
+          </article>
+          <article class="tarjeta">
+            <h2>Recuperar datos desde un respaldo</h2>
+            <p class="texto-suave">
+              Vuelve a crear los datos del archivo que ya no estén en la base de datos, por ejemplo recetas borradas por error.
+              <strong>No borra ni cambia nada de lo que existe hoy.</strong> Si algo falla, no se cambia nada.
+            </p>
+            <form id="form-restaurar" novalidate>
+              <label for="r-archivo">Archivo de respaldo (.json)</label>
+              <input id="r-archivo" type="file" accept=".json,application/json" required>
+              <label for="r-confirmar">Para confirmar, escribe RESTAURAR</label>
+              <input id="r-confirmar" type="text" autocomplete="off" spellcheck="false" required>
+              <button type="submit" id="btn-restaurar" class="boton secundario">Recuperar datos</button>
+            </form>
+            <div id="r-resultado" class="resultado" role="status" hidden></div>
+          </article>
+        </div>
+        <p class="nota">
+          Los respaldos que descargas aquí cubren los datos de la aplicación. Para copias completas de la base de datos
+          (con restauración a un punto en el tiempo) usa los respaldos propios de Supabase en tu plan.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <div id="avisos" class="avisos" role="status" aria-live="polite"></div>
+
+  <script src="admin.js?v=43"></script>
+  <script src="login-moderno.js?v=2"></script>
+  <script src="menu-movil.js?v=2"></script>
+  <script src="panel-moderno.js?v=4"></script>
+  <script src="resumen-moderno.js?v=18"></script>
+</body>
+</html>

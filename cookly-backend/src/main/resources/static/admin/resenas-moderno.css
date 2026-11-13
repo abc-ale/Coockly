@@ -1,0 +1,64 @@
+/* Reseñas: resumen, tarjeta con estrellas, paginas y vista de tarjetitas en celular */
+#lista-resenas .rs-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-bottom: 18px; }
+#lista-resenas .rs-tile { border-radius: 28px; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+#lista-resenas .rs-tile b { display: block; font-size: 34px; line-height: 1; font-weight: 600; }
+#lista-resenas .rs-tile small { display: block; font-size: 12.5px; opacity: .7; margin-top: 4px; }
+#lista-resenas .rs-tile span { font-size: 14px; color: #5C4651; text-align: right; }
+#lista-resenas .rs-card { background: #fff; border: 1px solid #F3D9DC; border-radius: 28px; overflow: hidden; }
+#lista-resenas .rs-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid #F7E6E8; }
+#lista-resenas .rs-c { flex: 0 1 210px; }
+#lista-resenas .rs-c select { width: 100%; box-sizing: border-box; border-radius: 999px; padding-left: 18px; margin: 0; }
+#lista-resenas .rs-cuenta { color: #9A8690; font-size: 13.5px; }
+#lista-resenas .rs-scroll { overflow: hidden; }
+#lista-resenas .rs { width: 100%; table-layout: fixed; border-collapse: collapse; }
+#lista-resenas .rs th { text-align: left; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #7A6670; padding: 14px 18px; background: #FFF9FA; border-bottom: 1px solid #F7E6E8; white-space: nowrap; }
+#lista-resenas .rs td { padding: 14px 18px; border-bottom: 1px solid #F7E6E8; font-size: 14px; vertical-align: middle; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+#lista-resenas .rs td::before { display: none; }
+#lista-resenas .rs tbody tr:last-child td { border-bottom: 0; }
+#lista-resenas .rs tbody tr:hover td { background: #FFFAFB; }
+#lista-resenas .rs-nada { text-align: center; color: #9A8690; padding: 28px 18px; }
+#lista-resenas .rs-rec, #lista-resenas .rs-aut { display: flex; align-items: center; gap: 12px; min-width: 0; }
+#lista-resenas .rs-im { width: 44px; height: 44px; border-radius: 14px; flex: none; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 17px; color: #2B1020; }
+#lista-resenas .rs-av { width: 32px; height: 32px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+#lista-resenas .rs-rec b, #lista-resenas .rs-aut b { font-size: 14px; line-height: 1.25; }
+#lista-resenas .rs-est { display: inline-flex; align-items: center; gap: 2px; }
+#lista-resenas .rs-est svg { width: 15px; height: 15px; }
+#lista-resenas .rs-est em { font-style: normal; font-weight: 700; font-size: 13.5px; margin-left: 6px; }
+#lista-resenas .rs-op { color: #5C4651; line-height: 1.4; }
+#lista-resenas .rs-op.no { color: #B8A5AB; font-style: italic; }
+#lista-resenas .rs-fe { white-space: nowrap; }
+#lista-resenas .rs-fe b { display: block; font-size: 13.5px; }
+#lista-resenas .rs-fe small { color: #9A8690; font-size: 12.5px; }
+#lista-resenas .rs-ac { text-align: right; }
+#lista-resenas .rs-del { border-radius: 999px; padding: 7px 14px; font: inherit; font-weight: 700; font-size: 12.5px; color: #C2264F; background: #FFF6F8; border: 1.5px solid #FFD0DA; cursor: pointer; }
+#lista-resenas .rs-del:disabled { opacity: .5; cursor: not-allowed; }
+#lista-resenas .rs-pie { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 14px 18px; border-top: 1px solid #F7E6E8; color: #9A8690; font-size: 13.5px; }
+#lista-resenas .rs-pg { display: flex; gap: 6px; flex-wrap: wrap; }
+#lista-resenas .rs-pg button { min-width: 34px; height: 34px; border-radius: 50%; border: 1px solid #F3D9DC; background: #fff; font: inherit; font-weight: 700; font-size: 13px; color: #7A6670; cursor: pointer; }
+#lista-resenas .rs-pg button.on { background: #2B1020; border-color: #2B1020; color: #fff; }
+#lista-resenas .rs-pg button:disabled { opacity: .45; cursor: not-allowed; }
+
+@media (max-width: 1150px) {
+  #lista-resenas .rs th, #lista-resenas .rs td { padding-left: 12px; padding-right: 12px; }
+  #lista-resenas .rs-tile b { font-size: 28px; }
+}
+@media (max-width: 860px) {
+  #lista-resenas .rs-tiles { grid-template-columns: 1fr; gap: 12px; }
+  #lista-resenas .rs, #lista-resenas .rs tbody { display: block; }
+  #lista-resenas .rs colgroup, #lista-resenas .rs thead { display: none; }
+  #lista-resenas .rs tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; padding: 14px 16px; border-bottom: 1px solid #F7E6E8; background: #fff; border-radius: 0; box-shadow: none; margin: 0; }
+  #lista-resenas .rs tbody tr:last-child { border-bottom: 0; }
+  #lista-resenas .rs td { display: block; padding: 0; border: 0; background: transparent !important; }
+  #lista-resenas .rs td:nth-child(1) { grid-column: 1; grid-row: 1; }
+  #lista-resenas .rs td:nth-child(6) { grid-column: 2; grid-row: 1; }
+  #lista-resenas .rs td:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+  #lista-resenas .rs td:nth-child(3) { grid-column: 1 / -1; grid-row: 3; }
+  #lista-resenas .rs td:nth-child(4) { grid-column: 1 / -1; grid-row: 4; }
+  #lista-resenas .rs td:nth-child(5) { grid-column: 1 / -1; grid-row: 5; white-space: normal; }
+  #lista-resenas .rs td.rs-nada { grid-column: 1 / -1; grid-row: auto; padding: 22px 0; }
+  #lista-resenas .rs-bar { flex-direction: column; align-items: stretch; }
+  #lista-resenas .rs-c { flex: 1 1 100%; }
+}
+#lista-resenas .rs-del { white-space: nowrap; }
+#lista-resenas .rs td.rs-ac { padding-left: 6px; }
+[data-seccion="resenas"] .herramientas .campo { max-width: 440px; }

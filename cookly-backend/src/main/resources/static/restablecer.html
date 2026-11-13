@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <title>Restablecer contraseña | Cookly</title>
+  <link rel="stylesheet" href="/restablecer.css">
+</head>
+<body>
+  <main class="page">
+    <section class="card" aria-label="Recuperación de contraseña">
+      <div class="logo" aria-label="Cookly">
+        <div class="logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M5 10.5h14v7.2A2.3 2.3 0 0 1 16.7 20H7.3A2.3 2.3 0 0 1 5 17.7v-7.2Z"/>
+            <path d="M8 10.5V8.8a2.2 2.2 0 0 1 3.9-1.4A2.7 2.7 0 0 1 17 8.8v1.7"/>
+            <path d="M8 14h8"/>
+          </svg>
+        </div>
+        <span class="logo-text">Cookly</span>
+      </div>
+
+      <div id="view-loading" class="state">
+        <div class="loader" aria-hidden="true"></div>
+        <h1>Verificando enlace</h1>
+        <p class="sub">Espera un momento mientras comprobamos tu enlace.</p>
+      </div>
+
+      <div id="view-form" class="hidden">
+        <h1>Nueva contraseña</h1>
+        <p class="sub">
+          Debe tener al menos 10 caracteres e incluir letras y números.
+        </p>
+
+        <div id="timer-banner" class="banner">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7v5l3 2"/>
+          </svg>
+          <span>Este enlace vence en <strong id="timer">--:--</strong></span>
+        </div>
+
+        <form id="reset-form" novalidate>
+          <div class="field">
+            <label for="password">Contraseña nueva</label>
+            <div class="input-wrap">
+              <svg class="icon-lock" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="5" y="11" width="14" height="9" rx="2"/>
+                <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+              </svg>
+              <input
+                id="password"
+                type="password"
+                autocomplete="new-password"
+                maxlength="72"
+                placeholder="Escribe tu nueva contraseña"
+                required
+              >
+              <button
+                class="eye"
+                type="button"
+                data-target="password"
+                aria-label="Mostrar contraseña"
+                aria-pressed="false"
+              >
+                <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/>
+                  <circle cx="12" cy="12" r="2.5"/>
+                </svg>
+                <svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M3 3l18 18"/>
+                  <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6 0 9.5 6 9.5 6a16.5 16.5 0 0 1-3.1 3.6"/>
+                  <path d="M6.2 6.7C3.8 8.2 2.5 12 2.5 12s3.5 6 9.5 6c1.2 0 2.3-.2 3.3-.6"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="confirm-password">Confirmar contraseña</label>
+            <div class="input-wrap">
+              <svg class="icon-lock" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="5" y="11" width="14" height="9" rx="2"/>
+                <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+              </svg>
+              <input
+                id="confirm-password"
+                type="password"
+                autocomplete="new-password"
+                maxlength="72"
+                placeholder="Repite tu nueva contraseña"
+                required
+              >
+              <button
+                class="eye"
+                type="button"
+                data-target="confirm-password"
+                aria-label="Mostrar contraseña"
+                aria-pressed="false"
+              >
+                <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/>
+                  <circle cx="12" cy="12" r="2.5"/>
+                </svg>
+                <svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M3 3l18 18"/>
+                  <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6 0 9.5 6 9.5 6a16.5 16.5 0 0 1-3.1 3.6"/>
+                  <path d="M6.2 6.7C3.8 8.2 2.5 12 2.5 12s3.5 6 9.5 6c1.2 0 2.3-.2 3.3-.6"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div id="message" class="message" role="alert"></div>
+
+          <button id="submit-button" class="btn btn-primary" type="submit">
+            Cambiar contraseña
+          </button>
+        </form>
+      </div>
+
+      <div id="view-success" class="state hidden" role="status">
+        <div class="badge badge-ok" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="m8 12 2.6 2.6L16.5 9"/>
+          </svg>
+        </div>
+        <h1>Contraseña actualizada</h1>
+        <p class="sub" id="exito-texto">
+          Ya puedes volver a Cookly e iniciar sesión con tu contraseña nueva.
+        </p>
+        <a class="btn btn-primary" id="enlace-exito" href="cookly://login">Abrir Cookly</a>
+      </div>
+
+      <div id="view-invalid" class="state hidden" role="status">
+        <div class="badge badge-error" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3.5 2.5 20h19L12 3.5Z"/>
+            <path d="M12 10v4.5M12 17.5h.01"/>
+          </svg>
+        </div>
+        <h1>Enlace no disponible</h1>
+        <p class="sub" id="invalid-text">
+          Este enlace venció o ya fue utilizado. Los enlaces duran 15 minutos
+          y solo se pueden usar una vez.
+        </p>
+        <a class="btn btn-primary" id="enlace-nuevo" href="cookly://olvide-contrasena">
+          Solicitar un enlace nuevo
+        </a>
+        <a class="link" id="enlace-login" href="cookly://login">Volver al inicio de sesión</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="/restablecer.js" defer></script>
+</body>
+</html>

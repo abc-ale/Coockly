@@ -1,1 +1,0 @@
-package com.cookly.modelos; import java.util.List; public class RecomendacionReceta { public Long id; public String nombre; public int porcentajeCoincidencia; public List<String> ingredientesFaltantes; public Integer minutosPreparacion; }

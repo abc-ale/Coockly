@@ -1,0 +1,238 @@
+import React, { useEffect, useRef } from 'react';
+import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, radius, spacing, typography, shadow } from '../constants/theme';
+import { Presionable } from './Animaciones';
+import ImagenReceta from './ImagenReceta';
+import Estrellas from './Estrellas';
+import { toque } from '../lib/vibracion';
+
+/**
+ * Entrada suave: la tarjeta sube un poco y se asienta, SIN cambiar la transparencia.
+ * (En Android, una sombra dentro de algo semitransparente se ve como un rectángulo gris: por eso no se usa fundido.)
+ */
+export function EntradaSuave({
+  children, delay = 0, distancia = 16, style,
+}: { children: React.ReactNode; delay?: number; distancia?: number; style?: any }) {
+  const progreso = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(progreso, { toValue: 1, duration: 380, delay, useNativeDriver: true }).start();
+  }, [progreso, delay]);
+  return (
+    <Animated.View
+      style={[
+        style,
+        {
+          transform: [
+            { translateY: progreso.interpolate({ inputRange: [0, 1], outputRange: [distancia, 0] }) },
+            { scale: progreso.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) },
+          ],
+        },
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
+/** Forma de los datos de ejemplo que usa la pantalla Buscar. */
+export type Recipe = {
+  id: number;
+  title: string;
+  description: string;
+  image: string;
+  rating: number;
+  difficulty: 'Fácil' | 'Media' | 'Difícil';
+  minutes: number;
+  servings: number;
+  kcal: number;
+  isFavorite?: boolean;
+};
+
+/** Forma que devuelve el servidor en las listas de recetas (buscar, por etiqueta y favoritos). */
+export type TarjetaReceta = {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  minutosPreparacion?: number;
+  portada?: string;
+  promedio?: number;
+  isFavorite?: boolean;
+};
+
+type Props = {
+  recipe: Recipe | TarjetaReceta;
+  onPress?: () => void;
+  onToggleFavorite?: () => void;
+  /** Posición en la lista: las tarjetas entran una tras otra. */
+  indice?: number;
+};
+
+function RecipeCard({ recipe, onPress, onToggleFavorite, indice = 0 }: Props) {
+  // Acepta las dos formas: la del servidor (nombre, portada…) y la de ejemplo (title, image…).
+  const r = recipe as any;
+  const titulo: string = r.title ?? r.nombre ?? '';
+  const descripcion: string = r.description ?? r.descripcion ?? '';
+  const imagen: string | undefined = r.image ?? r.portada;
+  const puntuacion: number = Number(r.rating ?? r.promedio ?? 0);
+  const minutos: number | undefined = r.minutes ?? r.minutosPreparacion ?? undefined;
+  const dificultad: string | undefined = r.difficulty;
+  const personas: number | undefined = r.servings;
+  const kcal: number | undefined = r.kcal;
+
+  // El corazón "late" cada vez que cambia (no al aparecer por primera vez).
+  const escalaCorazon = useRef(new Animated.Value(1)).current;
+  const primeraVez = useRef(true);
+  useEffect(() => {
+    if (primeraVez.current) {
+      primeraVez.current = false;
+      return;
+    }
+    Animated.sequence([
+      Animated.timing(escalaCorazon, { toValue: 1.4, duration: 110, useNativeDriver: true }),
+      Animated.spring(escalaCorazon, { toValue: 1, friction: 4, tension: 160, useNativeDriver: true }),
+    ]).start();
+  }, [r.isFavorite, escalaCorazon]);
+
+  return (
+    <EntradaSuave delay={Math.min(indice, 8) * 60} distancia={14} style={styles.envoltura}>
+    <Presionable onPress={onPress} escalaAlPresionar={0.97} style={[styles.card, shadow.card]}>
+      <View style={styles.fotoCaja}>
+        {/* Foto liviana (Cloudinary) con fundido: nunca queda un cuadro blanco mientras carga */}
+        <ImagenReceta uri={imagen} ancho={500} style={styles.image} />
+
+        <Pressable
+          style={styles.favoriteBadge}
+          onPress={() => {
+            toque();
+            onToggleFavorite?.();
+          }}
+          hitSlop={8}
+        >
+          <Animated.View style={{ transform: [{ scale: escalaCorazon }] }}>
+            <Ionicons
+              name={r.isFavorite ? 'heart' : 'heart-outline'}
+              size={16}
+              color={r.isFavorite ? colors.primary : colors.textMuted}
+            />
+          </Animated.View>
+        </Pressable>
+      </View>
+
+      <View style={styles.body}>
+        <View style={styles.titleRow}>
+          <Text style={styles.title} numberOfLines={1}>{titulo}</Text>
+          {dificultad ? (
+            <View style={styles.difficultyChip}>
+              <Text style={styles.difficultyText}>{dificultad}</Text>
+            </View>
+          ) : null}
+        </View>
+
+        {descripcion ? <Text style={styles.description} numberOfLines={2}>{descripcion}</Text> : null}
+
+        <View style={styles.pieFila}>
+          <View style={styles.metaRow}>
+            <View style={styles.minEstrellas}>
+              {minutos ? <Meta icon="time-outline" text={`${minutos} min`} /> : null}
+              <Estrellas valor={puntuacion} tamano={10} gap={0} />
+            </View>
+            {personas ? <Meta icon="people-outline" text={`${personas}`} /> : null}
+            {kcal ? <Meta icon="flame-outline" text={`${kcal} kcal`} /> : null}
+          </View>
+          <View style={styles.flecha}>
+            <Ionicons name="arrow-forward" size={16} color={colors.white} />
+          </View>
+        </View>
+      </View>
+    </Presionable>
+    </EntradaSuave>
+  );
+}
+
+export default React.memo(RecipeCard);
+
+function Meta({ icon, text }: { icon: any; text: string }) {
+  return (
+    <View style={styles.metaItem}>
+      <Ionicons name={icon} size={13} color={colors.textMuted} />
+      <Text style={styles.metaText}>{text}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  envoltura: {
+    width: '48%',
+    marginBottom: spacing.md,
+  },
+  card: {
+    backgroundColor: colors.primaryLight,
+    borderRadius: radius.lg,
+    width: '100%',
+    padding: 8,
+  },
+  fotoCaja: { borderRadius: 22, overflow: 'hidden' },
+  image: {
+    width: '100%',
+    height: 124,
+  },
+  sinFoto: {
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ratingBadge: {
+    position: 'absolute',
+    left: spacing.sm,
+    top: spacing.sm,
+    backgroundColor: colors.white,
+    borderRadius: radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  ratingText: { ...typography.caption, color: colors.text },
+  favoriteBadge: {
+    position: 'absolute',
+    right: spacing.sm,
+    top: spacing.sm,
+    backgroundColor: colors.white,
+    borderRadius: radius.pill,
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  body: {
+    paddingHorizontal: 6,
+    paddingTop: 10,
+    paddingBottom: 6,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  title: { ...typography.h3, color: colors.text, flexShrink: 1 },
+  difficultyChip: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  difficultyText: { ...typography.caption, color: colors.primaryDark },
+  description: {
+    ...typography.bodySmall,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  pieFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.sm },
+  minEstrellas: { gap: 3 },
+  metaRow: { flexDirection: 'row', gap: spacing.sm, flexShrink: 1 },
+  flecha: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  metaText: { ...typography.caption, color: colors.textMuted },
+});

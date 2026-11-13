@@ -1,0 +1,8 @@
+cookly-android/.gradle/
+cookly-android/app/build/
+*.iml
+.idea/
+/local.properties
+*.apk
+*.aab
+.vscode/

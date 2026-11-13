@@ -1,37 +1,67 @@
 spring:
   profiles:
-    default: ${SPRING_PROFILES_DEFAULT:local}
+    default: local
+
   datasource:
     url: ${SUPABASE_DATABASE_URL}
     username: ${SUPABASE_DATABASE_USERNAME}
     password: ${SUPABASE_DATABASE_PASSWORD}
     hikari:
-      maximum-pool-size: ${DB_POOL_MAX:5}
-      minimum-idle: ${DB_POOL_MIN:1}
-      connection-timeout: ${DB_CONNECTION_TIMEOUT:20000}
-      keepalive-time: ${DB_KEEPALIVE:60000}
+      maximum-pool-size: 5
+      data-source-properties:
+        # El pooler de Supabase (puerto 6543) no admite sentencias preparadas en el servidor.
+        prepareThreshold: "0"
+
   jpa:
     hibernate:
       ddl-auto: validate
     open-in-view: false
-    properties:
-      hibernate:
-        jdbc:
-          batch_size: 25
-        query:
-          in_clause_parameter_padding: true
+
   jackson:
     default-property-inclusion: non_null
 
+  # Respaldos: el valor por defecto de Spring es 1 MB y rechazaría el archivo de recuperación.
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+
 server:
-  port: ${PORT:8080}
+  port: ${PORT:9090}
+  forward-headers-strategy: framework
+  # Respuestas JSON comprimidas: menos datos por la red móvil.
+  compression:
+    enabled: true
+    min-response-size: 1024
 
 seguridad:
   jwt:
     secreto: ${JWT_SECRETO}
-    expiracion-minutos: ${JWT_EXPIRACION_MINUTOS:60}
+    # Usuarios: la sesión no vence (10 años); solo se cierra si la persona sale o desinstala la app.
+    # Administrador: vence tras 30 min SIN actividad (el servidor renueva el token en cada petición).
+    expiracion-minutos: ${JWT_EXPIRACION_MINUTOS:5256000}
+    expiracion-admin-minutos: ${JWT_EXPIRACION_ADMIN_MINUTOS:30}
 
 cloudinary:
-  nombre: ${CLOUDINARY_CLOUD_NAME:}
-  clave-api: ${CLOUDINARY_API_KEY:}
-  secreto: ${CLOUDINARY_API_SECRET:}
+  nombre: ${CLOUDINARY_CLOUD_NAME}
+  clave-api: ${CLOUDINARY_API_KEY}
+  secreto: ${CLOUDINARY_API_SECRET}
+
+supabase:
+  url: ${SUPABASE_URL}
+  anon-key: ${SUPABASE_ANON_KEY}
+
+app:
+  url-publica: ${APP_URL_PUBLICA:https://cookly-api-sb9w.onrender.com}
+  zona-horaria: ${ZONA_HORARIA:America/Lima}
+
+# Cuenta de administrador: se crea al arrancar si las dos variables tienen valor.
+admin:
+  correo: ${ADMIN_CORREO:}
+  contrasena: ${ADMIN_CONTRASENA:}
+  nombre: ${ADMIN_NOMBRE:Administrador}
+
+brevo:
+  api-key: ${BREVO_API_KEY:}
+  remitente: ${BREVO_SENDER_EMAIL:}
+  nombre-remitente: ${BREVO_SENDER_NAME:Cookly}

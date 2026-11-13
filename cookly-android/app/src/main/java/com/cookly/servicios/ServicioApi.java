@@ -1,2 +1,0 @@
-package com.cookly.servicios; import com.cookly.modelos.*; import java.util.*; import retrofit2.Call; import retrofit2.http.*;
-public interface ServicioApi { @POST("autenticacion/login") Call<RespuestaAcceso> acceder(@Body SolicitudAcceso solicitud); @POST("autenticacion/registro") Call<RespuestaAcceso> registrar(@Body SolicitudRegistro solicitud); @POST("recetas/menu-express") Call<Map<String,List<RecomendacionReceta>>> menuExpress(@Body SolicitudMenuExpress solicitud); }

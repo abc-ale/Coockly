@@ -1,0 +1,198 @@
+/* ============================================================
+   Inicio de sesión moderno · Cookly (panel administrativo)
+   Todo con clases lg-* para no chocar con admin.css
+   ============================================================ */
+
+@keyframes lg-sube { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes lg-entra2 { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: none; } }
+@keyframes lg-entra { from { opacity: 0; transform: translate(-40px, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
+@keyframes lg-deriva { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(var(--dy, -14px)) rotate(var(--r, 6deg)); } }
+@keyframes lg-flota { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-12px) rotate(.6deg); } }
+@keyframes lg-foto { 0%, 100% { transform: translateY(0) rotate(0) scale(1); } 50% { transform: translateY(-12px) rotate(.5deg) scale(1.018); } }
+@keyframes lg-eco { 0%, 100% { transform: translateY(0) scale(1.16); } 50% { transform: translateY(14px) scale(1.2); } }
+@keyframes lg-asc { 0% { transform: translateY(0); opacity: 0; } 12% { opacity: .55; } 88% { opacity: .25; } 100% { transform: translateY(-105vh); opacity: 0; } }
+@keyframes lg-mueve { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(40px, -30px) scale(1.12); } }
+@keyframes lg-brillo { 0%, 55% { left: -90px; } 100% { left: 115%; } }
+@keyframes lg-pulso { 0% { transform: scale(.7); opacity: .9; } 100% { transform: scale(1.7); opacity: 0; } }
+@keyframes lg-brota { 0% { transform: scale(0); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
+@keyframes lg-rebota { 0%, 100% { transform: none; } 30% { transform: translateY(-10px) rotate(-4deg); } 60% { transform: translateY(0) rotate(3deg); } }
+@keyframes lg-tiembla { 0%, 100% { transform: none; } 20% { transform: translateX(-8px); } 40% { transform: translateX(7px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
+@keyframes lg-rayas { to { background-position: 40px 0; } }
+
+/* ------------------------------------------------------------ raíz */
+#vista-acceso.lg {
+  position: relative; min-height: 100vh; overflow: hidden;
+  display: flex; align-items: center;
+  background: #FFFAF9; color: var(--tinta);
+}
+
+/* ------------------------------------------------------------ panel izquierdo */
+#vista-acceso .lg-panel {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 50%;
+  border-radius: 0 52px 52px 0; overflow: hidden; display: flex; align-items: center; z-index: 2;
+  box-shadow: 18px 0 50px rgba(43, 18, 32, .2);
+  background:
+    radial-gradient(70% 60% at 38% 55%, rgba(255, 77, 128, .47) 0%, rgba(255, 77, 128, 0) 70%),
+    linear-gradient(160deg, #8E1747 0%, #4A0F2A 55%, #2B1220 100%);
+}
+#vista-acceso .lg-defs { position: absolute; width: 0; height: 0; }
+#vista-acceso .lg-g { position: absolute; border-radius: 50%; filter: blur(40px); animation: lg-mueve 16s ease-in-out infinite; }
+#vista-acceso .lg-g1 { width: 340px; height: 340px; left: -80px; bottom: -60px; background: rgba(255, 77, 128, .33); }
+#vista-acceso .lg-g2 { width: 300px; height: 300px; right: -60px; top: -60px; background: rgba(255, 176, 46, .2); animation-delay: -6s; }
+#vista-acceso .lg-luz { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(480px circle at var(--mx, 70%) var(--my, 40%), rgba(255, 77, 128, .09), transparent 62%); }
+#vista-acceso .lg-chispa { position: absolute; bottom: -20px; border-radius: 50%; background: #fff; opacity: 0; animation: lg-asc var(--t) linear var(--dl) infinite; }
+
+/* franja de frutas (Cloudinary) */
+#vista-acceso .lg-tira {
+  position: relative; flex: none; height: 100%; max-height: 1080px; aspect-ratio: 459 / 1080; z-index: 2;
+}
+#vista-acceso .lg-base, #vista-acceso .lg-eco { object-fit: cover; object-position: left center; }
+#vista-acceso .lg-base { position: absolute; inset: 0; display: block; width: 100%; height: 100%; user-select: none; filter: drop-shadow(10px 0 24px rgba(0, 0, 0, .4)); }
+#vista-acceso .lg-eco {
+  position: absolute; inset: 0; width: 100%; height: 100%; opacity: .45; filter: blur(18px) saturate(1.4); pointer-events: none;
+}
+
+/* mensaje de la izquierda */
+#vista-acceso .lg-hero { position: relative; z-index: 3; flex: 1; min-width: 0; margin: 0 2vw 0 -28px; max-width: 440px; color: #fff; }
+#vista-acceso .lg-lema { margin: 0 0 18px; font-family: var(--fuente-titulo); font-weight: 700; font-size: clamp(40px, 3.9vw, 58px); line-height: 1.06; letter-spacing: -1px; color: #fff; }
+#vista-acceso .lg-lema em { font-style: normal; color: var(--mantequilla); }
+#vista-acceso .lg-txt { margin: 0 0 30px; font-size: 17px; line-height: 1.45; color: rgba(255, 248, 246, .78); max-width: 420px; }
+#vista-acceso .lg-pills { display: flex; flex-wrap: wrap; gap: 12px; }
+#vista-acceso .lg-pill {
+  display: flex; align-items: center; gap: 10px; padding: 10px 18px 10px 12px; border-radius: 999px;
+  background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .25);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  font-weight: 700; font-size: 15px; box-shadow: 0 10px 24px rgba(0, 0, 0, .22);
+  animation: lg-flota 5s ease-in-out infinite;
+}
+#vista-acceso .lg-pill:nth-child(2) { animation-delay: -1.6s; }
+#vista-acceso .lg-pill:nth-child(3) { animation-delay: -3.2s; }
+#vista-acceso .lg-pill i { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: #FF4D82; }
+#vista-acceso .lg-pill svg { width: 17px; height: 17px; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+#vista-acceso .lg-pie { position: absolute; left: 50%; right: 0; bottom: 18px; margin: 0; text-align: center; font-size: 12px; letter-spacing: .06em; color: #8A6B77; }
+
+/* ------------------------------------------------------------ lado del formulario */
+#vista-acceso .lg-b1, #vista-acceso .lg-b2 { position: absolute; border-radius: 50%; pointer-events: none; }
+#vista-acceso .lg-b1 { right: -8%; top: -14%; width: 36vw; aspect-ratio: 1; background: radial-gradient(circle, rgba(255, 77, 128, .19), rgba(255, 77, 128, 0) 68%); animation: lg-mueve 15s ease-in-out infinite; }
+#vista-acceso .lg-b2 { right: 12%; bottom: -24%; width: 30vw; aspect-ratio: 1; background: radial-gradient(circle, rgba(255, 176, 46, .15), rgba(255, 176, 46, 0) 68%); animation: lg-mueve 18s ease-in-out -7s infinite; }
+
+#vista-acceso .lg-col {
+  position: relative; margin-left: 50%; width: 50%; padding: 40px 0;
+  display: flex; justify-content: center;
+}
+#vista-acceso .lg-caja { width: min(420px, 86%); }
+#vista-acceso .lg-caja > * { animation: lg-sube .7s cubic-bezier(.2, .8, .2, 1) both; }
+#vista-acceso .lg-caja > :nth-child(2) { animation-delay: .1s; }
+#vista-acceso .lg-caja.lg-tiembla { animation: lg-tiembla .45s; }
+
+#vista-acceso .lg-logo { display: flex; align-items: center; gap: 3px; margin: 0 0 22px; width: max-content; cursor: pointer; user-select: none; }
+#vista-acceso .lg-logo img { height: 58px; width: auto; display: block; transition: transform .5s cubic-bezier(.3, 1.6, .5, 1); }
+#vista-acceso .lg-logo span { font-family: var(--fuente-titulo); font-weight: 700; font-size: 50px; line-height: 1; color: var(--rosa); letter-spacing: -.5px; }
+#vista-acceso .lg-logo:hover img { transform: rotate(-14deg) scale(1.08); }
+
+#vista-acceso .lg-saludo {
+  display: inline-flex; align-items: center; gap: 8px; margin: 0 0 12px;
+  background: var(--tinta); color: var(--mantequilla); border-radius: 999px; padding: 6px 14px; font-size: 14px; font-weight: 700;
+}
+#vista-acceso .lg-saludo i { width: 9px; height: 9px; border-radius: 50%; background: var(--mantequilla); box-shadow: 0 0 0 4px rgba(255, 216, 102, .25); }
+
+#vista-acceso .lg-form > * { animation: lg-sube .6s cubic-bezier(.2, .8, .2, 1) both; }
+#vista-acceso .lg-form > :nth-child(1) { animation-delay: .12s; }
+#vista-acceso .lg-form > :nth-child(2) { animation-delay: .2s; }
+#vista-acceso .lg-form > :nth-child(3) { animation-delay: .28s; }
+#vista-acceso .lg-form > :nth-child(4) { animation-delay: .34s; }
+#vista-acceso .lg-form > :nth-child(5) { animation-delay: .4s; }
+#vista-acceso .lg-form > :nth-child(6) { animation-delay: .46s; }
+#vista-acceso .lg-form > :nth-child(7) { animation-delay: .52s; }
+#vista-acceso .lg-form h1 { margin: 0 0 8px; font-size: 40px; line-height: 1.08; font-weight: 700; letter-spacing: -.5px; color: var(--tinta); }
+#vista-acceso .lg-form h1 em { font-style: normal; color: var(--rosa); }
+#vista-acceso .lg-ayuda { margin: 0 0 28px; color: #5F4B54; font-size: 16px; }
+
+/* campos con etiqueta flotante */
+#vista-acceso .lg-campo { position: relative; height: 64px; margin: 0 0 16px; background: #fff; border: 2px solid #E4D3D9; border-radius: 18px; transition: border-color .15s, box-shadow .15s; }
+#vista-acceso .lg-campo:hover { border-color: #C9A9B4; }
+#vista-acceso .lg-campo:focus-within { border-color: var(--rosa); box-shadow: 0 0 0 4px rgba(255, 77, 128, .16); }
+#vista-acceso .lg-campo input {
+  position: absolute; inset: 0; width: 100%; height: 100%; padding: 25px 56px 0 20px;
+  border: 0; border-radius: 16px; background: transparent; box-shadow: none; font-size: 16px; font-weight: 500; color: var(--tinta);
+}
+#vista-acceso .lg-campo input:focus { box-shadow: none; border: 0; }
+#vista-acceso .lg-campo input::placeholder { color: transparent; transition: color .2s; }
+#vista-acceso .lg-campo input:focus::placeholder { color: #A8939B; }
+#vista-acceso .lg-campo label {
+  position: absolute; left: 20px; top: 21px; margin: 0; display: block;
+  font-size: 16px; font-weight: 500; color: #8A6B77; pointer-events: none;
+  transition: top .18s, font-size .18s, color .18s;
+}
+#vista-acceso .lg-campo input:focus + label,
+#vista-acceso .lg-campo input:not(:placeholder-shown) + label,
+#vista-acceso .lg-campo input:-webkit-autofill + label { top: 10px; font-size: 12px; font-weight: 700; color: #E11D5A; }
+#vista-acceso .lg-campo .ojo { right: 9px; color: #8A6B77; }
+#vista-acceso .lg-campo .ojo:hover { background: var(--blush); }
+
+#vista-acceso .lg-ing { display: flex; align-items: center; gap: 6px; margin: -6px 4px 14px; }
+#vista-acceso .lg-ing i { width: 12px; height: 12px; border-radius: 50%; background: #E4D3D9; transition: background .2s; }
+#vista-acceso .lg-ing i.on { animation: lg-brota .35s both; }
+#vista-acceso .lg-caps { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 12px; font-size: 13px; font-weight: 700; color: #B7791F; background: #FFF1C9; border-radius: 999px; padding: 5px 12px; }
+
+#vista-acceso .error-linea, #vista-acceso .exito-linea { display: flex; align-items: flex-start; gap: 10px; font-weight: 500; line-height: 1.35; }
+#vista-acceso .error-linea::before, #vista-acceso .exito-linea::before {
+  content: "!"; flex: 0 0 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 13px; font-weight: 700; color: #fff; background: var(--peligro); margin-top: 1px;
+}
+#vista-acceso .exito-linea::before { content: "✓"; background: #2E9B4F; }
+
+#vista-acceso .lg-olvide, #vista-acceso .lg-volver { color: #E11D5A; font-size: 14px; font-weight: 700; text-decoration: none; }
+#vista-acceso .lg-olvide { display: inline-block; margin: 2px 0 0; }
+#vista-acceso .lg-volver { display: block; text-align: center; margin-top: 20px; font-size: 15px; }
+#vista-acceso .lg-olvide:hover, #vista-acceso .lg-volver:hover { text-decoration: underline; }
+
+#vista-acceso .lg-btn {
+  position: relative; overflow: hidden; margin-top: 26px; height: 58px; padding: 0 22px; font-size: 18px;
+  background: linear-gradient(135deg, #FF4D82, #E11D5A); box-shadow: 0 14px 28px rgba(225, 29, 90, .28);
+}
+#vista-acceso .lg-btn:hover { background: linear-gradient(135deg, #FF5F8F, #EC2A66); }
+#vista-acceso .lg-btn::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: -90px; width: 60px;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .35), transparent);
+  transform: skewX(-20deg); animation: lg-brillo 4.5s ease-in-out infinite; pointer-events: none;
+}
+#vista-acceso .lg-btn[disabled] {
+  opacity: 1; cursor: progress;
+  background: repeating-linear-gradient(115deg, #E11D5A 0 14px, #F23B72 14px 28px); background-size: 40px 100%;
+  animation: lg-rayas .8s linear infinite;
+}
+#vista-acceso .lg-btn[disabled]::after { display: none; }
+#vista-acceso .lg-nota { margin: 22px 0 0; text-align: center; color: var(--apagado); font-size: 13px; }
+
+/* confeti (se crea desde login-moderno.js) */
+.lg-confeti { position: fixed; z-index: 90; left: 0; top: 0; pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  #vista-acceso *, #vista-acceso *::before, #vista-acceso *::after { animation: none !important; transition: none !important; }
+}
+
+/* ------------------------------------------------------------ celular y tableta */
+@media (max-width: 960px) {
+  #vista-acceso.lg { align-items: flex-start; }
+  #vista-acceso .lg-panel { width: 100%; height: 230px; bottom: auto; border-radius: 0 0 36px 36px; justify-content: center; }
+  #vista-acceso .lg-tira { position: absolute; left: 0; top: 0; opacity: .28; }
+  #vista-acceso .lg-hero { margin: 0 24px; max-width: none; text-align: center; }
+  #vista-acceso .lg-lema { font-size: 34px; margin: 0; }
+  #vista-acceso .lg-txt, #vista-acceso .lg-pills, #vista-acceso .lg-pie { display: none; }
+  #vista-acceso .lg-col { margin: 0; width: 100%; padding: 260px 0 32px; }
+  #vista-acceso .lg-caja { width: min(440px, 88%); }
+  #vista-acceso .lg-logo img { height: 46px; }
+  #vista-acceso .lg-logo span { font-size: 40px; }
+  #vista-acceso .lg-form h1 { font-size: 34px; }
+}
+
+/* ------------------------------------------------------------ formulario centrado */
+#vista-acceso .lg-caja { text-align: center; margin: 0 auto; }
+#vista-acceso .lg-logo { margin-left: auto; margin-right: auto; }
+#vista-acceso .lg-saludo { margin-left: auto; margin-right: auto; }
+#vista-acceso .lg-ing { justify-content: center; margin-left: 0; margin-right: 0; }
+#vista-acceso .lg-olvide { display: block; width: max-content; margin: 4px auto 0; }
+#vista-acceso .lg-campo input, #vista-acceso .lg-campo label { text-align: left; }
+#vista-acceso .error-linea, #vista-acceso .exito-linea { text-align: left; }

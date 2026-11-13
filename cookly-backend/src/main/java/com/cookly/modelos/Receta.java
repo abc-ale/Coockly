@@ -1,3 +1,37 @@
 package com.cookly.modelos;
-import jakarta.persistence.*; import java.util.*;
-@Entity @Table(name="recetas") public class Receta { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id; @Column(nullable=false) private String nombre; @Column(length=2000) private String descripcion; private Short minutosPreparacion; @ManyToOne(optional=false) private Usuario creador; @ManyToMany @JoinTable(name="ingredientes_receta",joinColumns=@JoinColumn(name="receta_id"),inverseJoinColumns=@JoinColumn(name="ingrediente_id")) private Set<Ingrediente> ingredientes=new HashSet<>(); public Long getId(){return id;} public String getNombre(){return nombre;} public String getDescripcion(){return descripcion;} public Short getMinutosPreparacion(){return minutosPreparacion;} public Usuario getCreador(){return creador;} public Set<Ingrediente> getIngredientes(){return ingredientes;} public void setNombre(String v){nombre=v;} public void setDescripcion(String v){descripcion=v;} public void setMinutosPreparacion(Short v){minutosPreparacion=v;} public void setCreador(Usuario v){creador=v;} }
+
+import jakarta.persistence.*;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Entity
+@Table(name = "recetas")
+public class Receta {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+    @Column(nullable = false) private String nombre;
+    @Column(length = 2000) private String descripcion;
+    private Short minutosPreparacion;
+    @ManyToOne(optional = false) private Usuario creador;
+    @OneToMany(mappedBy = "receta", fetch = FetchType.EAGER)
+    private Set<IngredienteReceta> detallesIngredientes = new LinkedHashSet<>();
+    @OneToMany(mappedBy = "receta", fetch = FetchType.EAGER)
+    @OrderBy("orden ASC")
+    private List<PasoReceta> pasos = new ArrayList<>();
+
+    public Long getId() { return id; }
+    public String getNombre() { return nombre; }
+    public String getDescripcion() { return descripcion; }
+    public Short getMinutosPreparacion() { return minutosPreparacion; }
+    public Usuario getCreador() { return creador; }
+    public Set<IngredienteReceta> getDetallesIngredientes() { return detallesIngredientes; }
+    public List<PasoReceta> getPasos() { return pasos; }
+    /** Compatibilidad con el algoritmo de Menú Express. */
+    public Set<Ingrediente> getIngredientes() {
+        return detallesIngredientes.stream().map(IngredienteReceta::getIngrediente)
+                .filter(Objects::nonNull).collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+    public void setNombre(String v) { nombre = v; }
+    public void setDescripcion(String v) { descripcion = v; }
+    public void setMinutosPreparacion(Short v) { minutosPreparacion = v; }
+    public void setCreador(Usuario v) { creador = v; }
+}
