@@ -52,7 +52,7 @@ supabase:
   anon-key: ${SUPABASE_ANON_KEY}
 
 app:
-  url-publica: ${APP_URL_PUBLICA:https://cookly-api-sb9w.onrender.com}
+  url-publica: ${APP_URL_PUBLICA:https://cookly-api-y045.onrender.com}
   zona-horaria: ${ZONA_HORARIA:America/Lima}
 
 # Cuenta de administrador: se crea al arrancar si las dos variables tienen valor.

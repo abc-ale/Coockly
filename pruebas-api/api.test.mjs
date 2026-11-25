@@ -1,7 +1,7 @@
 // Pruebas automáticas de la API de Cookly (todos los módulos), de punta a punta.
 //
 // Uso (desde la carpeta pruebas-api):
-//   BASE_URL=https://cookly-api-sb9w.onrender.com \
+//   BASE_URL=https://cookly-api-y045.onrender.com \
 //   ADMIN_CORREO=admin@ejemplo.com ADMIN_CONTRASENA=... \
 //   node --test api.test.mjs
 //

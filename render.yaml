@@ -45,7 +45,7 @@ services:
         value: Cookly
 
       - key: APP_URL_PUBLICA
-        value: https://cookly-api-sb9w.onrender.com
+        value: https://cookly-api-y045.onrender.com
 
       - key: ZONA_HORARIA
         value: America/Lima

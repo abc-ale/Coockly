@@ -61,7 +61,7 @@ public class ConfiguracionSeguridad {
     @Bean
     CorsConfigurationSource cors() {
         var c = new CorsConfiguration();
-        c.setAllowedOrigins(List.of("https://cookly.app", "https://cookly-api-sb9w.onrender.com"));
+        c.setAllowedOrigins(List.of("https://cookly.app", "https://cookly-api-y045.onrender.com"));
         c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         c.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         var s = new UrlBasedCorsConfigurationSource();
