@@ -113,7 +113,7 @@ export default function RuletaScreen() {
         setTimeout(() => {
           girandoRef.current = false;
           setGirando(false);
-          router.push({ pathname: '/ruleta-resultado', params: { id: String(receta.id), vibra: elegida.id } });
+          router.push({ pathname: '/ruleta-resultado', params: { id: String(receta.id), vibra: elegida.id, portada: receta.portada ?? '' } });
         }, 450)
       );
     });

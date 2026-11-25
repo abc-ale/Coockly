@@ -14,6 +14,7 @@ import * as Speech from 'expo-speech';
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ImagenReceta from '../components/ImagenReceta';
+import { obtenerPortada } from '../lib/portada'; // FIX 1: import nuevo
 import { EntradaSuave } from '../components/RecipeCard';
 import { toque, seleccion, exito } from '../lib/vibracion';
 import { PORCIONES_BASE, limitar, textoIngrediente } from '../lib/cantidades';
@@ -373,7 +374,7 @@ export default function ChatbotScreen() {
         const det = elegida.det;
         ctx.mostradas.add(siguiente.id);
 
-        const resImg = await api.get(`/imagenes/receta/${siguiente.id}`).catch(() => ({ data: [] as any[] }));
+        const portadaUrl = await obtenerPortada(siguiente.id, det.nombre); // FIX 2: foto con reintento y plan B
         const minutos: number | null = det.minutosPreparacion ?? siguiente.minutosPreparacion ?? null;
         ctx.receta = { id: det.id, nombre: det.nombre, detalle: det.detallesIngredientes ?? [], minutos, pasos: det.pasos?.length ?? 0 };
         ctx.personas = PORCIONES_BASE;
@@ -403,7 +404,7 @@ export default function ChatbotScreen() {
             nombre: det.nombre,
             minutos,
             pasos: det.pasos?.length ?? 0,
-            portada: resImg.data?.[0]?.url ?? null,
+            portada: portadaUrl, // FIX 3
           },
         });
         setChips(chipsDeReceta());

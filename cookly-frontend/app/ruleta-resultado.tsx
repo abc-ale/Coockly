@@ -11,6 +11,7 @@ import { Aparecer, Presionable, Rebote } from '../components/Animaciones';
 import ImagenReceta from '../components/ImagenReceta';
 import { buscarVibra, type RecetaRuleta } from '../lib/ruleta';
 import { exito } from '../lib/vibracion';
+import { obtenerPortada } from '../lib/portada';
 
 // Confeti fijo (aparece con un saltito): [izquierda %, arriba, color, ancho, alto, giro]
 const CONFETI: [number, number, string, number, number, number][] = [
@@ -23,11 +24,12 @@ const CONFETI: [number, number, string, number, number, number][] = [
 export default function RuletaResultadoScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { id, vibra: vibraId } = useLocalSearchParams<{ id?: string; vibra?: string }>();
+  const { id, vibra: vibraId, portada: portadaParam } = useLocalSearchParams<{ id?: string; vibra?: string; portada?: string }>();
   const vibra = buscarVibra(vibraId);
 
   const [receta, setReceta] = useState<RecetaRuleta | null>(null);
   const [fallo, setFallo] = useState(false);
+  const [portada, setPortada] = useState<string | null>(portadaParam || null);
 
   useEffect(() => {
     let vivo = true;
@@ -37,6 +39,10 @@ export default function RuletaResultadoScreen() {
         if (!vivo) return;
         setReceta(r.data as RecetaRuleta);
         exito();
+        // /recetas/{id} no trae la foto: si no llegó por parámetro, se pide aparte.
+        if (!portadaParam) {
+          obtenerPortada(r.data.id, r.data.nombre).then((u) => vivo && u && setPortada(u));
+        }
       })
       .catch(() => vivo && setFallo(true));
     return () => {
@@ -78,7 +84,7 @@ export default function RuletaResultadoScreen() {
         {receta ? (
           <Aparecer delay={150}>
             <View style={st.tarjeta}>
-              <ImagenReceta uri={receta.portada} ancho={800} tamanoIcono={44} style={st.foto} />
+              <ImagenReceta uri={portada} ancho={800} tamanoIcono={44} style={st.foto} />
               <View style={st.tarjetaTexto}>
                 <Text style={st.nombre} numberOfLines={2}>{receta.nombre}</Text>
                 <View style={st.datos}>
