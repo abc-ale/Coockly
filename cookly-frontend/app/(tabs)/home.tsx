@@ -23,6 +23,10 @@ import { api } from '../../lib/api';
 // Mismo margen superior que usan las demás pestañas (ver _layout.tsx).
 const MARGEN_SUPERIOR = 24;
 
+// Espera desde la última tecla antes de buscar: sin ella se mandaba una petición por letra
+// y Render respondía 429 (demasiadas solicitudes).
+const ESPERA_BUSQUEDA_MS = 400;
+
 // Colores de las tarjetas de "Populares": rosado, mantequilla y pistacho, en ese orden.
 const FONDOS_POPULARES = [colors.primaryLight, colors.accent, colors.magic];
 
@@ -49,6 +53,8 @@ function diaDelAnio() {
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [texto, setTexto] = useState('');
+  // Lo que realmente se busca: sigue a `texto` cuando el usuario deja de escribir.
+  const [textoBusqueda, setTextoBusqueda] = useState('');
   const [etiquetaSeleccionada, setEtiquetaSeleccionada] = useState<number | null>(null);
   const [recetasBase, setRecetas] = useState<TarjetaReceta[]>([]);
   // La lista del servidor no trae el promedio de estrellas: se pide aparte por receta y se mezcla aquí.
@@ -139,14 +145,25 @@ export default function HomeScreen() {
   }, [cargarPromedios]);
 
   useEffect(() => {
-    textoActual.current = texto;
+    const limpio = texto.trim();
+    // Al borrar el buscador se vuelve a la lista completa al instante.
+    if (!limpio) {
+      setTextoBusqueda('');
+      return;
+    }
+    const temporizador = setTimeout(() => setTextoBusqueda(limpio), ESPERA_BUSQUEDA_MS);
+    return () => clearTimeout(temporizador);
+  }, [texto]);
+
+  useEffect(() => {
+    textoActual.current = textoBusqueda;
     etiquetaActual.current = etiquetaSeleccionada;
-    buscarRecetas(texto, etiquetaSeleccionada);
-  }, [texto, etiquetaSeleccionada, buscarRecetas]);
+    buscarRecetas(textoBusqueda, etiquetaSeleccionada);
+  }, [textoBusqueda, etiquetaSeleccionada, buscarRecetas]);
 
   async function refrescar() {
     setRefrescando(true);
-    await buscarRecetas(texto, etiquetaSeleccionada, true);
+    await buscarRecetas(textoBusqueda, etiquetaSeleccionada, true);
     setRefrescando(false);
   }
 
