@@ -13,7 +13,7 @@ import { router } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import ImagenReceta from '../components/ImagenReceta';
+import ImagenReceta, { precargarImagenes } from '../components/ImagenReceta';
 import { EntradaSuave } from '../components/RecipeCard';
 import { toque, seleccion, exito } from '../lib/vibracion';
 import { PORCIONES_BASE, limitar, textoIngrediente } from '../lib/cantidades';
@@ -26,10 +26,18 @@ const URL_CHAT = `${URL_BASE_CHAT}/chat`;
 
 /** El servidor del chatbot se duerme si nadie lo usa; al abrir la pantalla lo despertamos para que el primer mensaje no espere. */
 let chatDespierto = 0;
-function despertarChat() {
-  if (Date.now() - chatDespierto < 4 * 60 * 1000) return;
+let despertandoChat: Promise<boolean> | null = null;
+/** Devuelve true cuando el servidor responde (Render gratis puede tardar ~1 minuto en despertar). */
+function despertarChat(): Promise<boolean> {
+  if (despertandoChat && Date.now() - chatDespierto < 4 * 60 * 1000) return despertandoChat;
   chatDespierto = Date.now();
-  fetch(URL_BASE_CHAT, { method: 'GET' }).catch(() => undefined);
+  const corte = new AbortController();
+  const reloj = setTimeout(() => corte.abort(), 70000);
+  despertandoChat = fetch(`${URL_BASE_CHAT}/salud`, { method: 'GET', signal: corte.signal })
+    .then((r) => r.ok)
+    .catch(() => false)
+    .finally(() => clearTimeout(reloj));
+  return despertandoChat;
 }
 
 /** Cosas que casi todos tienen en casa: no se le piden al usuario como "faltantes". */
@@ -52,6 +60,8 @@ type Recomendacion = {
   porcentajeCoincidencia: number;
   ingredientesFaltantes: string[];
   minutosPreparacion: number | null;
+  /** Primera foto de la receta (viene con la recomendación; puede faltar si el servidor es antiguo). */
+  portada?: string | null;
 };
 
 type IngredienteReceta = { ingrediente: { id: number; nombre: string }; cantidad: number; unidad: string };
@@ -152,7 +162,17 @@ function ingredientesDe(texto: string): string[] {
     .map((s) => (s.endsWith('s') && s.length > 4 ? s.slice(0, -1) : s));
 }
 
+/** Pregunta al chatbot. Si el servidor estaba dormido (Render), espera a que despierte y reintenta una vez. */
 async function preguntarAlServidor(historial: Mensaje[], contexto: any): Promise<Accion | null> {
+  const primera = await intentarChat(historial, contexto);
+  if (primera !== 'reintentar') return primera;
+  const despierto = await despertarChat();
+  if (!despierto) return null;
+  const segunda = await intentarChat(historial, contexto);
+  return segunda === 'reintentar' ? null : segunda;
+}
+
+async function intentarChat(historial: Mensaje[], contexto: any): Promise<Accion | null | 'reintentar'> {
   const corte = new AbortController();
   const reloj = setTimeout(() => corte.abort(), 15000);
   try {
@@ -165,7 +185,10 @@ async function preguntarAlServidor(historial: Mensaje[], contexto: any): Promise
         contexto,
       }),
     });
-    const d = await r.json();
+    // 502/503/504: el servidor está despertando (o caído). Respuesta que no es JSON: tampoco es del chatbot.
+    if (r.status >= 502 && r.status <= 504) return 'reintentar';
+    const d = await r.json().catch(() => null);
+    if (!d) return 'reintentar';
     if (typeof d?.texto !== 'string' && !d?.accion) return null;
     return {
       texto: d.texto ?? '',
@@ -175,8 +198,9 @@ async function preguntarAlServidor(historial: Mensaje[], contexto: any): Promise
       porciones: typeof d.porciones === 'number' ? d.porciones : null,
     };
   } catch (e) {
+    // Tiempo agotado o red caída: lo más probable es que el servidor siga despertando.
     console.log('ERROR AL LLAMAR AL CHATBOT:', e);
-    return null;
+    return 'reintentar';
   } finally {
     clearTimeout(reloj);
   }
@@ -373,7 +397,14 @@ export default function ChatbotScreen() {
         const det = elegida.det;
         ctx.mostradas.add(siguiente.id);
 
-        const resImg = await api.get(`/imagenes/receta/${siguiente.id}`).catch(() => ({ data: [] as any[] }));
+        // La portada ya viene con la recomendación; solo si falta se pide aparte (y si eso falla, la tarjeta muestra el cubierto).
+        let portada: string | null = siguiente.portada ?? null;
+        if (!portada) {
+          const resImg = await api.get(`/imagenes/receta/${siguiente.id}`).catch(() => ({ data: [] as any[] }));
+          portada = resImg.data?.[0]?.url ?? null;
+        }
+        // Se empieza a descargar ya, para que la foto esté lista cuando aparezca la tarjeta.
+        precargarImagenes([portada], 240);
         const minutos: number | null = det.minutosPreparacion ?? siguiente.minutosPreparacion ?? null;
         ctx.receta = { id: det.id, nombre: det.nombre, detalle: det.detallesIngredientes ?? [], minutos, pasos: det.pasos?.length ?? 0 };
         ctx.personas = PORCIONES_BASE;
@@ -403,7 +434,7 @@ export default function ChatbotScreen() {
             nombre: det.nombre,
             minutos,
             pasos: det.pasos?.length ?? 0,
-            portada: resImg.data?.[0]?.url ?? null,
+            portada,
           },
         });
         setChips(chipsDeReceta());

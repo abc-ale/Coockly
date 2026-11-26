@@ -8,8 +8,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts } from '../constants/theme';
 import { Aparecer, Presionable } from '../components/Animaciones';
 import { mostrarAviso } from '../components/Aviso';
+import { precargarImagenes } from '../components/ImagenReceta';
+import { despertarServidor } from '../lib/api';
 import { exito, seleccion, toque } from '../lib/vibracion';
-import { VIBRAS, cargarRecetasRuleta, elegirReceta, type RecetaRuleta } from '../lib/ruleta';
+import { ANCHO_FOTO_RULETA, VIBRAS, cargarRecetasRuleta, elegirReceta, type RecetaRuleta } from '../lib/ruleta';
 
 // Sensor de movimiento: si el módulo nativo aún no está en tu APK, el botón "Girar" sigue funcionando.
 let Sensores: any = null;
@@ -54,9 +56,11 @@ export default function RuletaScreen() {
 
   useEffect(() => limpiarTemporizadores, []);
 
-  // Descarga la rueda por adelantado para que aparezca de una vez.
+  // Al abrir la pantalla: se despierta el servidor y se descargan las recetas en segundo plano,
+  // así al tocar "Girar" la rueda arranca al instante en vez de esperar la descarga.
   useEffect(() => {
     Image.prefetch(URL_RUEDA).catch(() => {});
+    despertarServidor().then(() => cargarRecetasRuleta()).catch(() => {});
   }, []);
 
   const girar = useCallback(async () => {
@@ -87,6 +91,8 @@ export default function RuletaScreen() {
       return;
     }
     ultimaRecetaId.current = receta.id;
+    // La foto se descarga mientras la rueda gira (≈4 s): en "¡Te tocó!" ya está lista.
+    precargarImagenes([receta.portada], ANCHO_FOTO_RULETA);
 
     // La rueda termina con el sector elegido justo bajo el puntero (arriba).
     const actual = anguloActual.current;
@@ -113,7 +119,17 @@ export default function RuletaScreen() {
         setTimeout(() => {
           girandoRef.current = false;
           setGirando(false);
-          router.push({ pathname: '/ruleta-resultado', params: { id: String(receta.id), vibra: elegida.id } });
+          // Se pasan los datos que ya tenemos (nombre, foto, minutos) para mostrar la tarjeta sin esperar al servidor.
+          router.push({
+            pathname: '/ruleta-resultado',
+            params: {
+              id: String(receta.id),
+              vibra: elegida.id,
+              nombre: receta.nombre,
+              portada: receta.portada ?? '',
+              minutos: receta.minutosPreparacion ? String(receta.minutosPreparacion) : '',
+            },
+          });
         }, 450)
       );
     });

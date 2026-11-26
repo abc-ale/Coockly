@@ -49,7 +49,7 @@ public class ServicioReceta {
     @Transactional(readOnly = true)
     public List<RecomendacionReceta> menuExpress(SolicitudMenuExpress solicitud) {
         var disponibles = solicitud.ingredientes().stream().map(ServicioReceta::normalizar).collect(Collectors.toSet());
-        return recetas.findAll().stream().map(r -> {
+        List<RecomendacionReceta> lista = recetas.findAll().stream().map(r -> {
             // clave normalizada -> nombre original (para mostrar los faltantes tal como están en el catálogo)
             var requeridos = new java.util.TreeMap<String, String>();
             r.getIngredientes().forEach(i -> requeridos.putIfAbsent(normalizar(i.getNombre()), i.getNombre()));
@@ -57,12 +57,15 @@ public class ServicioReceta {
                     .map(java.util.Map.Entry::getValue).sorted().toList();
             int porcentaje = requeridos.isEmpty() ? 0 : (int) Math.round(100.0 * (requeridos.size() - faltantes.size()) / requeridos.size());
             Integer minutos = r.getMinutosPreparacion() == null ? null : r.getMinutosPreparacion().intValue();
-            return new RecomendacionReceta(r.getId(), r.getNombre(), porcentaje, faltantes, minutos);
+            return new RecomendacionReceta(r.getId(), r.getNombre(), porcentaje, faltantes, minutos, null);
         }).filter(x -> x.porcentajeCoincidencia() > 0)
           .sorted(Comparator.comparing(RecomendacionReceta::porcentajeCoincidencia).reversed()
                   .thenComparing(x -> x.ingredientesFaltantes().size())
                   .thenComparing(RecomendacionReceta::minutosPreparacion, Comparator.nullsLast(Comparator.naturalOrder())))
           .limit(30).toList();
+        // La foto de portada viaja con cada recomendación (una sola consulta para las 30): el chatbot ya no la pide aparte.
+        Map<Long, String> portadas = portadas(lista.stream().map(RecomendacionReceta::id).toList());
+        return lista.stream().map(x -> x.conPortada(portadas.get(x.id()))).toList();
     }
 
     /** Búsqueda por nombre (parcial, sin importar mayúsculas), las más nuevas primero, ya lista para dibujar tarjetas. */

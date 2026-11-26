@@ -83,13 +83,26 @@ export function buscarVibra(id?: string | null): Vibra | undefined {
 
 // ---- Recetas (se descargan una vez y se reutilizan) ----
 let cache: RecetaRuleta[] | null = null;
+// Si se piden dos veces a la vez (al abrir la pantalla y al girar), se espera la misma descarga.
+let enCurso: Promise<RecetaRuleta[]> | null = null;
+
+/** Tamaño de la foto en "¡Te tocó!": se precarga con este mismo ancho para que salga de la memoria. */
+export const ANCHO_FOTO_RULETA = 800;
 
 export async function cargarRecetasRuleta(forzarArg?: boolean): Promise<RecetaRuleta[]> {
   const forzar = forzarArg ?? false;
   if (cache && !forzar) return cache;
-  const { data } = await api.get('/recetas/buscar', { params: { texto: '', pagina: 0, tamano: 100 } });
-  cache = (data?.content ?? []) as RecetaRuleta[];
-  return cache;
+  if (enCurso && !forzar) return enCurso;
+  enCurso = api
+    .get('/recetas/buscar', { params: { texto: '', pagina: 0, tamano: 100 } })
+    .then(({ data }) => {
+      cache = (data?.content ?? []) as RecetaRuleta[];
+      return cache;
+    })
+    .finally(() => {
+      enCurso = null;
+    });
+  return enCurso;
 }
 
 /** Elige al azar una receta que vaya con la vibra. Si ninguna encaja, cualquiera. Evita repetir la anterior. */

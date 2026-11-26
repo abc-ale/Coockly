@@ -9,7 +9,7 @@ import { colors, fonts } from '../constants/theme';
 import { api } from '../lib/api';
 import { Aparecer, Presionable, Rebote } from '../components/Animaciones';
 import ImagenReceta from '../components/ImagenReceta';
-import { buscarVibra, type RecetaRuleta } from '../lib/ruleta';
+import { ANCHO_FOTO_RULETA, buscarVibra, type RecetaRuleta } from '../lib/ruleta';
 import { exito } from '../lib/vibracion';
 
 // Confeti fijo (aparece con un saltito): [izquierda %, arriba, color, ancho, alto, giro]
@@ -23,12 +23,26 @@ const CONFETI: [number, number, string, number, number, number][] = [
 export default function RuletaResultadoScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { id, vibra: vibraId } = useLocalSearchParams<{ id?: string; vibra?: string }>();
+  const { id, vibra: vibraId, nombre, portada, minutos } = useLocalSearchParams<{
+    id?: string; vibra?: string; nombre?: string; portada?: string; minutos?: string;
+  }>();
   const vibra = buscarVibra(vibraId);
 
-  const [receta, setReceta] = useState<RecetaRuleta | null>(null);
+  // La ruleta ya trae nombre, foto y minutos: la tarjeta se dibuja al instante (la foto se precargó mientras giraba).
+  const [receta, setReceta] = useState<RecetaRuleta | null>(() =>
+    id && nombre
+      ? { id: Number(id), nombre, portada: portada || undefined, minutosPreparacion: minutos ? Number(minutos) : undefined }
+      : null
+  );
+  const [foto, setFoto] = useState<string | null>(portada || null);
   const [fallo, setFallo] = useState(false);
 
+  useEffect(() => {
+    exito();
+  }, []);
+
+  // El detalle (/recetas/{id}) trae los ingredientes, pero NO la portada: se conserva la que ya teníamos,
+  // y si no había, se pide la primera foto aparte.
   useEffect(() => {
     let vivo = true;
     api
@@ -36,13 +50,21 @@ export default function RuletaResultadoScreen() {
       .then((r) => {
         if (!vivo) return;
         setReceta(r.data as RecetaRuleta);
-        exito();
       })
       .catch(() => vivo && setFallo(true));
+    if (!portada) {
+      api
+        .get(`/imagenes/receta/${id}`)
+        .then((r) => {
+          const url: string | undefined = r.data?.[0]?.url;
+          if (vivo && url) setFoto(url);
+        })
+        .catch(() => {});
+    }
     return () => {
       vivo = false;
     };
-  }, [id]);
+  }, [id, portada]);
 
   const ingredientes = receta?.detallesIngredientes?.length ?? 0;
 
@@ -78,7 +100,7 @@ export default function RuletaResultadoScreen() {
         {receta ? (
           <Aparecer delay={150}>
             <View style={st.tarjeta}>
-              <ImagenReceta uri={receta.portada} ancho={800} tamanoIcono={44} style={st.foto} />
+              <ImagenReceta uri={foto ?? receta.portada} ancho={ANCHO_FOTO_RULETA} tamanoIcono={44} style={st.foto} />
               <View style={st.tarjetaTexto}>
                 <Text style={st.nombre} numberOfLines={2}>{receta.nombre}</Text>
                 <View style={st.datos}>
